@@ -20,6 +20,13 @@ import { makeId } from '../utils/id.js'
 
 const CLOUD_SAVE_DEBOUNCE_MS = 800
 
+// Timestamps cross the wire in varying formats ('…Z' vs '…+00:00'); compare
+// them as epoch milliseconds, never as strings.
+function toEpoch(timestamp) {
+  const ms = Date.parse(timestamp)
+  return Number.isFinite(ms) ? ms : null
+}
+
 // The single data store: children, events, documents and photos. Always
 // persisted on-device (localStorage + IndexedDB for blobs); when a user is
 // signed in it also syncs to Supabase — cloud rows for metadata, a private
@@ -39,7 +46,11 @@ export function useFamilyStore(user) {
   // True once the initial cloud load/migration for this user finished, so we
   // never overwrite the cloud with stale local state.
   const cloudReadyRef = useRef(false)
+  // Epoch ms of our last cloud write, and the JSON we last exchanged with the
+  // cloud (in either direction). Together they stop our own realtime echo from
+  // being re-adopted and re-saved in an endless loop.
   const lastSavedAtRef = useRef(null)
+  const lastCloudJsonRef = useRef(null)
   const saveTimerRef = useRef(null)
 
   // Files are stored under the signed-in user's folder in the bucket.
@@ -63,15 +74,18 @@ export function useFamilyStore(user) {
         const cloud = await fetchCloudData(supabase, userId)
         if (!active) return
         if (cloud) {
-          setData(normalizeData(cloud))
+          const normalized = normalizeData(cloud)
+          lastCloudJsonRef.current = JSON.stringify(normalized)
+          setData(normalized)
         } else {
           const local = loadData()
           if (hasContent(local)) {
             const fileIds = [...local.documents, ...local.photos].map((item) => item.fileId)
             await uploadLocalFiles(fileIds)
           }
-          lastSavedAtRef.current = await saveCloudData(supabase, userId, local)
+          lastSavedAtRef.current = toEpoch(await saveCloudData(supabase, userId, local))
           if (!active) return
+          lastCloudJsonRef.current = JSON.stringify(local)
           setData(local)
         }
         cloudReadyRef.current = true
@@ -93,11 +107,17 @@ export function useFamilyStore(user) {
     saveData(data)
     if (!userId || !supabase || !cloudReadyRef.current) return undefined
 
+    // Nothing to push if this state is what we last loaded from / saved to the
+    // cloud (e.g. we just adopted a realtime update).
+    const json = JSON.stringify(data)
+    if (json === lastCloudJsonRef.current) return undefined
+
     clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(async () => {
       setCloudState('syncing')
       try {
-        lastSavedAtRef.current = await saveCloudData(supabase, userId, data)
+        lastSavedAtRef.current = toEpoch(await saveCloudData(supabase, userId, data))
+        lastCloudJsonRef.current = json
         setCloudState('synced')
       } catch (error) {
         console.error('Cloud save failed', error)
@@ -108,8 +128,9 @@ export function useFamilyStore(user) {
     return () => clearTimeout(saveTimerRef.current)
   }, [data, userId])
 
-  // Live cross-device updates. Our own writes echo back too; adopting them is
-  // harmless (same content), and the updated_at guard skips the common case.
+  // Live cross-device updates. Our own writes echo back through this channel
+  // too; the timestamp and JSON guards drop them so they can't feed back into
+  // the save effect.
   useEffect(() => {
     if (!userId || !supabase) return undefined
 
@@ -120,8 +141,13 @@ export function useFamilyStore(user) {
         { event: '*', schema: 'public', table: 'family_data', filter: `user_id=eq.${userId}` },
         (payload) => {
           const row = payload.new
-          if (!row || row.updated_at === lastSavedAtRef.current) return
-          setData(normalizeData(row.data))
+          if (!row) return
+          if (toEpoch(row.updated_at) === lastSavedAtRef.current) return
+          const incoming = normalizeData(row.data)
+          const json = JSON.stringify(incoming)
+          if (json === lastCloudJsonRef.current) return
+          lastCloudJsonRef.current = json
+          setData(incoming)
         },
       )
       .subscribe()
