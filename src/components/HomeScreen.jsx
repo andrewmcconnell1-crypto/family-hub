@@ -15,6 +15,7 @@ export default function HomeScreen({ data, onNavigate }) {
   const today = todayKey()
   const week = upcomingEvents(data.events, today, 7)
   const recentPhotos = data.photos.slice(0, 6)
+  const activeTodos = data.todos.filter((todo) => !todo.done)
 
   return (
     <div className="screen">
@@ -67,6 +68,33 @@ export default function HomeScreen({ data, onNavigate }) {
           </ul>
         )}
       </section>
+
+      {activeTodos.length > 0 && (
+        <section className="card">
+          <div className="card-title-row">
+            <h2>To-dos</h2>
+            <button type="button" className="link-button" onClick={() => onNavigate('todos')}>
+              All to-dos
+            </button>
+          </div>
+          <ul className="home-todo-list">
+            {activeTodos.slice(0, 3).map((todo) => (
+              <li key={todo.id}>
+                <span className="home-todo-dot" aria-hidden="true" />
+                <span className="home-todo-title">{todo.title}</span>
+                {todo.dueDate && (
+                  <span className={`todo-due${todo.dueDate < today ? ' todo-overdue' : ''}`}>
+                    {formatDateKey(todo.dueDate)}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+          {activeTodos.length > 3 && (
+            <p className="muted">+ {activeTodos.length - 3} more</p>
+          )}
+        </section>
+      )}
 
       <section className="card">
         <div className="card-title-row">

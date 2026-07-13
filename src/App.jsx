@@ -2,6 +2,7 @@ import { useState } from 'react'
 import TabBar from './components/TabBar.jsx'
 import HomeScreen from './components/HomeScreen.jsx'
 import CalendarScreen from './components/CalendarScreen.jsx'
+import TodosScreen from './components/TodosScreen.jsx'
 import DocumentsScreen from './components/DocumentsScreen.jsx'
 import PhotosScreen from './components/PhotosScreen.jsx'
 import FamilyScreen from './components/FamilyScreen.jsx'
@@ -74,6 +75,17 @@ export default function App() {
             addEvent={store.addEvent}
             updateEvent={store.updateEvent}
             removeEvent={store.removeEvent}
+          />
+        )}
+        {tab === 'todos' && (
+          <TodosScreen
+            data={store.data}
+            addTodo={store.addTodo}
+            updateTodo={store.updateTodo}
+            toggleTodo={store.toggleTodo}
+            moveTodo={store.moveTodo}
+            removeTodo={store.removeTodo}
+            clearDoneTodos={store.clearDoneTodos}
           />
         )}
         {tab === 'documents' && (

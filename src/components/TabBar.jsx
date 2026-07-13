@@ -1,8 +1,9 @@
-import { CalendarDays, FolderOpen, Home, Image, Users } from 'lucide-react'
+import { CalendarDays, FolderOpen, Home, Image, ListTodo, Users } from 'lucide-react'
 
 const TABS = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'calendar', label: 'Calendar', icon: CalendarDays },
+  { id: 'todos', label: 'To-dos', icon: ListTodo },
   { id: 'documents', label: 'Docs', icon: FolderOpen },
   { id: 'photos', label: 'Photos', icon: Image },
   { id: 'family', label: 'Family', icon: Users },

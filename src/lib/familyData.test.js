@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { emptyData, loadData, normalizeData, saveData } from './familyData.js'
+import { emptyData, loadData, normalizeData, reorderTodo, saveData } from './familyData.js'
 
 describe('normalizeData', () => {
   it('returns empty data for junk input', () => {
@@ -36,6 +36,41 @@ describe('normalizeData', () => {
       events: [{ id: 'e1', title: 'Swim', date: '2026-07-14', childIds: ['c1', 'ghost'] }],
     })
     expect(data.events[0].childIds).toEqual(['c1'])
+  })
+})
+
+describe('todos', () => {
+  it('normalizes todos with defaults and boolean done', () => {
+    const data = normalizeData({
+      todos: [
+        { id: 't1', title: 'Book dentist', done: 'yes' },
+        { id: 't2', title: 'RSVP', done: true, dueDate: '2026-07-20' },
+        { id: 't3' },
+      ],
+    })
+    expect(data.todos.map((t) => t.id)).toEqual(['t1', 't2'])
+    expect(data.todos[0]).toMatchObject({ done: false, doneAt: '', dueDate: '', notes: '' })
+    expect(data.todos[1].done).toBe(true)
+  })
+})
+
+describe('reorderTodo', () => {
+  const todos = [
+    { id: 'a', done: false },
+    { id: 'b', done: true },
+    { id: 'c', done: false },
+    { id: 'd', done: false },
+  ]
+
+  it('swaps with the nearest not-done neighbour, skipping done items', () => {
+    expect(reorderTodo(todos, 'c', -1).map((t) => t.id)).toEqual(['c', 'b', 'a', 'd'])
+    expect(reorderTodo(todos, 'c', 1).map((t) => t.id)).toEqual(['a', 'b', 'd', 'c'])
+  })
+
+  it('is a no-op at the boundaries or for unknown ids', () => {
+    expect(reorderTodo(todos, 'a', -1)).toBe(todos)
+    expect(reorderTodo(todos, 'd', 1)).toBe(todos)
+    expect(reorderTodo(todos, 'nope', 1)).toBe(todos)
   })
 })
 

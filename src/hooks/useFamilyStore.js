@@ -5,6 +5,7 @@ import {
   hasContent,
   loadData,
   normalizeData,
+  reorderTodo,
   saveCloudData,
   saveData,
 } from '../lib/familyData.js'
@@ -194,6 +195,48 @@ export function useFamilyStore(user, ownerId) {
     }))
   }, [])
 
+  const addTodo = useCallback((todo) => {
+    const id = makeId('todo')
+    setData((d) => ({
+      ...d,
+      todos: [
+        ...d.todos,
+        { done: false, doneAt: '', dueDate: '', notes: '', childIds: [], ...todo, id },
+      ],
+    }))
+    return id
+  }, [])
+
+  const updateTodo = useCallback((id, patch) => {
+    setData((d) => ({
+      ...d,
+      todos: d.todos.map((t) => (t.id === id ? { ...t, ...patch } : t)),
+    }))
+  }, [])
+
+  const toggleTodo = useCallback((id) => {
+    setData((d) => ({
+      ...d,
+      todos: d.todos.map((t) =>
+        t.id === id
+          ? { ...t, done: !t.done, doneAt: t.done ? '' : new Date().toISOString() }
+          : t,
+      ),
+    }))
+  }, [])
+
+  const moveTodo = useCallback((id, delta) => {
+    setData((d) => ({ ...d, todos: reorderTodo(d.todos, id, delta) }))
+  }, [])
+
+  const removeTodo = useCallback((id) => {
+    setData((d) => ({ ...d, todos: d.todos.filter((t) => t.id !== id) }))
+  }, [])
+
+  const clearDoneTodos = useCallback(() => {
+    setData((d) => ({ ...d, todos: d.todos.filter((t) => !t.done) }))
+  }, [])
+
   const addEvent = useCallback((event) => {
     const id = makeId('event')
     setData((d) => ({
@@ -284,6 +327,12 @@ export function useFamilyStore(user, ownerId) {
     addChild,
     updateChild,
     removeChild,
+    addTodo,
+    updateTodo,
+    toggleTodo,
+    moveTodo,
+    removeTodo,
+    clearDoneTodos,
     addEvent,
     updateEvent,
     removeEvent,

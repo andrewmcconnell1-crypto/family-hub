@@ -49,7 +49,23 @@ export const DOC_CATEGORIES = [
 ]
 
 export function emptyData() {
-  return { children: [], events: [], documents: [], photos: [] }
+  return { children: [], todos: [], events: [], documents: [], photos: [] }
+}
+
+// The todos array's order IS the priority order (actives only; done items are
+// displayed separately). Move a todo one step up/down past its nearest
+// not-done neighbour, returning a new array (or the same one at a boundary).
+export function reorderTodo(todos, id, delta) {
+  const index = todos.findIndex((t) => t.id === id)
+  if (index === -1) return todos
+  let neighbour = index + delta
+  while (neighbour >= 0 && neighbour < todos.length && todos[neighbour].done) {
+    neighbour += delta
+  }
+  if (neighbour < 0 || neighbour >= todos.length) return todos
+  const next = [...todos]
+  ;[next[index], next[neighbour]] = [next[neighbour], next[index]]
+  return next
 }
 
 const isNonEmptyString = (v) => typeof v === 'string' && v.length > 0
@@ -72,6 +88,12 @@ export function normalizeData(raw) {
   const childIdSet = new Set(children.map((c) => c.id))
   const data = {
     children,
+    todos: normalizeList(raw.todos, ['id', 'title'], {
+      done: false,
+      doneAt: '',
+      dueDate: '',
+      notes: '',
+    }).map((todo) => ({ ...todo, done: todo.done === true })),
     events: normalizeList(raw.events, ['id', 'title', 'date'], {
       time: '',
       category: 'other',
@@ -92,7 +114,7 @@ export function normalizeData(raw) {
     }),
   }
   // Drop tags pointing at children that no longer exist.
-  for (const listName of ['events', 'documents', 'photos']) {
+  for (const listName of ['todos', 'events', 'documents', 'photos']) {
     for (const item of data[listName]) {
       item.childIds = item.childIds.filter((id) => childIdSet.has(id))
     }
@@ -120,6 +142,7 @@ export function saveData(data, storage = window.localStorage) {
 export function hasContent(data) {
   return (
     data.children.length > 0 ||
+    data.todos.length > 0 ||
     data.events.length > 0 ||
     data.documents.length > 0 ||
     data.photos.length > 0
