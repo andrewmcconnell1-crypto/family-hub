@@ -6,8 +6,11 @@ import DocumentsScreen from './components/DocumentsScreen.jsx'
 import PhotosScreen from './components/PhotosScreen.jsx'
 import FamilyScreen from './components/FamilyScreen.jsx'
 import SignInScreen from './components/SignInScreen.jsx'
+import InviteBanner from './components/InviteBanner.jsx'
 import { useAuth } from './hooks/useAuth.js'
 import { useFamilyStore } from './hooks/useFamilyStore.js'
+import { useHousehold } from './hooks/useHousehold.js'
+import { captureJoinCodeFromUrl, clearPendingJoinCode } from './lib/household.js'
 import { isSupabaseConfigured } from './lib/supabase.js'
 
 const LOCAL_ONLY_KEY = 'treehouse:localOnly'
@@ -15,12 +18,24 @@ const LOCAL_ONLY_KEY = 'treehouse:localOnly'
 export default function App() {
   const [tab, setTab] = useState('home')
   const auth = useAuth()
-  const store = useFamilyStore(auth.user)
+  const household = useHousehold(auth.user)
+  // Cloud data owner: resolved household owner. Null until resolution
+  // finishes, which pauses cloud sync rather than loading the wrong row.
+  const ownerId = household.loading ? null : household.ownerId
+  const store = useFamilyStore(auth.user, ownerId)
+  // Invite code captured from a ?join=CODE link (survives the sign-in
+  // redirect in sessionStorage).
+  const [pendingJoinCode, setPendingJoinCode] = useState(() => captureJoinCodeFromUrl())
   // "Use on this device only": remembered so the sign-in screen doesn't come
   // back on every load. Signing in later clears it (Family tab).
   const [localOnly, setLocalOnly] = useState(
     () => localStorage.getItem(LOCAL_ONLY_KEY) === '1',
   )
+
+  const dismissInvite = () => {
+    clearPendingJoinCode()
+    setPendingJoinCode(null)
+  }
 
   if (auth.loading) {
     return <div className="app-loading" aria-label="Loading" />
@@ -41,6 +56,17 @@ export default function App() {
   return (
     <div className="app">
       <main className="app-main">
+        {pendingJoinCode && auth.user && (
+          <InviteBanner
+            code={pendingJoinCode}
+            onJoined={() => {
+              dismissInvite()
+              household.refresh()
+              setTab('family')
+            }}
+            onDismiss={dismissInvite}
+          />
+        )}
         {tab === 'home' && <HomeScreen data={store.data} onNavigate={setTab} />}
         {tab === 'calendar' && (
           <CalendarScreen
@@ -68,6 +94,7 @@ export default function App() {
             removeChild={store.removeChild}
             syncState={store.syncState}
             user={auth.user}
+            household={household}
             onSignIn={() => {
               localStorage.removeItem(LOCAL_ONLY_KEY)
               if (auth.user) return

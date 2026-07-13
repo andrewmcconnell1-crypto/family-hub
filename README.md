@@ -66,8 +66,17 @@ For local dev, copy `.env.example` to `.env.local` and fill them in.
 4. **Authentication → URL Configuration:** add the app's URL(s) (deployed URL
    and `http://localhost:5173/` for dev) to Site URL + Redirect URLs.
 
-Sharing one hub between two parents (a household, like the meal planner has)
-is the next step on the roadmap; for now each account has its own copy.
+### Household sharing (two parents, one hub)
+
+Run `supabase/household.sql` in the SQL editor (once, after `setup.sql`). It
+adds a `household_members` table, invite RPCs, and additive RLS/storage
+policies so members can read and write their household owner's data row and
+files folder.
+
+Then, in the app: Family tab → **Invite your partner** → share the code or
+link. Your partner signs in with their own Google account and joins — from
+then on you both see and edit the same hub, live. Leaving (or the owner
+stopping sharing) returns each account to its own separate copy.
 
 ## Project structure
 

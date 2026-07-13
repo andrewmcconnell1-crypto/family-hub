@@ -32,8 +32,13 @@ function toEpoch(timestamp) {
 // signed in it also syncs to Supabase — cloud rows for metadata, a private
 // storage bucket for files, and realtime updates from other devices.
 //
+// `ownerId` is whose cloud data this account reads/writes: their own id when
+// solo, the household owner's id when they've joined a shared hub (see
+// useHousehold). Null while the household is still resolving — cloud work
+// waits so we never load one owner's data and then switch to another's.
+//
 // syncState: 'local' (no cloud), 'syncing', 'synced', or 'error'.
-export function useFamilyStore(user) {
+export function useFamilyStore(user, ownerId) {
   const [data, setData] = useState(() =>
     typeof window === 'undefined' ? emptyData() : loadData(),
   )
@@ -53,25 +58,27 @@ export function useFamilyStore(user) {
   const lastCloudJsonRef = useRef(null)
   const saveTimerRef = useRef(null)
 
-  // Files are stored under the signed-in user's folder in the bucket.
+  // Files are stored under the data owner's folder in the bucket.
   useEffect(() => {
-    setCloudFileContext(userId)
+    setCloudFileContext(ownerId)
     return () => setCloudFileContext(null)
-  }, [userId])
+  }, [ownerId])
 
-  // On sign-in: adopt the cloud copy, or — first sign-in with existing local
-  // data — migrate the local copy (including file blobs) up to the cloud.
+  // On sign-in (or joining/leaving a household): adopt the owner's cloud
+  // copy, or — first sign-in with existing local data — migrate the local
+  // copy (including file blobs) up to the cloud.
   useEffect(() => {
-    if (!userId || !supabase) {
+    if (!userId || !supabase || !ownerId) {
       cloudReadyRef.current = false
       return undefined
     }
 
     let active = true
+    lastCloudJsonRef.current = null
     ;(async () => {
       setCloudState('syncing')
       try {
-        const cloud = await fetchCloudData(supabase, userId)
+        const cloud = await fetchCloudData(supabase, ownerId)
         if (!active) return
         if (cloud) {
           const normalized = normalizeData(cloud)
@@ -83,7 +90,7 @@ export function useFamilyStore(user) {
             const fileIds = [...local.documents, ...local.photos].map((item) => item.fileId)
             await uploadLocalFiles(fileIds)
           }
-          lastSavedAtRef.current = toEpoch(await saveCloudData(supabase, userId, local))
+          lastSavedAtRef.current = toEpoch(await saveCloudData(supabase, ownerId, local))
           if (!active) return
           lastCloudJsonRef.current = JSON.stringify(local)
           setData(local)
@@ -100,12 +107,12 @@ export function useFamilyStore(user) {
       active = false
       cloudReadyRef.current = false
     }
-  }, [userId])
+  }, [userId, ownerId])
 
   // Persist on every change: locally right away, to the cloud debounced.
   useEffect(() => {
     saveData(data)
-    if (!userId || !supabase || !cloudReadyRef.current) return undefined
+    if (!userId || !supabase || !ownerId || !cloudReadyRef.current) return undefined
 
     // Nothing to push if this state is what we last loaded from / saved to the
     // cloud (e.g. we just adopted a realtime update).
@@ -116,7 +123,7 @@ export function useFamilyStore(user) {
     saveTimerRef.current = setTimeout(async () => {
       setCloudState('syncing')
       try {
-        lastSavedAtRef.current = toEpoch(await saveCloudData(supabase, userId, data))
+        lastSavedAtRef.current = toEpoch(await saveCloudData(supabase, ownerId, data))
         lastCloudJsonRef.current = json
         setCloudState('synced')
       } catch (error) {
@@ -126,19 +133,19 @@ export function useFamilyStore(user) {
     }, CLOUD_SAVE_DEBOUNCE_MS)
 
     return () => clearTimeout(saveTimerRef.current)
-  }, [data, userId])
+  }, [data, userId, ownerId])
 
   // Live cross-device updates. Our own writes echo back through this channel
   // too; the timestamp and JSON guards drop them so they can't feed back into
   // the save effect.
   useEffect(() => {
-    if (!userId || !supabase) return undefined
+    if (!userId || !supabase || !ownerId) return undefined
 
     const channel = supabase
-      .channel(`family_data:${userId}`)
+      .channel(`family_data:${ownerId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'family_data', filter: `user_id=eq.${userId}` },
+        { event: '*', schema: 'public', table: 'family_data', filter: `user_id=eq.${ownerId}` },
         (payload) => {
           const row = payload.new
           if (!row) return
@@ -155,7 +162,7 @@ export function useFamilyStore(user) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [userId])
+  }, [userId, ownerId])
 
   const addChild = useCallback((child) => {
     const id = makeId('child')
