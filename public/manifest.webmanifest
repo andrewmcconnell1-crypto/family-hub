@@ -1,0 +1,14 @@
+{
+  "name": "Treehouse — the family hub",
+  "short_name": "Treehouse",
+  "description": "Documents, calendar and photos for the kids, all in one place.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f4ee",
+  "theme_color": "#2f6b46",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

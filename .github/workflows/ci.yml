@@ -1,0 +1,29 @@
+name: CI
+
+# Runs the same gate as the deploy on every pull request, so a failing lint,
+# test, or build blocks the MERGE rather than silently failing the deploy after
+# it's already on main. Make this a required check in branch protection to
+# enforce it (Settings -> Branches -> add rule for `main`).
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
