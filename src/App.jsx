@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import TabBar from './components/TabBar.jsx'
 import HomeScreen from './components/HomeScreen.jsx'
-import CalendarScreen from './components/CalendarScreen.jsx'
-import TodosScreen from './components/TodosScreen.jsx'
+import PlannerScreen from './components/PlannerScreen.jsx'
 import DocumentsScreen from './components/DocumentsScreen.jsx'
 import PhotosScreen from './components/PhotosScreen.jsx'
 import FamilyScreen from './components/FamilyScreen.jsx'
@@ -18,6 +17,20 @@ const LOCAL_ONLY_KEY = 'treehouse:localOnly'
 
 export default function App() {
   const [tab, setTab] = useState('home')
+  // Which of the Planner's top tabs (calendar | todos) is active. Lives here
+  // so Home's shortcut links can deep-link straight to either view.
+  const [plannerMode, setPlannerMode] = useState('calendar')
+
+  // Navigation targets are bottom-bar tabs, plus the virtual 'calendar' /
+  // 'todos' ids used by Home's shortcuts, which land on the Planner tab.
+  const navigate = (target) => {
+    if (target === 'calendar' || target === 'todos') {
+      setPlannerMode(target)
+      setTab('planner')
+      return
+    }
+    setTab(target)
+  }
   const auth = useAuth()
   const household = useHousehold(auth.user)
   // Cloud data owner: resolved household owner. Null until resolution
@@ -68,25 +81,9 @@ export default function App() {
             onDismiss={dismissInvite}
           />
         )}
-        {tab === 'home' && <HomeScreen data={store.data} onNavigate={setTab} />}
-        {tab === 'calendar' && (
-          <CalendarScreen
-            data={store.data}
-            addEvent={store.addEvent}
-            updateEvent={store.updateEvent}
-            removeEvent={store.removeEvent}
-          />
-        )}
-        {tab === 'todos' && (
-          <TodosScreen
-            data={store.data}
-            addTodo={store.addTodo}
-            updateTodo={store.updateTodo}
-            toggleTodo={store.toggleTodo}
-            moveTodo={store.moveTodo}
-            removeTodo={store.removeTodo}
-            clearDoneTodos={store.clearDoneTodos}
-          />
+        {tab === 'home' && <HomeScreen data={store.data} onNavigate={navigate} />}
+        {tab === 'planner' && (
+          <PlannerScreen mode={plannerMode} onModeChange={setPlannerMode} store={store} />
         )}
         {tab === 'documents' && (
           <DocumentsScreen
@@ -117,7 +114,7 @@ export default function App() {
           />
         )}
       </main>
-      <TabBar tab={tab} onChange={setTab} />
+      <TabBar tab={tab} onChange={navigate} />
     </div>
   )
 }

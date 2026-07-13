@@ -7,6 +7,7 @@ import { matchesChild } from '../lib/familyData.js'
 import { formatDateKey, todayKey } from '../utils/dateUtils.js'
 
 export default function TodosScreen({
+  tabs,
   data,
   addTodo,
   updateTodo,
@@ -36,7 +37,7 @@ export default function TodosScreen({
   return (
     <div className="screen">
       <header className="screen-header screen-header-row">
-        <h1>To-dos</h1>
+        {tabs || <h1>To-dos</h1>}
         <button type="button" className="primary-button" onClick={() => setSheet({})}>
           <Plus size={18} aria-hidden="true" /> To-do
         </button>

@@ -485,6 +485,49 @@ button {
   background: #fff;
 }
 
+/* --- Planner mode tabs (Bistro-style pills) ------------------------------------ */
+
+.mode-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem;
+}
+
+.mode-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+}
+
+.mode-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.mode-tab-count {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 0.05rem 0.4rem;
+}
+
+.mode-tab.active .mode-tab-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
 /* --- To-dos ------------------------------------------------------------------- */
 
 .todo-list {

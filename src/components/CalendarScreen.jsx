@@ -14,7 +14,7 @@ import {
   todayKey,
 } from '../utils/dateUtils.js'
 
-export default function CalendarScreen({ data, addEvent, updateEvent, removeEvent }) {
+export default function CalendarScreen({ tabs, data, addEvent, updateEvent, removeEvent }) {
   const today = todayKey()
   const [selectedKey, setSelectedKey] = useState(today)
   const [monthDate, setMonthDate] = useState(() => startOfMonth(parseDateKey(today)))
@@ -38,7 +38,7 @@ export default function CalendarScreen({ data, addEvent, updateEvent, removeEven
   return (
     <div className="screen">
       <header className="screen-header screen-header-row">
-        <h1>Calendar</h1>
+        {tabs || <h1>Calendar</h1>}
         <button type="button" className="primary-button" onClick={() => setSheet({})}>
           <Plus size={18} aria-hidden="true" /> Event
         </button>
