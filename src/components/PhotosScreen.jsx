@@ -121,6 +121,9 @@ function AddPhotosSheet({ kids, onAdd, onClose }) {
     setSaving(true)
     try {
       await onAdd({ files, childIds, caption: caption.trim() })
+    } catch (error) {
+      console.error('Saving photos failed', error)
+      window.alert("Couldn't save the photos — check your connection and try again.")
     } finally {
       setSaving(false)
     }

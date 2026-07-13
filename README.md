@@ -31,15 +31,43 @@ npm test         # vitest
 
 ## Where the data lives
 
-Right now everything is stored **privately on the device**: item metadata in
-`localStorage`, file blobs (documents & photos) in IndexedDB. There is no
-server and nothing leaves the browser.
+Everything is always stored **privately on the device** (metadata in
+`localStorage`, file blobs in IndexedDB), so the app works with no
+configuration at all.
 
-The store is deliberately shaped so cloud sync can slot in later without the
-screens changing (the same pattern as our meal planner): a Supabase project
-with Google sign-in, one row of JSON metadata per household protected by
-row-level security, and a private Storage bucket for the files. That's the
-next step on the roadmap.
+When cloud sync is configured (below) and you sign in, the same data also
+syncs to **Supabase**: metadata in a per-user row protected by row-level
+security, files in a private Storage bucket under your user's folder, and
+realtime updates so other signed-in devices refresh live. Signing in for the
+first time on a device with existing local data migrates that data (and its
+files) into the account. Without sign-in, or if the network drops, the local
+copy keeps working.
+
+## Cloud sync setup (Supabase + Google sign-in)
+
+The app reads two Vite env vars (safe to expose — data is protected by
+row-level security, not by hiding the key):
+
+```
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_ANON_KEY=<anon public key>
+```
+
+For local dev, copy `.env.example` to `.env.local` and fill them in.
+
+1. Create a project at [supabase.com](https://supabase.com); copy the API URL
+   and anon public key from Project Settings → API into the vars above.
+2. Run `supabase/setup.sql` in the SQL editor — it creates the `family_data`
+   table with RLS, enables realtime, and creates the private `family-files`
+   storage bucket with per-user access policies.
+3. **Authentication → Providers → Google:** enable it and add a Google OAuth
+   client's ID/secret (the client's redirect URI must be Supabase's
+   `…/auth/v1/callback`).
+4. **Authentication → URL Configuration:** add the app's URL(s) (deployed URL
+   and `http://localhost:5173/` for dev) to Site URL + Redirect URLs.
+
+Sharing one hub between two parents (a household, like the meal planner has)
+is the next step on the roadmap; for now each account has its own copy.
 
 ## Project structure
 

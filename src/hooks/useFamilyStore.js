@@ -1,19 +1,135 @@
-import { useCallback, useEffect, useState } from 'react'
-import { emptyData, loadData, saveData } from '../lib/familyData.js'
-import { deleteFile, putFile, releaseFileUrl } from '../lib/fileStore.js'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  emptyData,
+  fetchCloudData,
+  hasContent,
+  loadData,
+  normalizeData,
+  saveCloudData,
+  saveData,
+} from '../lib/familyData.js'
+import {
+  deleteFile,
+  putFile,
+  releaseFileUrl,
+  setCloudFileContext,
+  uploadLocalFiles,
+} from '../lib/fileStore.js'
+import { supabase } from '../lib/supabase.js'
 import { makeId } from '../utils/id.js'
 
-// The single data store: children, events, documents and photos, persisted to
-// localStorage (metadata) + IndexedDB (file blobs). Cloud sync will slot in
-// here later without the screens having to change.
-export function useFamilyStore() {
+const CLOUD_SAVE_DEBOUNCE_MS = 800
+
+// The single data store: children, events, documents and photos. Always
+// persisted on-device (localStorage + IndexedDB for blobs); when a user is
+// signed in it also syncs to Supabase — cloud rows for metadata, a private
+// storage bucket for files, and realtime updates from other devices.
+//
+// syncState: 'local' (no cloud), 'syncing', 'synced', or 'error'.
+export function useFamilyStore(user) {
   const [data, setData] = useState(() =>
     typeof window === 'undefined' ? emptyData() : loadData(),
   )
+  // Cloud sync progress while signed in; signed out, the state is simply
+  // 'local', derived below rather than set from effects.
+  const [cloudState, setCloudState] = useState('syncing')
+  const userId = user?.id ?? null
+  const syncState = userId && supabase ? cloudState : 'local'
 
+  // True once the initial cloud load/migration for this user finished, so we
+  // never overwrite the cloud with stale local state.
+  const cloudReadyRef = useRef(false)
+  const lastSavedAtRef = useRef(null)
+  const saveTimerRef = useRef(null)
+
+  // Files are stored under the signed-in user's folder in the bucket.
+  useEffect(() => {
+    setCloudFileContext(userId)
+    return () => setCloudFileContext(null)
+  }, [userId])
+
+  // On sign-in: adopt the cloud copy, or — first sign-in with existing local
+  // data — migrate the local copy (including file blobs) up to the cloud.
+  useEffect(() => {
+    if (!userId || !supabase) {
+      cloudReadyRef.current = false
+      return undefined
+    }
+
+    let active = true
+    ;(async () => {
+      setCloudState('syncing')
+      try {
+        const cloud = await fetchCloudData(supabase, userId)
+        if (!active) return
+        if (cloud) {
+          setData(normalizeData(cloud))
+        } else {
+          const local = loadData()
+          if (hasContent(local)) {
+            const fileIds = [...local.documents, ...local.photos].map((item) => item.fileId)
+            await uploadLocalFiles(fileIds)
+          }
+          lastSavedAtRef.current = await saveCloudData(supabase, userId, local)
+          if (!active) return
+          setData(local)
+        }
+        cloudReadyRef.current = true
+        setCloudState('synced')
+      } catch (error) {
+        console.error('Cloud load failed', error)
+        if (active) setCloudState('error')
+      }
+    })()
+
+    return () => {
+      active = false
+      cloudReadyRef.current = false
+    }
+  }, [userId])
+
+  // Persist on every change: locally right away, to the cloud debounced.
   useEffect(() => {
     saveData(data)
-  }, [data])
+    if (!userId || !supabase || !cloudReadyRef.current) return undefined
+
+    clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(async () => {
+      setCloudState('syncing')
+      try {
+        lastSavedAtRef.current = await saveCloudData(supabase, userId, data)
+        setCloudState('synced')
+      } catch (error) {
+        console.error('Cloud save failed', error)
+        setCloudState('error')
+      }
+    }, CLOUD_SAVE_DEBOUNCE_MS)
+
+    return () => clearTimeout(saveTimerRef.current)
+  }, [data, userId])
+
+  // Live cross-device updates. Our own writes echo back too; adopting them is
+  // harmless (same content), and the updated_at guard skips the common case.
+  useEffect(() => {
+    if (!userId || !supabase) return undefined
+
+    const channel = supabase
+      .channel(`family_data:${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'family_data', filter: `user_id=eq.${userId}` },
+        (payload) => {
+          const row = payload.new
+          if (!row || row.updated_at === lastSavedAtRef.current) return
+          setData(normalizeData(row.data))
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [userId])
 
   const addChild = useCallback((child) => {
     const id = makeId('child')
@@ -131,6 +247,7 @@ export function useFamilyStore() {
 
   return {
     data,
+    syncState,
     addChild,
     updateChild,
     removeChild,

@@ -6,7 +6,23 @@ import EmptyState from './EmptyState.jsx'
 import { CHILD_COLORS } from '../lib/familyData.js'
 import { ageFromDob, formatDateKey } from '../utils/dateUtils.js'
 
-export default function FamilyScreen({ data, addChild, updateChild, removeChild }) {
+const SYNC_LABELS = {
+  local: { dot: 'sync-dot-local', text: 'On this device only' },
+  syncing: { dot: 'sync-dot-syncing', text: 'Syncing…' },
+  synced: { dot: 'sync-dot-synced', text: 'Synced to the cloud' },
+  error: { dot: 'sync-dot-error', text: 'Sync problem — changes are safe on this device' },
+}
+
+export default function FamilyScreen({
+  data,
+  addChild,
+  updateChild,
+  removeChild,
+  syncState,
+  user,
+  onSignIn,
+  onSignOut,
+}) {
   const [sheet, setSheet] = useState(null) // null | { child? }
 
   return (
@@ -48,12 +64,29 @@ export default function FamilyScreen({ data, addChild, updateChild, removeChild 
       )}
 
       <section className="card">
-        <h2>Your data</h2>
-        <p className="muted">
-          Everything is stored privately on this device (metadata in localStorage, files in
-          IndexedDB). Cloud sync with sign-in — so both parents see the same hub on every device —
-          is the next step on the roadmap.
+        <h2>Account & sync</h2>
+        <p className="sync-status">
+          <span className={`sync-dot ${SYNC_LABELS[syncState].dot}`} aria-hidden="true" />
+          {SYNC_LABELS[syncState].text}
         </p>
+        {user ? (
+          <div className="account-row">
+            <span className="muted">{user.email}</span>
+            <button type="button" className="link-button" onClick={onSignOut}>
+              Sign out
+            </button>
+          </div>
+        ) : (
+          <>
+            <p className="muted">
+              Everything is stored privately on this device. Sign in to back it up to the cloud
+              and see it on all your devices.
+            </p>
+            <button type="button" className="primary-button" onClick={onSignIn}>
+              Sign in with Google
+            </button>
+          </>
+        )}
       </section>
 
       {sheet && (

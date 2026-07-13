@@ -118,6 +118,9 @@ function AddDocumentSheet({ kids, onAdd, onClose }) {
     setSaving(true)
     try {
       await onAdd({ file, title: title.trim() || file.name, category, childIds, notes: notes.trim() })
+    } catch (error) {
+      console.error('Saving document failed', error)
+      window.alert("Couldn't save the document — check your connection and try again.")
     } finally {
       setSaving(false)
     }

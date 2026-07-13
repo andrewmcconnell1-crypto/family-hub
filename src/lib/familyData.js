@@ -116,3 +116,41 @@ export function saveData(data, storage = window.localStorage) {
     // Best effort — quota errors etc. shouldn't crash the app.
   }
 }
+
+export function hasContent(data) {
+  return (
+    data.children.length > 0 ||
+    data.events.length > 0 ||
+    data.documents.length > 0 ||
+    data.photos.length > 0
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Cloud persistence (Supabase): one row of JSON per user, protected by RLS.
+// See supabase/setup.sql. File blobs go through lib/fileStore.js instead.
+// ---------------------------------------------------------------------------
+
+const TABLE = 'family_data'
+
+export async function fetchCloudData(supabase, userId) {
+  const { data, error } = await supabase
+    .from(TABLE)
+    .select('data')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error) throw error
+  return data ? data.data : null
+}
+
+export async function saveCloudData(supabase, userId, data) {
+  const updatedAt = new Date().toISOString()
+
+  const { error } = await supabase
+    .from(TABLE)
+    .upsert({ user_id: userId, data, updated_at: updatedAt }, { onConflict: 'user_id' })
+
+  if (error) throw error
+  return updatedAt
+}
