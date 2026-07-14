@@ -1,12 +1,30 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// A new id each build. Emitted as version.json so the running app can detect a
+// fresh deploy and offer a refresh (see src/hooks/useUpdatePrompt).
+const buildId = String(Date.now())
+
+// Emits dist/version.json containing the current build id.
+function emitVersionJson() {
+  return {
+    name: 'emit-version-json',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: JSON.stringify({ buildId }),
+      })
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   // Relative base so the built site works whether it's served from the domain
   // root (vite preview / Netlify) or from a subpath (GitHub Pages).
   base: './',
-  plugins: [react()],
+  plugins: [react(), emitVersionJson()],
   build: {
     rollupOptions: {
       output: {

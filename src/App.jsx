@@ -7,7 +7,9 @@ import PhotosScreen from './components/PhotosScreen.jsx'
 import FamilyScreen from './components/FamilyScreen.jsx'
 import SignInScreen from './components/SignInScreen.jsx'
 import InviteBanner from './components/InviteBanner.jsx'
+import UpdateBanner from './components/UpdateBanner.jsx'
 import { useAuth } from './hooks/useAuth.js'
+import { useUpdatePrompt } from './hooks/useUpdatePrompt.js'
 import { useFamilyStore } from './hooks/useFamilyStore.js'
 import { useHousehold } from './hooks/useHousehold.js'
 import { captureJoinCodeFromUrl, clearPendingJoinCode } from './lib/household.js'
@@ -45,6 +47,7 @@ export default function App() {
   const [localOnly, setLocalOnly] = useState(
     () => localStorage.getItem(LOCAL_ONLY_KEY) === '1',
   )
+  const updateReady = useUpdatePrompt()
 
   const dismissInvite = () => {
     clearPendingJoinCode()
@@ -115,6 +118,7 @@ export default function App() {
         )}
       </main>
       <TabBar tab={tab} onChange={navigate} />
+      {updateReady && <UpdateBanner onReload={() => window.location.reload()} />}
     </div>
   )
 }

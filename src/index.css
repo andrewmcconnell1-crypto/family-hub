@@ -1094,6 +1094,34 @@ button {
   letter-spacing: 0.15em;
 }
 
+/* --- Update banner ------------------------------------------------------------------ */
+
+.update-banner {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(4.75rem + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: 0 4px 16px rgba(20, 30, 23, 0.18);
+  padding: 0.4rem 0.4rem 0.4rem 1rem;
+  z-index: 50;
+  max-width: calc(100vw - 2rem);
+}
+
+.update-banner-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* --- Empty states ------------------------------------------------------------------ */
 
 .empty-state {
