@@ -1,9 +1,14 @@
 // Load / save / normalise the app's data. Storage is injectable so the pure
 // parts can be tested without a browser.
 //
-// Shape (all items may be tagged with zero or more children via childIds;
-// an empty list means "whole family"):
+// Shape (all items may be tagged with zero or more family members via
+// childIds; an empty list means "whole family"):
 //   children:  [{ id, name, dob, colorId }]
+//
+// Naming note: `children` / `childIds` are the original storage keys but hold
+// ALL family members (adults included). The keys are kept for backwards
+// compatibility with data already saved locally and in the cloud — renaming
+// them would need a two-way migration for little gain.
 //   events:    [{ id, title, date, time, category, childIds, notes }]
 //   documents: [{ id, title, category, childIds, notes,
 //                 fileId, fileName, fileType, size, addedAt }]

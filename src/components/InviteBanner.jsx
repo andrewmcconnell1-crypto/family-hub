@@ -27,7 +27,7 @@ export default function InviteBanner({ code, onJoined, onDismiss }) {
       <div className="invite-banner-main">
         <strong>You've been invited to a shared family hub</strong>
         <span className="muted">
-          Join to see the same children, calendar, documents and photos.
+          Join to share the same calendar, to-dos, documents and photos.
         </span>
         {error && <span className="invite-error">{error}</span>}
       </div>

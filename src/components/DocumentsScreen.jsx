@@ -34,7 +34,7 @@ export default function DocumentsScreen({ data, addDocument, removeDocument }) {
         <EmptyState
           icon={FolderOpen}
           title="No documents yet"
-          hint="Birth certificates, school letters, medical records — keep them all here."
+          hint="Passports, birth certificates, school letters, medical records — keep them all here."
         />
       ) : (
         groups.map(({ category, docs }) => (

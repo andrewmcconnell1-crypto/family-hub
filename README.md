@@ -1,23 +1,26 @@
 # Treehouse
 
-A private family hub: **documents, calendar and photos for the kids, all in
-one place.** Add each child once, then tag everything to them — a birth
-certificate, the school sports day, the first-day-of-school photo — and filter
-any screen by child.
+A private family hub: **calendar, to-dos, documents and photos for the whole
+family, all in one place.** Add each family member once — kids and grown-ups —
+then tag everything to them: a birth certificate, the school sports day, a
+passport renewal, the holiday photos. Filter any screen by person.
 
 ## The five tabs
 
-- **Home** – today at a glance: the next 7 days of events, recent photos, and
-  quick counts.
-- **Calendar** – a month view with per-child colour dots; add school, medical,
-  activity and birthday events with optional times and notes.
+- **Home** – today at a glance: the next 7 days of events, outstanding to-dos,
+  recent photos, and quick counts.
+- **Planner** – two top tabs (Bistro-style pills): **Calendar**, a month view
+  with per-person colour dots and school/medical/activity/birthday events; and
+  **To-dos**, a shared tick-off list in manual priority order with optional
+  due dates.
 - **Docs** – upload any file (PDFs, scans, letters), organised by category
-  (Medical / School / Identity / Activities) and taggable to a child. Tap to
+  (Medical / School / Identity / Activities) and taggable to a person. Tap to
   open or download.
-- **Photos** – a family photo grid with captions and per-child tags, plus a
+- **Photos** – a family photo grid with captions and per-person tags, plus a
   full-screen viewer.
-- **Family** – manage the children themselves: name, date of birth, and the
-  colour used for their tags everywhere else.
+- **Family** – manage the family members themselves: name, date of birth, and
+  the colour used for their tags everywhere else. Also account/sync status and
+  household sharing.
 
 ## Getting started
 

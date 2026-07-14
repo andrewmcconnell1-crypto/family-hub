@@ -4,7 +4,7 @@ import { childColor } from '../lib/familyData.js'
 export function ChildFilter({ kids, value, onChange }) {
   if (kids.length === 0) return null
   return (
-    <div className="chip-row" role="tablist" aria-label="Filter by child">
+    <div className="chip-row" role="tablist" aria-label="Filter by family member">
       <Chip label="Everyone" active={value === 'all'} onClick={() => onChange('all')} />
       {kids.map((child) => (
         <Chip

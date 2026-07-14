@@ -7,7 +7,7 @@ export default function SignInScreen({ onGoogle, onSkip }) {
       <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" width="72" height="72" />
       <h1>Treehouse</h1>
       <p className="muted">
-        Documents, calendar and photos for the kids — private to your family, on all your devices.
+        Your whole family's calendar, to-dos, documents and photos — private, on all your devices.
       </p>
       <button type="button" className="primary-button signin-google" onClick={onGoogle}>
         Continue with Google

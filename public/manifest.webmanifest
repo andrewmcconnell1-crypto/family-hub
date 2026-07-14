@@ -1,7 +1,7 @@
 {
   "name": "Treehouse — the family hub",
   "short_name": "Treehouse",
-  "description": "Documents, calendar and photos for the kids, all in one place.",
+  "description": "Calendar, to-dos, documents and photos for the whole family, all in one place.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

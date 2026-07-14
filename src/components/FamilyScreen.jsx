@@ -40,15 +40,15 @@ export default function FamilyScreen({
       <header className="screen-header screen-header-row">
         <h1>Family</h1>
         <button type="button" className="primary-button" onClick={() => setSheet({})}>
-          <Plus size={18} aria-hidden="true" /> Child
+          <Plus size={18} aria-hidden="true" /> Person
         </button>
       </header>
 
       {data.children.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="No children added yet"
-          hint="Add each child so events, documents and photos can be tagged to them."
+          title="No family members yet"
+          hint="Add everyone — kids and grown-ups — so events, documents and photos can be tagged to them."
         />
       ) : (
         <section className="card">
@@ -307,7 +307,7 @@ function ChildSheet({ child, onSave, onDelete, onClose }) {
   }
 
   return (
-    <Sheet title={child ? `Edit ${child.name}` : 'Add a child'} onClose={onClose}>
+    <Sheet title={child ? `Edit ${child.name}` : 'Add a family member'} onClose={onClose}>
       <form className="form" onSubmit={submit}>
         <label>
           Name
