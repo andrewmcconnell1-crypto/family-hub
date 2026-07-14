@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Copy, Plus, Share2, Users } from 'lucide-react'
 import Avatar from './Avatar.jsx'
+import AvatarCropper from './AvatarCropper.jsx'
 import Sheet from './Sheet.jsx'
 import EmptyState from './EmptyState.jsx'
 import { CHILD_COLORS, childColor } from '../lib/familyData.js'
 import { deleteFile, putFile, releaseFileUrl } from '../lib/fileStore.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
 import { makeId } from '../utils/id.js'
-import { squareThumbnail } from '../utils/imageUtils.js'
 import {
   createInvite,
   disbandHousehold,
@@ -118,9 +118,9 @@ export default function FamilyScreen({
                 avatarFileId = ''
               }
               if (avatar.file) {
-                const thumb = await squareThumbnail(avatar.file).catch(() => avatar.file)
+                // Already cropped + downscaled by AvatarCropper.
                 avatarFileId = makeId('file')
-                await putFile(avatarFileId, thumb)
+                await putFile(avatarFileId, avatar.file)
               }
               if (sheet.child) updateChild(sheet.child.id, { ...fields, avatarFileId })
               else addChild({ ...fields, avatarFileId })
@@ -320,7 +320,9 @@ function ChildSheet({ child, onSave, onDelete, onClose }) {
   const [name, setName] = useState(child?.name || '')
   const [dob, setDob] = useState(child?.dob || '')
   const [colorId, setColorId] = useState(child?.colorId || 'meadow')
-  // Photo choice: a newly picked File, or an explicit removal of the current one.
+  // Photo choice: a freshly picked file awaiting cropping, the cropped blob
+  // ready to save, or an explicit removal of the current photo.
+  const [cropFile, setCropFile] = useState(null)
   const [avatarFile, setAvatarFile] = useState(null)
   const [removeAvatar, setRemoveAvatar] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -386,10 +388,7 @@ function ChildSheet({ child, onSave, onDelete, onClose }) {
               hidden
               onChange={(e) => {
                 const file = e.target.files?.[0] || null
-                if (file) {
-                  setAvatarFile(file)
-                  setRemoveAvatar(false)
-                }
+                if (file) setCropFile(file)
               }}
             />
             <button type="button" className="link-button" onClick={() => fileRef.current?.click()}>
@@ -456,6 +455,21 @@ function ChildSheet({ child, onSave, onDelete, onClose }) {
           </button>
         </div>
       </form>
+      {cropFile && (
+        <AvatarCropper
+          file={cropFile}
+          onUse={(blob) => {
+            setAvatarFile(blob)
+            setRemoveAvatar(false)
+            setCropFile(null)
+            if (fileRef.current) fileRef.current.value = ''
+          }}
+          onCancel={() => {
+            setCropFile(null)
+            if (fileRef.current) fileRef.current.value = ''
+          }}
+        />
+      )}
     </Sheet>
   )
 }

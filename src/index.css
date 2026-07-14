@@ -250,6 +250,65 @@ button {
   gap: 0.75rem;
 }
 
+/* --- Avatar cropper --------------------------------------------------------- */
+
+.cropper-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 26, 21, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 1rem;
+}
+
+.cropper {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: calc(100vw - 2rem);
+}
+
+.cropper-viewport {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000;
+  touch-action: none;
+  cursor: grab;
+  max-width: 100%;
+}
+
+.cropper-viewport:active {
+  cursor: grabbing;
+}
+
+.cropper-viewport img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.cropper-mask {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.cropper-zoom {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
 /* --- Chips / tags --------------------------------------------------------- */
 
 .chip-row {
