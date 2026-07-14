@@ -1,9 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Copy, Plus, Share2, Users } from 'lucide-react'
 import Avatar from './Avatar.jsx'
 import Sheet from './Sheet.jsx'
 import EmptyState from './EmptyState.jsx'
-import { CHILD_COLORS } from '../lib/familyData.js'
+import { CHILD_COLORS, childColor } from '../lib/familyData.js'
+import { deleteFile, putFile, releaseFileUrl } from '../lib/fileStore.js'
+import { useFileUrl } from '../hooks/useFileUrl.js'
+import { makeId } from '../utils/id.js'
+import { squareThumbnail } from '../utils/imageUtils.js'
 import {
   createInvite,
   disbandHousehold,
@@ -104,10 +108,27 @@ export default function FamilyScreen({
       {sheet && (
         <ChildSheet
           child={sheet.child}
-          onSave={(fields) => {
-            if (sheet.child) updateChild(sheet.child.id, fields)
-            else addChild(fields)
-            setSheet(null)
+          onSave={async ({ avatar, ...fields }) => {
+            try {
+              let avatarFileId = sheet.child?.avatarFileId || ''
+              // A new photo or an explicit removal replaces the old file.
+              if (avatarFileId && (avatar.file || avatar.remove)) {
+                releaseFileUrl(avatarFileId)
+                deleteFile(avatarFileId).catch(() => {})
+                avatarFileId = ''
+              }
+              if (avatar.file) {
+                const thumb = await squareThumbnail(avatar.file).catch(() => avatar.file)
+                avatarFileId = makeId('file')
+                await putFile(avatarFileId, thumb)
+              }
+              if (sheet.child) updateChild(sheet.child.id, { ...fields, avatarFileId })
+              else addChild({ ...fields, avatarFileId })
+              setSheet(null)
+            } catch (error) {
+              console.error('Saving member photo failed', error)
+              window.alert("Couldn't save the photo — check your connection and try again.")
+            }
           }}
           onDelete={
             sheet.child
@@ -299,16 +320,96 @@ function ChildSheet({ child, onSave, onDelete, onClose }) {
   const [name, setName] = useState(child?.name || '')
   const [dob, setDob] = useState(child?.dob || '')
   const [colorId, setColorId] = useState(child?.colorId || 'meadow')
+  // Photo choice: a newly picked File, or an explicit removal of the current one.
+  const [avatarFile, setAvatarFile] = useState(null)
+  const [removeAvatar, setRemoveAvatar] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const fileRef = useRef(null)
 
-  const submit = (e) => {
+  // Preview: the freshly picked file wins; otherwise the stored photo. The
+  // object URL is derived (not effect-set state) and revoked when replaced.
+  const pickedUrl = useMemo(
+    () => (avatarFile ? URL.createObjectURL(avatarFile) : null),
+    [avatarFile],
+  )
+  useEffect(() => {
+    if (!pickedUrl) return undefined
+    return () => URL.revokeObjectURL(pickedUrl)
+  }, [pickedUrl])
+  const storedUrl = useFileUrl(!removeAvatar && !avatarFile ? child?.avatarFileId || null : null)
+  const previewUrl = pickedUrl || storedUrl
+
+  const submit = async (e) => {
     e.preventDefault()
-    if (!name.trim()) return
-    onSave({ name: name.trim(), dob, colorId })
+    if (!name.trim() || saving) return
+    setSaving(true)
+    try {
+      await onSave({
+        name: name.trim(),
+        dob,
+        colorId,
+        avatar: { file: avatarFile, remove: removeAvatar },
+      })
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <Sheet title={child ? `Edit ${child.name}` : 'Add a family member'} onClose={onClose}>
       <form className="form" onSubmit={submit}>
+        <div className="form-field">
+          <span className="form-label">Photo <span className="muted">(optional)</span></span>
+          <div className="avatar-picker">
+            {previewUrl ? (
+              <img
+                className="avatar avatar-photo"
+                src={previewUrl}
+                alt=""
+                width={56}
+                height={56}
+                style={{ width: 56, height: 56, borderColor: childColor({ colorId }) }}
+              />
+            ) : (
+              <span
+                className="avatar"
+                style={{ width: 56, height: 56, fontSize: 24, background: childColor({ colorId }) }}
+                aria-hidden="true"
+              >
+                {(name || '?').trim().charAt(0).toUpperCase()}
+              </span>
+            )}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0] || null
+                if (file) {
+                  setAvatarFile(file)
+                  setRemoveAvatar(false)
+                }
+              }}
+            />
+            <button type="button" className="link-button" onClick={() => fileRef.current?.click()}>
+              {previewUrl ? 'Change photo' : 'Choose photo'}
+            </button>
+            {previewUrl && (
+              <button
+                type="button"
+                className="link-button danger-link"
+                onClick={() => {
+                  setAvatarFile(null)
+                  setRemoveAvatar(true)
+                  if (fileRef.current) fileRef.current.value = ''
+                }}
+              >
+                Remove photo
+              </button>
+            )}
+          </div>
+        </div>
         <label>
           Name
           <input value={name} onChange={(e) => setName(e.target.value)} autoFocus required />
@@ -350,8 +451,8 @@ function ChildSheet({ child, onSave, onDelete, onClose }) {
               Remove
             </button>
           )}
-          <button type="submit" className="primary-button">
-            Save
+          <button type="submit" className="primary-button" disabled={saving}>
+            {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
       </form>

@@ -89,7 +89,11 @@ function normalizeList(list, required, defaults) {
 // Coerce anything (old versions, hand-edited JSON, junk) into the shape above.
 export function normalizeData(raw) {
   if (!raw || typeof raw !== 'object') return emptyData()
-  const children = normalizeList(raw.children, ['id', 'name'], { dob: '', colorId: 'meadow' })
+  const children = normalizeList(raw.children, ['id', 'name'], {
+    dob: '',
+    colorId: 'meadow',
+    avatarFileId: '',
+  })
   const childIdSet = new Set(children.map((c) => c.id))
   const data = {
     children,

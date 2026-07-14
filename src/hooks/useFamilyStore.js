@@ -167,7 +167,10 @@ export function useFamilyStore(user, ownerId) {
 
   const addChild = useCallback((child) => {
     const id = makeId('child')
-    setData((d) => ({ ...d, children: [...d.children, { dob: '', colorId: 'meadow', ...child, id }] }))
+    setData((d) => ({
+      ...d,
+      children: [...d.children, { dob: '', colorId: 'meadow', avatarFileId: '', ...child, id }],
+    }))
     return id
   }, [])
 
@@ -178,8 +181,8 @@ export function useFamilyStore(user, ownerId) {
     }))
   }, [])
 
-  // Removing a child keeps their events/documents/photos but untags them,
-  // so nothing is silently lost.
+  // Removing a member keeps their events/documents/photos but untags them,
+  // so nothing is silently lost. Their avatar image, though, goes with them.
   const removeChild = useCallback((id) => {
     const untag = (list) =>
       list.map((item) =>
@@ -187,12 +190,21 @@ export function useFamilyStore(user, ownerId) {
           ? { ...item, childIds: item.childIds.filter((c) => c !== id) }
           : item,
       )
-    setData((d) => ({
-      children: d.children.filter((c) => c.id !== id),
-      events: untag(d.events),
-      documents: untag(d.documents),
-      photos: untag(d.photos),
-    }))
+    setData((d) => {
+      const member = d.children.find((c) => c.id === id)
+      if (member?.avatarFileId) {
+        releaseFileUrl(member.avatarFileId)
+        deleteFile(member.avatarFileId).catch(() => {})
+      }
+      return {
+        ...d,
+        children: d.children.filter((c) => c.id !== id),
+        todos: untag(d.todos),
+        events: untag(d.events),
+        documents: untag(d.documents),
+        photos: untag(d.photos),
+      }
+    })
   }, [])
 
   const addTodo = useCallback((todo) => {
