@@ -1,8 +1,8 @@
-import { CalendarDays, FolderOpen, Image } from 'lucide-react'
+import { AlertCircle, CalendarDays, FolderOpen, Image } from 'lucide-react'
 import Avatar from './Avatar.jsx'
 import { ChildTags } from './ChildChips.jsx'
-import { addDays, formatDateKey, todayKey } from '../utils/dateUtils.js'
-import { calendarOccurrences } from '../utils/recurrence.js'
+import { addDays, formatDateKey, parseDateKey, todayKey } from '../utils/dateUtils.js'
+import { birthdayOccurrences, calendarOccurrences, weekdayIndex } from '../utils/recurrence.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
 
 function greeting() {
@@ -12,11 +12,34 @@ function greeting() {
   return 'Good evening'
 }
 
+// Bistro-style dashboard: today front and centre, the rest of the week
+// condensed, plus highlights (overdue to-dos, next birthday, top priorities).
+// The Planner holds the detail; everything here links into it.
 export default function HomeScreen({ data, onNavigate }) {
   const today = todayKey()
-  const week = calendarOccurrences(data, today, addDays(today, 6))
+  const weekEnd = addDays(today, 6 - weekdayIndex(today)) // Sunday of this week
+  const thisWeek = calendarOccurrences(data, today, weekEnd)
+
+  const todayEvents = thisWeek.filter((o) => o.date === today)
+  const todosDueToday = data.todos.filter((t) => !t.done && t.dueDate === today)
+  const overdueTodos = data.todos.filter((t) => !t.done && t.dueDate && t.dueDate < today)
+  const activeTodos = data.todos.filter((t) => !t.done)
   const recentPhotos = data.photos.slice(0, 6)
-  const activeTodos = data.todos.filter((todo) => !todo.done)
+
+  // Remaining days of this week, condensed to a line each (events + due to-dos).
+  const laterDays = []
+  for (let key = addDays(today, 1); key <= weekEnd; key = addDays(key, 1)) {
+    const items = [
+      ...thisWeek.filter((o) => o.date === key).map((o) => o.title),
+      ...data.todos.filter((t) => !t.done && t.dueDate === key).map((t) => `☐ ${t.title}`),
+    ]
+    if (items.length > 0) laterDays.push({ key, items })
+  }
+
+  const nextBirthday = birthdayOccurrences(data.children, addDays(today, 1), addDays(today, 60))[0]
+  const daysToBirthday = nextBirthday
+    ? Math.round((parseDateKey(nextBirthday.date) - parseDateKey(today)) / 86400000)
+    : null
 
   return (
     <div className="screen">
@@ -43,22 +66,42 @@ export default function HomeScreen({ data, onNavigate }) {
         </button>
       )}
 
+      {overdueTodos.length > 0 && (
+        <button type="button" className="card attention-card" onClick={() => onNavigate('todos')}>
+          <span className="attention-title">
+            <AlertCircle size={16} aria-hidden="true" />
+            Needs attention
+          </span>
+          {overdueTodos.slice(0, 3).map((todo) => (
+            <span key={todo.id} className="attention-item">
+              {todo.title} — due {formatDateKey(todo.dueDate, { weekday: true })}
+            </span>
+          ))}
+          {overdueTodos.length > 3 && (
+            <span className="muted">+ {overdueTodos.length - 3} more overdue</span>
+          )}
+        </button>
+      )}
+
       <section className="card">
         <div className="card-title-row">
-          <h2>Next 7 days</h2>
+          <h2>Today</h2>
           <button type="button" className="link-button" onClick={() => onNavigate('week')}>
             This week
           </button>
         </div>
-        {week.length === 0 ? (
-          <p className="muted">Nothing on — enjoy the quiet week.</p>
+        {todayEvents.length === 0 && todosDueToday.length === 0 ? (
+          <p className="muted">Nothing on today.</p>
         ) : (
           <ul className="event-list">
-            {week.map((event) => (
+            {todayEvents.map((event) => (
               <li key={`${event.id}-${event.date}`} className="event-row">
                 <div className="event-when">
-                  <span className="event-date">{formatDateKey(event.date, { weekday: true })}</span>
-                  {event.time && <span className="event-time">{event.time}</span>}
+                  {event.time ? (
+                    <span className="event-time">{event.time}</span>
+                  ) : (
+                    <span className="event-time muted">all day</span>
+                  )}
                 </div>
                 <div className="event-main">
                   <span className="event-title">{event.title}</span>
@@ -66,14 +109,54 @@ export default function HomeScreen({ data, onNavigate }) {
                 </div>
               </li>
             ))}
+            {todosDueToday.map((todo) => (
+              <li key={todo.id} className="event-row">
+                <div className="event-when">
+                  <span className="event-time muted">to-do</span>
+                </div>
+                <div className="event-main">
+                  <span className="event-title">{todo.title}</span>
+                  <ChildTags kids={data.children} childIds={todo.childIds} />
+                </div>
+              </li>
+            ))}
           </ul>
         )}
       </section>
 
+      {laterDays.length > 0 && (
+        <section className="card">
+          <div className="card-title-row">
+            <h2>Later this week</h2>
+            <button type="button" className="link-button" onClick={() => onNavigate('week')}>
+              Full week
+            </button>
+          </div>
+          <ul className="home-week-list">
+            {laterDays.map((day) => (
+              <li key={day.key}>
+                <span className="home-week-day">{formatDateKey(day.key, { weekday: true })}</span>
+                <span className="home-week-items">{day.items.join(' · ')}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {nextBirthday && (
+        <button type="button" className="card bday-card" onClick={() => onNavigate('calendar')}>
+          <span className="bday-title">{nextBirthday.title}</span>
+          <span className="muted">
+            {formatDateKey(nextBirthday.date, { weekday: true })} — in {daysToBirthday}{' '}
+            {daysToBirthday === 1 ? 'day' : 'days'}
+          </span>
+        </button>
+      )}
+
       {activeTodos.length > 0 && (
         <section className="card">
           <div className="card-title-row">
-            <h2>To-dos</h2>
+            <h2>To-do priorities</h2>
             <button type="button" className="link-button" onClick={() => onNavigate('todos')}>
               All to-dos
             </button>
@@ -91,9 +174,7 @@ export default function HomeScreen({ data, onNavigate }) {
               </li>
             ))}
           </ul>
-          {activeTodos.length > 3 && (
-            <p className="muted">+ {activeTodos.length - 3} more</p>
-          )}
+          {activeTodos.length > 3 && <p className="muted">+ {activeTodos.length - 3} more</p>}
         </section>
       )}
 
