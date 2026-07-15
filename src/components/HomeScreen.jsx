@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertCircle, CalendarDays, ChevronDown, ChevronRight, FolderOpen, Image } from 'lucide-react'
+import { AlertCircle, ChevronDown, ChevronRight } from 'lucide-react'
 import Avatar from './Avatar.jsx'
 import { ChildTags } from './ChildChips.jsx'
 import { addDays, formatDateKey, parseDateKey, todayKey } from '../utils/dateUtils.js'
@@ -161,23 +161,6 @@ export default function HomeScreen({ data, onNavigate }) {
         )}
       </section>
 
-      <div className="stat-row">
-        <button type="button" className="stat-tile" onClick={() => onNavigate('calendar')}>
-          <CalendarDays size={20} aria-hidden="true" />
-          <strong>{data.events.length}</strong>
-          <span>events</span>
-        </button>
-        <button type="button" className="stat-tile" onClick={() => onNavigate('documents')}>
-          <FolderOpen size={20} aria-hidden="true" />
-          <strong>{data.documents.length}</strong>
-          <span>documents</span>
-        </button>
-        <button type="button" className="stat-tile" onClick={() => onNavigate('photos')}>
-          <Image size={20} aria-hidden="true" />
-          <strong>{data.photos.length}</strong>
-          <span>photos</span>
-        </button>
-      </div>
     </div>
   )
 }
