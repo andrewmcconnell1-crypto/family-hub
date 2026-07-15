@@ -1,0 +1,203 @@
+import { useMemo, useState } from 'react'
+import { Check, ChevronLeft, ChevronRight, Plus, Repeat } from 'lucide-react'
+import EventSheet from './EventSheet.jsx'
+import { ChildTags } from './ChildChips.jsx'
+import { calendarOccurrences, weekdayIndex } from '../utils/recurrence.js'
+import { addDays, formatDateKey, todayKey } from '../utils/dateUtils.js'
+
+const mondayOf = (key) => addDays(key, -weekdayIndex(key))
+
+// The whole week at a glance, Bistro Plan-style: one section per day with the
+// day's events (recurrences and birthdays included) AND the to-dos due that
+// day, tick-off-able in place.
+export default function WeekScreen({
+  tabs,
+  data,
+  addEvent,
+  updateEvent,
+  removeEvent,
+  skipEventOccurrence,
+  toggleTodo,
+}) {
+  const today = todayKey()
+  const [weekStart, setWeekStart] = useState(() => mondayOf(today))
+  const weekEnd = addDays(weekStart, 6)
+  const [sheet, setSheet] = useState(null) // null | { event?, occurrenceDate?, defaultDate? }
+
+  const days = useMemo(() => {
+    const eventsByDay = new Map()
+    for (const occurrence of calendarOccurrences(data, weekStart, weekEnd)) {
+      if (!eventsByDay.has(occurrence.date)) eventsByDay.set(occurrence.date, [])
+      eventsByDay.get(occurrence.date).push(occurrence)
+    }
+    return Array.from({ length: 7 }, (_, i) => {
+      const key = addDays(weekStart, i)
+      return {
+        key,
+        events: eventsByDay.get(key) || [],
+        todos: data.todos.filter((todo) => !todo.done && todo.dueDate === key),
+      }
+    })
+  }, [data, weekStart, weekEnd])
+
+  const isCurrentWeek = weekStart === mondayOf(today)
+
+  const openOccurrence = (occurrence) => {
+    if (occurrence.isBirthday) return
+    const series = data.events.find((e) => e.id === occurrence.id)
+    if (series) setSheet({ event: series, occurrenceDate: occurrence.date })
+  }
+
+  return (
+    <div className="screen">
+      <header className="screen-header screen-header-row">
+        {tabs || <h1>Week</h1>}
+        <button type="button" className="primary-button" onClick={() => setSheet({ defaultDate: isCurrentWeek ? today : weekStart })}>
+          <Plus size={18} aria-hidden="true" /> Event
+        </button>
+      </header>
+
+      <div className="week-nav card">
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Previous week"
+          onClick={() => setWeekStart((k) => addDays(k, -7))}
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <span className="week-nav-label">
+          <strong>
+            {formatDateKey(weekStart)} – {formatDateKey(weekEnd)}
+          </strong>
+          {!isCurrentWeek && (
+            <button type="button" className="link-button" onClick={() => setWeekStart(mondayOf(today))}>
+              This week
+            </button>
+          )}
+        </span>
+        <button
+          type="button"
+          className="icon-button"
+          aria-label="Next week"
+          onClick={() => setWeekStart((k) => addDays(k, 7))}
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
+
+      {days.map((day) => (
+        <section key={day.key} className={`card week-day${day.key === today ? ' week-day-today' : ''}`}>
+          <div className="card-title-row">
+            <h2>
+              {formatDateKey(day.key, { weekday: true })}
+              {day.key === today && <span className="today-chip">Today</span>}
+            </h2>
+            <button
+              type="button"
+              className="icon-button"
+              aria-label={`Add event on ${formatDateKey(day.key, { weekday: true })}`}
+              onClick={() => setSheet({ defaultDate: day.key })}
+            >
+              <Plus size={18} />
+            </button>
+          </div>
+
+          {day.events.length === 0 && day.todos.length === 0 ? (
+            <p className="muted week-empty">Nothing on</p>
+          ) : (
+            <>
+              {day.events.length > 0 && (
+                <ul className="event-list">
+                  {day.events.map((occurrence) => (
+                    <li key={`${occurrence.id}-${occurrence.date}`}>
+                      <button
+                        type="button"
+                        className="event-row event-row-button"
+                        disabled={occurrence.isBirthday}
+                        onClick={() => openOccurrence(occurrence)}
+                      >
+                        <div className="event-when">
+                          {occurrence.time ? (
+                            <span className="event-time">{occurrence.time}</span>
+                          ) : (
+                            <span className="event-time muted">all day</span>
+                          )}
+                        </div>
+                        <div className="event-main">
+                          <span className="event-title">{occurrence.title}</span>
+                          <span className="event-meta">
+                            {occurrence.repeat !== 'none' && !occurrence.isBirthday && (
+                              <Repeat size={12} aria-label="Repeats" />
+                            )}
+                            <ChildTags kids={data.children} childIds={occurrence.childIds} />
+                          </span>
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {day.todos.length > 0 && (
+                <ul className="todo-list week-todos">
+                  {day.todos.map((todo) => (
+                    <li key={todo.id} className="todo-row">
+                      <button
+                        type="button"
+                        className="todo-check"
+                        role="checkbox"
+                        aria-checked={false}
+                        aria-label={`Mark “${todo.title}” done`}
+                        onClick={() => toggleTodo(todo.id)}
+                      >
+                        <Check size={14} aria-hidden="true" style={{ visibility: 'hidden' }} />
+                      </button>
+                      <span className="todo-main">
+                        <span className="todo-title">{todo.title}</span>
+                        <span className="todo-meta">
+                          <span className="muted">to-do</span>
+                          <ChildTags kids={data.children} childIds={todo.childIds} />
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </section>
+      ))}
+
+      {sheet && (
+        <EventSheet
+          kids={data.children}
+          event={sheet.event}
+          occurrenceDate={sheet.occurrenceDate}
+          defaultDate={sheet.defaultDate || today}
+          onSave={(fields) => {
+            if (sheet.event) updateEvent(sheet.event.id, fields)
+            else addEvent(fields)
+            setSheet(null)
+          }}
+          onDelete={
+            sheet.event
+              ? () => {
+                  removeEvent(sheet.event.id)
+                  setSheet(null)
+                }
+              : null
+          }
+          onSkipDay={
+            sheet.event && sheet.event.repeat !== 'none' && sheet.occurrenceDate
+              ? () => {
+                  skipEventOccurrence(sheet.event.id, sheet.occurrenceDate)
+                  setSheet(null)
+                }
+              : null
+          }
+          onClose={() => setSheet(null)}
+        />
+      )}
+    </div>
+  )
+}

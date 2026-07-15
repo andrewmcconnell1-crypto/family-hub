@@ -46,8 +46,8 @@ export default function HomeScreen({ data, onNavigate }) {
       <section className="card">
         <div className="card-title-row">
           <h2>Next 7 days</h2>
-          <button type="button" className="link-button" onClick={() => onNavigate('calendar')}>
-            Calendar
+          <button type="button" className="link-button" onClick={() => onNavigate('week')}>
+            This week
           </button>
         </div>
         {week.length === 0 ? (

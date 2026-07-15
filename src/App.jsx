@@ -16,17 +16,27 @@ import { captureJoinCodeFromUrl, clearPendingJoinCode } from './lib/household.js
 import { isSupabaseConfigured } from './lib/supabase.js'
 
 const LOCAL_ONLY_KEY = 'treehouse:localOnly'
+const PLANNER_MODE_KEY = 'treehouse:plannerMode'
 
 export default function App() {
   const [tab, setTab] = useState('home')
-  // Which of the Planner's top tabs (calendar | todos) is active. Lives here
-  // so Home's shortcut links can deep-link straight to either view.
-  const [plannerMode, setPlannerMode] = useState('calendar')
+  // Which of the Planner's top tabs (week | calendar | todos) is active.
+  // Lives here so Home's shortcut links can deep-link straight to a view,
+  // and is remembered per device so the Planner reopens where you left it.
+  const [plannerMode, setPlannerModeState] = useState(() => {
+    const saved = localStorage.getItem(PLANNER_MODE_KEY)
+    return saved === 'calendar' || saved === 'todos' ? saved : 'week'
+  })
+  const setPlannerMode = (mode) => {
+    localStorage.setItem(PLANNER_MODE_KEY, mode)
+    setPlannerModeState(mode)
+  }
 
-  // Navigation targets are bottom-bar tabs, plus the virtual 'calendar' /
-  // 'todos' ids used by Home's shortcuts, which land on the Planner tab.
+  // Navigation targets are bottom-bar tabs, plus the virtual 'week' /
+  // 'calendar' / 'todos' ids used by Home's shortcuts, which land on the
+  // Planner tab.
   const navigate = (target) => {
-    if (target === 'calendar' || target === 'todos') {
+    if (target === 'week' || target === 'calendar' || target === 'todos') {
       setPlannerMode(target)
       setTab('planner')
       return
