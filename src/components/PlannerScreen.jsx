@@ -53,6 +53,7 @@ export default function PlannerScreen({ mode, onModeChange, store }) {
       addEvent={store.addEvent}
       updateEvent={store.updateEvent}
       removeEvent={store.removeEvent}
+      skipEventOccurrence={store.skipEventOccurrence}
     />
   )
 }

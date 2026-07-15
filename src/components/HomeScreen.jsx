@@ -1,7 +1,8 @@
 import { CalendarDays, FolderOpen, Image } from 'lucide-react'
 import Avatar from './Avatar.jsx'
 import { ChildTags } from './ChildChips.jsx'
-import { formatDateKey, todayKey, upcomingEvents } from '../utils/dateUtils.js'
+import { addDays, formatDateKey, todayKey } from '../utils/dateUtils.js'
+import { calendarOccurrences } from '../utils/recurrence.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
 
 function greeting() {
@@ -13,7 +14,7 @@ function greeting() {
 
 export default function HomeScreen({ data, onNavigate }) {
   const today = todayKey()
-  const week = upcomingEvents(data.events, today, 7)
+  const week = calendarOccurrences(data, today, addDays(today, 6))
   const recentPhotos = data.photos.slice(0, 6)
   const activeTodos = data.todos.filter((todo) => !todo.done)
 
@@ -54,7 +55,7 @@ export default function HomeScreen({ data, onNavigate }) {
         ) : (
           <ul className="event-list">
             {week.map((event) => (
-              <li key={event.id} className="event-row">
+              <li key={`${event.id}-${event.date}`} className="event-row">
                 <div className="event-when">
                   <span className="event-date">{formatDateKey(event.date, { weekday: true })}</span>
                   {event.time && <span className="event-time">{event.time}</span>}

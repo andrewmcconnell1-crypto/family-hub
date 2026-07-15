@@ -107,7 +107,19 @@ export function normalizeData(raw) {
       time: '',
       category: 'other',
       notes: '',
-    }),
+      repeat: 'none',
+      weekdays: [],
+      endDate: '',
+      exceptions: [],
+    }).map((event) => ({
+      ...event,
+      weekdays: Array.isArray(event.weekdays)
+        ? event.weekdays.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+        : [],
+      exceptions: Array.isArray(event.exceptions)
+        ? event.exceptions.filter(isNonEmptyString)
+        : [],
+    })),
     documents: normalizeList(raw.documents, ['id', 'title', 'fileId'], {
       category: 'other',
       notes: '',

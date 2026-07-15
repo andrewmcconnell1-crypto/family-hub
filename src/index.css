@@ -485,6 +485,15 @@ button {
   color: var(--text-muted);
 }
 
+.event-row-button:disabled {
+  cursor: default;
+}
+
+.series-note {
+  margin: 0 0 0.75rem;
+  font-size: 0.82rem;
+}
+
 /* --- Calendar -------------------------------------------------------------- */
 
 .month-nav {

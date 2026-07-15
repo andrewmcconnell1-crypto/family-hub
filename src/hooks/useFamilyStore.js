@@ -253,7 +253,21 @@ export function useFamilyStore(user, ownerId) {
     const id = makeId('event')
     setData((d) => ({
       ...d,
-      events: [...d.events, { time: '', category: 'other', notes: '', childIds: [], ...event, id }],
+      events: [
+        ...d.events,
+        {
+          time: '',
+          category: 'other',
+          notes: '',
+          childIds: [],
+          repeat: 'none',
+          weekdays: [],
+          endDate: '',
+          exceptions: [],
+          ...event,
+          id,
+        },
+      ],
     }))
     return id
   }, [])
@@ -267,6 +281,19 @@ export function useFamilyStore(user, ownerId) {
 
   const removeEvent = useCallback((id) => {
     setData((d) => ({ ...d, events: d.events.filter((e) => e.id !== id) }))
+  }, [])
+
+  // "Delete just this day" on a recurring event: the occurrence date joins the
+  // series' exception list.
+  const skipEventOccurrence = useCallback((id, dateKey) => {
+    setData((d) => ({
+      ...d,
+      events: d.events.map((e) =>
+        e.id === id && !e.exceptions.includes(dateKey)
+          ? { ...e, exceptions: [...e.exceptions, dateKey] }
+          : e,
+      ),
+    }))
   }, [])
 
   const addDocument = useCallback(async ({ file, title, category, childIds, notes }) => {
@@ -348,6 +375,7 @@ export function useFamilyStore(user, ownerId) {
     addEvent,
     updateEvent,
     removeEvent,
+    skipEventOccurrence,
     addDocument,
     removeDocument,
     addPhotos,
