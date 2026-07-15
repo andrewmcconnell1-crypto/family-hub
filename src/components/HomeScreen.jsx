@@ -1,4 +1,5 @@
-import { AlertCircle, CalendarDays, FolderOpen, Image } from 'lucide-react'
+import { useState } from 'react'
+import { AlertCircle, CalendarDays, ChevronDown, ChevronRight, FolderOpen, Image } from 'lucide-react'
 import Avatar from './Avatar.jsx'
 import { ChildTags } from './ChildChips.jsx'
 import { addDays, formatDateKey, parseDateKey, todayKey } from '../utils/dateUtils.js'
@@ -20,21 +21,28 @@ export default function HomeScreen({ data, onNavigate }) {
   const weekEnd = addDays(today, 6 - weekdayIndex(today)) // Sunday of this week
   const thisWeek = calendarOccurrences(data, today, weekEnd)
 
-  const todayEvents = thisWeek.filter((o) => o.date === today)
-  const todosDueToday = data.todos.filter((t) => !t.done && t.dueDate === today)
   const overdueTodos = data.todos.filter((t) => !t.done && t.dueDate && t.dueDate < today)
   const activeTodos = data.todos.filter((t) => !t.done)
   const recentPhotos = data.photos.slice(0, 6)
 
-  // Remaining days of this week, condensed to a line each (events + due to-dos).
-  const laterDays = []
-  for (let key = addDays(today, 1); key <= weekEnd; key = addDays(key, 1)) {
-    const items = [
-      ...thisWeek.filter((o) => o.date === key).map((o) => o.title),
-      ...data.todos.filter((t) => !t.done && t.dueDate === key).map((t) => `☐ ${t.title}`),
-    ]
-    if (items.length > 0) laterDays.push({ key, items })
+  // A card per remaining day of this week (today included).
+  const weekDays = []
+  for (let key = today; key <= weekEnd; key = addDays(key, 1)) {
+    weekDays.push({
+      key,
+      events: thisWeek.filter((o) => o.date === key),
+      todos: data.todos.filter((t) => !t.done && t.dueDate === key),
+    })
   }
+  // Today starts expanded; tap a day's header to toggle it.
+  const [expandedDays, setExpandedDays] = useState(() => new Set([today]))
+  const toggleDay = (key) =>
+    setExpandedDays((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
 
   const nextBirthday = birthdayOccurrences(data.children, addDays(today, 1), addDays(today, 60))[0]
   const daysToBirthday = nextBirthday
@@ -83,65 +91,22 @@ export default function HomeScreen({ data, onNavigate }) {
         </button>
       )}
 
-      <section className="card">
-        <div className="card-title-row">
-          <h2>Today</h2>
-          <button type="button" className="link-button" onClick={() => onNavigate('week')}>
-            This week
-          </button>
-        </div>
-        {todayEvents.length === 0 && todosDueToday.length === 0 ? (
-          <p className="muted">Nothing on today.</p>
-        ) : (
-          <ul className="event-list">
-            {todayEvents.map((event) => (
-              <li key={`${event.id}-${event.date}`} className="event-row">
-                <div className="event-when">
-                  {event.time ? (
-                    <span className="event-time">{event.time}</span>
-                  ) : (
-                    <span className="event-time muted">all day</span>
-                  )}
-                </div>
-                <div className="event-main">
-                  <span className="event-title">{event.title}</span>
-                  <ChildTags kids={data.children} childIds={event.childIds} />
-                </div>
-              </li>
-            ))}
-            {todosDueToday.map((todo) => (
-              <li key={todo.id} className="event-row">
-                <div className="event-when">
-                  <span className="event-time muted">to-do</span>
-                </div>
-                <div className="event-main">
-                  <span className="event-title">{todo.title}</span>
-                  <ChildTags kids={data.children} childIds={todo.childIds} />
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {laterDays.length > 0 && (
-        <section className="card">
-          <div className="card-title-row">
-            <h2>Later this week</h2>
-            <button type="button" className="link-button" onClick={() => onNavigate('week')}>
-              Full week
-            </button>
-          </div>
-          <ul className="home-week-list">
-            {laterDays.map((day) => (
-              <li key={day.key}>
-                <span className="home-week-day">{formatDateKey(day.key, { weekday: true })}</span>
-                <span className="home-week-items">{day.items.join(' · ')}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <div className="card-title-row week-strip-header">
+        <h2>This week</h2>
+        <button type="button" className="link-button" onClick={() => onNavigate('week')}>
+          Planner
+        </button>
+      </div>
+      {weekDays.map((day) => (
+        <DayCard
+          key={day.key}
+          day={day}
+          isToday={day.key === today}
+          kids={data.children}
+          expanded={expandedDays.has(day.key)}
+          onToggle={() => toggleDay(day.key)}
+        />
+      ))}
 
       {nextBirthday && (
         <button type="button" className="card bday-card" onClick={() => onNavigate('calendar')}>
@@ -214,6 +179,74 @@ export default function HomeScreen({ data, onNavigate }) {
         </button>
       </div>
     </div>
+  )
+}
+
+// One Bistro-style card per day: collapsed it's a single summary line, tapped
+// open it shows the full rows (times, tags, due to-dos).
+function DayCard({ day, isToday, kids, expanded, onToggle }) {
+  const count = day.events.length + day.todos.length
+  const summary = [
+    ...day.events.map((e) => e.title),
+    ...day.todos.map((t) => `☐ ${t.title}`),
+  ].join(' · ')
+
+  return (
+    <section className={`card day-card${isToday ? ' week-day-today' : ''}`}>
+      <button
+        type="button"
+        className="day-card-header"
+        aria-expanded={expanded}
+        disabled={count === 0}
+        onClick={onToggle}
+      >
+        <span className="day-card-title">
+          {formatDateKey(day.key, { weekday: true })}
+          {isToday && <span className="today-chip">Today</span>}
+        </span>
+        {!expanded && (
+          <span className={`day-card-summary${count === 0 ? ' muted' : ''}`}>
+            {count === 0 ? 'Nothing on' : summary}
+          </span>
+        )}
+        {count > 0 &&
+          (expanded ? (
+            <ChevronDown size={18} aria-hidden="true" />
+          ) : (
+            <ChevronRight size={18} aria-hidden="true" />
+          ))}
+      </button>
+      {expanded && count > 0 && (
+        <ul className="event-list day-card-body">
+          {day.events.map((event) => (
+            <li key={`${event.id}-${event.date}`} className="event-row">
+              <div className="event-when">
+                {event.time ? (
+                  <span className="event-time">{event.time}</span>
+                ) : (
+                  <span className="event-time muted">all day</span>
+                )}
+              </div>
+              <div className="event-main">
+                <span className="event-title">{event.title}</span>
+                <ChildTags kids={kids} childIds={event.childIds} />
+              </div>
+            </li>
+          ))}
+          {day.todos.map((todo) => (
+            <li key={todo.id} className="event-row">
+              <div className="event-when">
+                <span className="event-time muted">to-do</span>
+              </div>
+              <div className="event-main">
+                <span className="event-title">{todo.title}</span>
+                <ChildTags kids={kids} childIds={todo.childIds} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   )
 }
 
