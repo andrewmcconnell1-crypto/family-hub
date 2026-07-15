@@ -1,15 +1,15 @@
 import { useMemo, useRef, useState } from 'react'
-import { FileText, FolderOpen, Plus, Trash2 } from 'lucide-react'
+import { FileText, FolderOpen, Pencil, Plus, Trash2 } from 'lucide-react'
 import Sheet from './Sheet.jsx'
 import EmptyState from './EmptyState.jsx'
 import { ChildFilter, ChildMultiSelect, ChildTags } from './ChildChips.jsx'
 import { DOC_CATEGORIES, matchesChild } from '../lib/familyData.js'
-import { formatDateKey, toDateKey } from '../utils/dateUtils.js'
+import { addDays, formatDateKey, toDateKey, todayKey } from '../utils/dateUtils.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
 
-export default function DocumentsScreen({ data, addDocument, removeDocument }) {
+export default function DocumentsScreen({ data, addDocument, updateDocument, removeDocument }) {
   const [filter, setFilter] = useState('all')
-  const [adding, setAdding] = useState(false)
+  const [sheet, setSheet] = useState(null) // null | { doc? }
 
   const groups = useMemo(() => {
     const visible = data.documents.filter((doc) => matchesChild(doc, filter))
@@ -23,7 +23,7 @@ export default function DocumentsScreen({ data, addDocument, removeDocument }) {
     <div className="screen">
       <header className="screen-header screen-header-row">
         <h1>Documents</h1>
-        <button type="button" className="primary-button" onClick={() => setAdding(true)}>
+        <button type="button" className="primary-button" onClick={() => setSheet({})}>
           <Plus size={18} aria-hidden="true" /> Add
         </button>
       </header>
@@ -42,21 +42,29 @@ export default function DocumentsScreen({ data, addDocument, removeDocument }) {
             <h2>{category.label}</h2>
             <ul className="doc-list">
               {docs.map((doc) => (
-                <DocRow key={doc.id} doc={doc} kids={data.children} onRemove={() => removeDocument(doc.id)} />
+                <DocRow
+                  key={doc.id}
+                  doc={doc}
+                  kids={data.children}
+                  onEdit={() => setSheet({ doc })}
+                  onRemove={() => removeDocument(doc.id)}
+                />
               ))}
             </ul>
           </section>
         ))
       )}
 
-      {adding && (
-        <AddDocumentSheet
+      {sheet && (
+        <DocumentSheet
           kids={data.children}
-          onAdd={async (fields) => {
-            await addDocument(fields)
-            setAdding(false)
+          doc={sheet.doc}
+          onSave={async (fields) => {
+            if (sheet.doc) updateDocument(sheet.doc.id, fields)
+            else await addDocument(fields)
+            setSheet(null)
           }}
-          onClose={() => setAdding(false)}
+          onClose={() => setSheet(null)}
         />
       )}
     </div>
@@ -69,8 +77,22 @@ function formatSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-function DocRow({ doc, kids, onRemove }) {
+function expiryLabel(doc) {
+  if (!doc.expiryDate) return null
+  const today = todayKey()
+  if (doc.expiryDate < today) {
+    return { text: `expired ${formatDateKey(doc.expiryDate)}`, urgent: true }
+  }
+  const soon = doc.expiryDate <= addDays(today, 30)
+  return {
+    text: `expires ${formatDateKey(doc.expiryDate, { long: !soon })}`,
+    urgent: soon,
+  }
+}
+
+function DocRow({ doc, kids, onEdit, onRemove }) {
   const url = useFileUrl(doc.fileId)
+  const expiry = expiryLabel(doc)
   return (
     <li className="doc-row">
       <FileText size={20} className="doc-icon" aria-hidden="true" />
@@ -85,10 +107,16 @@ function DocRow({ doc, kids, onRemove }) {
         <span className="doc-meta">
           {doc.addedAt && formatDateKey(toDateKey(new Date(doc.addedAt)))}
           {doc.size ? ` · ${formatSize(doc.size)}` : ''}
+          {expiry && (
+            <span className={expiry.urgent ? 'doc-expiry-urgent' : undefined}> · {expiry.text}</span>
+          )}
           <ChildTags kids={kids} childIds={doc.childIds} />
         </span>
         {doc.notes && <span className="doc-notes">{doc.notes}</span>}
       </div>
+      <button type="button" className="icon-button" aria-label={`Edit ${doc.title}`} onClick={onEdit}>
+        <Pencil size={18} />
+      </button>
       <button
         type="button"
         className="icon-button"
@@ -103,21 +131,30 @@ function DocRow({ doc, kids, onRemove }) {
   )
 }
 
-function AddDocumentSheet({ kids, onAdd, onClose }) {
+// Add (with file) or edit (details only — the file itself doesn't change).
+function DocumentSheet({ kids, doc, onSave, onClose }) {
   const fileRef = useRef(null)
   const [file, setFile] = useState(null)
-  const [title, setTitle] = useState('')
-  const [category, setCategory] = useState('other')
-  const [childIds, setChildIds] = useState([])
-  const [notes, setNotes] = useState('')
+  const [title, setTitle] = useState(doc?.title || '')
+  const [category, setCategory] = useState(doc?.category || 'other')
+  const [childIds, setChildIds] = useState(doc?.childIds || [])
+  const [notes, setNotes] = useState(doc?.notes || '')
+  const [expiryDate, setExpiryDate] = useState(doc?.expiryDate || '')
   const [saving, setSaving] = useState(false)
 
   const submit = async (e) => {
     e.preventDefault()
-    if (!file || saving) return
+    if ((!doc && !file) || saving) return
     setSaving(true)
     try {
-      await onAdd({ file, title: title.trim() || file.name, category, childIds, notes: notes.trim() })
+      await onSave({
+        ...(doc ? {} : { file }),
+        title: title.trim() || (file ? file.name : doc.title),
+        category,
+        childIds,
+        notes: notes.trim(),
+        expiryDate,
+      })
     } catch (error) {
       console.error('Saving document failed', error)
       window.alert("Couldn't save the document — check your connection and try again.")
@@ -127,33 +164,41 @@ function AddDocumentSheet({ kids, onAdd, onClose }) {
   }
 
   return (
-    <Sheet title="Add document" onClose={onClose}>
+    <Sheet title={doc ? 'Edit document' : 'Add document'} onClose={onClose}>
       <form className="form" onSubmit={submit}>
-        <div className="form-field">
-          <input
-            ref={fileRef}
-            type="file"
-            onChange={(e) => {
-              const f = e.target.files?.[0] || null
-              setFile(f)
-              if (f && !title) setTitle(f.name.replace(/\.[^.]+$/, ''))
-            }}
-          />
-        </div>
+        {!doc && (
+          <div className="form-field">
+            <input
+              ref={fileRef}
+              type="file"
+              onChange={(e) => {
+                const f = e.target.files?.[0] || null
+                setFile(f)
+                if (f && !title) setTitle(f.name.replace(/\.[^.]+$/, ''))
+              }}
+            />
+          </div>
+        )}
         <label>
           Title
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Birth certificate" />
         </label>
-        <label>
-          Category
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
-            {DOC_CATEGORIES.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="form-row">
+          <label>
+            Category
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {DOC_CATEGORIES.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Expires <span className="muted">(optional)</span>
+            <input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
+          </label>
+        </div>
         {kids.length > 0 && (
           <div className="form-field">
             <span className="form-label">Belongs to <span className="muted">(none = whole family)</span></span>
@@ -165,7 +210,7 @@ function AddDocumentSheet({ kids, onAdd, onClose }) {
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </label>
         <div className="form-actions">
-          <button type="submit" className="primary-button" disabled={!file || saving}>
+          <button type="submit" className="primary-button" disabled={(!doc && !file) || saving}>
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>

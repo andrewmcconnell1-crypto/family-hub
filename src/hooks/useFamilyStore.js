@@ -18,6 +18,7 @@ import {
 } from '../lib/fileStore.js'
 import { supabase } from '../lib/supabase.js'
 import { makeId } from '../utils/id.js'
+import { downscaleImage } from '../utils/imageUtils.js'
 
 const CLOUD_SAVE_DEBOUNCE_MS = 800
 
@@ -296,7 +297,7 @@ export function useFamilyStore(user, ownerId) {
     }))
   }, [])
 
-  const addDocument = useCallback(async ({ file, title, category, childIds, notes }) => {
+  const addDocument = useCallback(async ({ file, title, category, childIds, notes, expiryDate }) => {
     const fileId = makeId('file')
     await putFile(fileId, file)
     const id = makeId('doc')
@@ -309,6 +310,7 @@ export function useFamilyStore(user, ownerId) {
           category: category || 'other',
           childIds: childIds || [],
           notes: notes || '',
+          expiryDate: expiryDate || '',
           fileId,
           fileName: file.name,
           fileType: file.type,
@@ -319,6 +321,13 @@ export function useFamilyStore(user, ownerId) {
       ],
     }))
     return id
+  }, [])
+
+  const updateDocument = useCallback((id, patch) => {
+    setData((d) => ({
+      ...d,
+      documents: d.documents.map((doc) => (doc.id === id ? { ...doc, ...patch } : doc)),
+    }))
   }, [])
 
   const removeDocument = useCallback((id) => {
@@ -335,14 +344,18 @@ export function useFamilyStore(user, ownerId) {
   const addPhotos = useCallback(async ({ files, childIds, caption }) => {
     const entries = []
     for (const file of files) {
+      // Full camera photos are huge; a ~2000px JPEG is indistinguishable on a
+      // phone and stretches the storage quota ~10x. Fall back to the original
+      // if the browser can't decode it.
+      const blob = await downscaleImage(file).catch(() => file)
       const fileId = makeId('file')
-      await putFile(fileId, file)
+      await putFile(fileId, blob)
       entries.push({
         id: makeId('photo'),
         caption: caption || '',
         childIds: childIds || [],
         fileId,
-        fileType: file.type,
+        fileType: blob.type || file.type,
         addedAt: new Date().toISOString(),
       })
     }
@@ -377,6 +390,7 @@ export function useFamilyStore(user, ownerId) {
     removeEvent,
     skipEventOccurrence,
     addDocument,
+    updateDocument,
     removeDocument,
     addPhotos,
     removePhoto,

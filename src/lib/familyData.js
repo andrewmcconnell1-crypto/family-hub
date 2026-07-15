@@ -37,6 +37,13 @@ export function matchesChild(item, filter) {
   return item.childIds.includes(filter)
 }
 
+// Documents already expired or expiring within the horizon, soonest first.
+export function expiringDocuments(documents, fromKey, horizonKey) {
+  return documents
+    .filter((doc) => doc.expiryDate && doc.expiryDate <= horizonKey)
+    .sort((a, b) => a.expiryDate.localeCompare(b.expiryDate))
+}
+
 export const EVENT_CATEGORIES = [
   { id: 'school', label: 'School' },
   { id: 'medical', label: 'Medical' },
@@ -127,6 +134,7 @@ export function normalizeData(raw) {
       fileType: '',
       size: 0,
       addedAt: '',
+      expiryDate: '',
     }),
     photos: normalizeList(raw.photos, ['id', 'fileId'], {
       caption: '',

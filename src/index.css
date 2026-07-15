@@ -918,6 +918,11 @@ button {
   color: var(--text-muted);
 }
 
+.doc-expiry-urgent {
+  color: var(--danger);
+  font-weight: 600;
+}
+
 /* --- Photos ------------------------------------------------------------------ */
 
 .photo-grid {

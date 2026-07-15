@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { emptyData, loadData, normalizeData, reorderTodo, saveData } from './familyData.js'
+import {
+  emptyData,
+  expiringDocuments,
+  loadData,
+  normalizeData,
+  reorderTodo,
+  saveData,
+} from './familyData.js'
 
 describe('normalizeData', () => {
   it('returns empty data for junk input', () => {
@@ -71,6 +78,25 @@ describe('reorderTodo', () => {
     expect(reorderTodo(todos, 'a', -1)).toBe(todos)
     expect(reorderTodo(todos, 'd', 1)).toBe(todos)
     expect(reorderTodo(todos, 'nope', 1)).toBe(todos)
+  })
+})
+
+describe('expiringDocuments', () => {
+  const docs = [
+    { id: 'a', title: 'Passport', expiryDate: '2026-08-01' },
+    { id: 'b', title: 'Rego', expiryDate: '2026-07-10' }, // already expired
+    { id: 'c', title: 'Insurance', expiryDate: '2027-01-01' }, // far future
+    { id: 'd', title: 'Letter', expiryDate: '' }, // no expiry
+  ]
+
+  it('returns expired + soon-to-expire docs, soonest first', () => {
+    const out = expiringDocuments(docs, '2026-07-15', '2026-08-14')
+    expect(out.map((d) => d.id)).toEqual(['b', 'a'])
+  })
+
+  it('defaults expiryDate to empty on normalize', () => {
+    const data = normalizeData({ documents: [{ id: 'd1', title: 'X', fileId: 'f1' }] })
+    expect(data.documents[0].expiryDate).toBe('')
   })
 })
 

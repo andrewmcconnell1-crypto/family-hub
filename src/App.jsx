@@ -102,6 +102,7 @@ export default function App() {
           <DocumentsScreen
             data={store.data}
             addDocument={store.addDocument}
+            updateDocument={store.updateDocument}
             removeDocument={store.removeDocument}
           />
         )}

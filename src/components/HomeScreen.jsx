@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AlertCircle, ChevronDown, ChevronRight } from 'lucide-react'
 import Avatar from './Avatar.jsx'
 import { ChildTags } from './ChildChips.jsx'
+import { expiringDocuments } from '../lib/familyData.js'
 import { addDays, formatDateKey, parseDateKey, todayKey } from '../utils/dateUtils.js'
 import { birthdayOccurrences, calendarOccurrences, weekdayIndex } from '../utils/recurrence.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
@@ -22,6 +23,7 @@ export default function HomeScreen({ data, onNavigate }) {
   const thisWeek = calendarOccurrences(data, today, weekEnd)
 
   const overdueTodos = data.todos.filter((t) => !t.done && t.dueDate && t.dueDate < today)
+  const expiringDocs = expiringDocuments(data.documents, today, addDays(today, 30))
   const activeTodos = data.todos.filter((t) => !t.done)
   const recentPhotos = data.photos.slice(0, 6)
 
@@ -74,8 +76,12 @@ export default function HomeScreen({ data, onNavigate }) {
         </button>
       )}
 
-      {overdueTodos.length > 0 && (
-        <button type="button" className="card attention-card" onClick={() => onNavigate('todos')}>
+      {(overdueTodos.length > 0 || expiringDocs.length > 0) && (
+        <button
+          type="button"
+          className="card attention-card"
+          onClick={() => onNavigate(overdueTodos.length > 0 ? 'todos' : 'documents')}
+        >
           <span className="attention-title">
             <AlertCircle size={16} aria-hidden="true" />
             Needs attention
@@ -87,6 +93,15 @@ export default function HomeScreen({ data, onNavigate }) {
           ))}
           {overdueTodos.length > 3 && (
             <span className="muted">+ {overdueTodos.length - 3} more overdue</span>
+          )}
+          {expiringDocs.slice(0, 3).map((doc) => (
+            <span key={doc.id} className="attention-item">
+              {doc.title} — {doc.expiryDate < today ? 'expired' : 'expires'}{' '}
+              {formatDateKey(doc.expiryDate)}
+            </span>
+          ))}
+          {expiringDocs.length > 3 && (
+            <span className="muted">+ {expiringDocs.length - 3} more expiring</span>
           )}
         </button>
       )}
