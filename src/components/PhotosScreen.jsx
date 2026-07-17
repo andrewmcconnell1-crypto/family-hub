@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Image, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Crop, Image, Pencil, Plus, Trash2, X } from 'lucide-react'
+import ImageCropper from './ImageCropper.jsx'
 import Sheet from './Sheet.jsx'
 import EmptyState from './EmptyState.jsx'
 import { ChildFilter, ChildMultiSelect, ChildTags } from './ChildChips.jsx'
 import { matchesChild } from '../lib/familyData.js'
+import { deleteFile, getFile, putFile, releaseFileUrl } from '../lib/fileStore.js'
+import { makeId } from '../utils/id.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
 
 export default function PhotosScreen({ data, addPhotos, updatePhoto, removePhoto }) {
@@ -11,6 +14,8 @@ export default function PhotosScreen({ data, addPhotos, updatePhoto, removePhoto
   const [adding, setAdding] = useState(false)
   const [viewing, setViewing] = useState(null) // photo id
   const [editing, setEditing] = useState(null) // photo id
+  // Reframing an existing photo: { photo, file } while the cropper is open.
+  const [adjusting, setAdjusting] = useState(null)
 
   const visible = useMemo(
     () => data.photos.filter((photo) => matchesChild(photo, filter)),
@@ -76,7 +81,37 @@ export default function PhotosScreen({ data, addPhotos, updatePhoto, removePhoto
             updatePhoto(editingPhoto.id, fields)
             setEditing(null)
           }}
+          onAdjust={async () => {
+            const blob = await getFile(editingPhoto.fileId).catch(() => null)
+            if (!blob) {
+              window.alert("Couldn't load the photo to adjust it — check your connection.")
+              return
+            }
+            setAdjusting({ photo: editingPhoto, file: blob })
+          }}
           onClose={() => setEditing(null)}
+        />
+      )}
+
+      {adjusting && (
+        <ImageCropper
+          file={adjusting.file}
+          round={false}
+          output={2000}
+          onCancel={() => setAdjusting(null)}
+          onUse={async (blob) => {
+            try {
+              const fileId = makeId('file')
+              await putFile(fileId, blob)
+              releaseFileUrl(adjusting.photo.fileId)
+              deleteFile(adjusting.photo.fileId).catch(() => {})
+              updatePhoto(adjusting.photo.id, { fileId, fileType: blob.type })
+              setAdjusting(null)
+            } catch (error) {
+              console.error('Saving reframed photo failed', error)
+              window.alert("Couldn't save the adjusted photo — check your connection and try again.")
+            }
+          }}
         />
       )}
     </div>
@@ -132,10 +167,11 @@ function PhotoViewer({ photo, kids, onEdit, onDelete, onClose }) {
   )
 }
 
-// Edit a photo's caption and tags after the fact (the image itself is fixed).
-function EditPhotoSheet({ kids, photo, onSave, onClose }) {
+// Edit a photo's caption/tags, or reframe (crop + zoom) the image itself.
+function EditPhotoSheet({ kids, photo, onSave, onAdjust, onClose }) {
   const [caption, setCaption] = useState(photo.caption || '')
   const [childIds, setChildIds] = useState(photo.childIds || [])
+  const previewUrl = useFileUrl(photo.fileId)
 
   const submit = (e) => {
     e.preventDefault()
@@ -144,6 +180,12 @@ function EditPhotoSheet({ kids, photo, onSave, onClose }) {
 
   return (
     <Sheet title="Edit photo" onClose={onClose}>
+      <div className="edit-photo-preview">
+        {previewUrl && <img src={previewUrl} alt="" />}
+        <button type="button" className="primary-button" onClick={onAdjust}>
+          <Crop size={16} aria-hidden="true" /> Crop & zoom
+        </button>
+      </div>
       <form className="form" onSubmit={submit}>
         <label>
           Caption
@@ -170,6 +212,7 @@ function AddPhotosSheet({ kids, onAdd, onClose }) {
   const [childIds, setChildIds] = useState([])
   const [caption, setCaption] = useState('')
   const [saving, setSaving] = useState(false)
+  const [cropFile, setCropFile] = useState(null) // single-photo reframe before adding
 
   const submit = async (e) => {
     e.preventDefault()
@@ -196,6 +239,11 @@ function AddPhotosSheet({ kids, onAdd, onClose }) {
             onChange={(e) => setFiles(Array.from(e.target.files || []))}
           />
           {files.length > 1 && <span className="muted">{files.length} photos selected</span>}
+          {files.length === 1 && (
+            <button type="button" className="link-button" onClick={() => setCropFile(files[0])}>
+              <Crop size={14} aria-hidden="true" /> Crop & zoom before adding
+            </button>
+          )}
         </div>
         {kids.length > 0 && (
           <div className="form-field">
@@ -213,6 +261,18 @@ function AddPhotosSheet({ kids, onAdd, onClose }) {
           </button>
         </div>
       </form>
+      {cropFile && (
+        <ImageCropper
+          file={cropFile}
+          round={false}
+          output={2000}
+          onCancel={() => setCropFile(null)}
+          onUse={(blob) => {
+            setFiles([blob])
+            setCropFile(null)
+          }}
+        />
+      )}
     </Sheet>
   )
 }

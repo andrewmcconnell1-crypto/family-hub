@@ -24,14 +24,14 @@ export async function downscaleImage(file, maxSide = 2000, quality = 0.85) {
   }
 }
 
-// Draw a square region (source-image pixels) of a loaded image element onto a
-// size×size canvas and return it as a small JPEG blob. Used by the avatar
-// cropper so member photos stay a few KB instead of a full camera photo.
-export function cropImageToSquare(image, { x, y, side }, size = 256) {
+// Draw a region (source-image pixels) of a loaded image element onto an
+// outW×outH canvas and return it as a JPEG blob. Used by the shared cropper
+// for both square avatars and free-aspect photo reframing.
+export function cropImageRegion(image, { x, y, w, h }, outW, outH) {
   const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  canvas.getContext('2d').drawImage(image, x, y, side, side, 0, 0, size, size)
+  canvas.width = outW
+  canvas.height = outH
+  canvas.getContext('2d').drawImage(image, x, y, w, h, 0, 0, outW, outH)
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => (blob ? resolve(blob) : reject(new Error('toBlob returned null'))),

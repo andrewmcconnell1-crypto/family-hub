@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Copy, Plus, Share2, Users } from 'lucide-react'
 import Avatar from './Avatar.jsx'
-import AvatarCropper from './AvatarCropper.jsx'
+import ImageCropper from './ImageCropper.jsx'
 import Sheet from './Sheet.jsx'
 import EmptyState from './EmptyState.jsx'
 import { CHILD_COLORS, childColor } from '../lib/familyData.js'
@@ -141,7 +141,7 @@ export default function FamilyScreen({
                 avatarFileId = ''
               }
               if (avatar.file) {
-                // Already cropped + downscaled by AvatarCropper.
+                // Already cropped + downscaled by ImageCropper.
                 avatarFileId = makeId('file')
                 await putFile(avatarFileId, avatar.file)
               }
@@ -479,7 +479,7 @@ function ChildSheet({ child, onSave, onDelete, onClose }) {
         </div>
       </form>
       {cropFile && (
-        <AvatarCropper
+        <ImageCropper
           file={cropFile}
           onUse={(blob) => {
             setAvatarFile(blob)
