@@ -143,12 +143,12 @@ function AddPhotosSheet({ kids, onAdd, onClose }) {
         </div>
         {kids.length > 0 && (
           <div className="form-field">
-            <span className="form-label">Who's in them? <span className="muted">(none = whole family)</span></span>
+            <span className="form-label">Who's in them? <span className="label-hint">none = whole family</span></span>
             <ChildMultiSelect kids={kids} value={childIds} onChange={setChildIds} />
           </div>
         )}
         <label>
-          Caption <span className="muted">(optional)</span>
+          Caption
           <input value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Sports day 2026" />
         </label>
         <div className="form-actions">

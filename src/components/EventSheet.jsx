@@ -77,7 +77,7 @@ export default function EventSheet({
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
           </label>
           <label>
-            Time <span className="muted">(optional)</span>
+            Time
             <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           </label>
         </div>
@@ -123,13 +123,13 @@ export default function EventSheet({
         )}
         {repeat !== 'none' && (
           <label>
-            Repeats until <span className="muted">(optional)</span>
+            Repeats until
             <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
           </label>
         )}
         {kids.length > 0 && (
           <div className="form-field">
-            <span className="form-label">Who's it for? <span className="muted">(none = whole family)</span></span>
+            <span className="form-label">Who's it for? <span className="label-hint">none = whole family</span></span>
             <ChildMultiSelect kids={kids} value={childIds} onChange={setChildIds} />
           </div>
         )}

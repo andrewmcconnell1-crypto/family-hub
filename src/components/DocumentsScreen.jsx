@@ -195,13 +195,13 @@ function DocumentSheet({ kids, doc, onSave, onClose }) {
             </select>
           </label>
           <label>
-            Expires <span className="muted">(optional)</span>
+            Expires
             <input type="date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
           </label>
         </div>
         {kids.length > 0 && (
           <div className="form-field">
-            <span className="form-label">Belongs to <span className="muted">(none = whole family)</span></span>
+            <span className="form-label">Belongs to <span className="label-hint">none = whole family</span></span>
             <ChildMultiSelect kids={kids} value={childIds} onChange={setChildIds} />
           </div>
         )}

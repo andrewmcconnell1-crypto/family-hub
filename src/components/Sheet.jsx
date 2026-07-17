@@ -20,6 +20,7 @@ export default function Sheet({ title, onClose, children }) {
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
       >
+        <div className="sheet-handle" aria-hidden="true" />
         <header className="sheet-header">
           <h2>{title}</h2>
           <button type="button" className="icon-button" aria-label="Close" onClick={onClose}>

@@ -213,12 +213,12 @@ function TodoSheet({ kids, todo, onSave, onDelete, onClose }) {
           <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Book dentist check-up" autoFocus required />
         </label>
         <label>
-          Due date <span className="muted">(optional)</span>
+          Due date
           <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </label>
         {kids.length > 0 && (
           <div className="form-field">
-            <span className="form-label">Who's it about? <span className="muted">(none = whole family)</span></span>
+            <span className="form-label">Who's it about? <span className="label-hint">none = whole family</span></span>
             <ChildMultiSelect kids={kids} value={childIds} onChange={setChildIds} />
           </div>
         )}

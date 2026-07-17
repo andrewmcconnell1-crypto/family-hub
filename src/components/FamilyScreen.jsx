@@ -361,7 +361,7 @@ function ChildSheet({ child, onSave, onDelete, onClose }) {
     <Sheet title={child ? `Edit ${child.name}` : 'Add a family member'} onClose={onClose}>
       <form className="form" onSubmit={submit}>
         <div className="form-field">
-          <span className="form-label">Photo <span className="muted">(optional)</span></span>
+          <span className="form-label">Photo</span>
           <div className="avatar-picker">
             {previewUrl ? (
               <img
@@ -414,7 +414,7 @@ function ChildSheet({ child, onSave, onDelete, onClose }) {
           <input value={name} onChange={(e) => setName(e.target.value)} autoFocus required />
         </label>
         <label>
-          Date of birth <span className="muted">(optional)</span>
+          Date of birth
           <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
         </label>
         <div className="form-field">
