@@ -55,7 +55,9 @@ export default function HomeScreen({ data, onNavigate }) {
     <div className="screen">
       <header className="screen-header">
         <p className="eyebrow">{formatDateKey(today, { long: true })}</p>
-        <h1>{greeting()}</h1>
+        <h1>
+          <span className="marker">{greeting()}</span>
+        </h1>
       </header>
 
       {data.children.length > 0 && (

@@ -101,7 +101,7 @@ button {
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
-  padding: 1.25rem 1rem calc(5.5rem + env(safe-area-inset-bottom));
+  padding: 1.25rem 1rem calc(7.25rem + env(safe-area-inset-bottom));
 }
 
 .screen {
@@ -121,20 +121,30 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.5rem;
+}
+
+.screen-header-row .primary-button {
+  flex-shrink: 0;
+  padding: 0.45rem 0.8rem;
 }
 
 .tab-bar {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  bottom: calc(0.8rem + env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 1.6rem);
+  max-width: 480px;
   display: flex;
   justify-content: center;
   gap: 0.25rem;
   background: var(--surface);
-  border-top: 2px solid var(--ink);
-  padding: 0.4rem 0.5rem calc(0.4rem + env(safe-area-inset-bottom));
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  padding: 0.35rem 0.45rem;
+  z-index: 20;
 }
 
 .tab-button {
@@ -157,6 +167,7 @@ button {
   color: var(--ink);
   background: var(--pop);
   border: 2px solid var(--ink);
+  border-radius: 999px;
   padding: calc(0.35rem - 2px) calc(0.25rem - 2px);
 }
 
@@ -508,11 +519,23 @@ button {
 }
 
 .photo-strip-thumb {
-  width: 84px;
-  height: 84px;
-  border-radius: 10px;
+  width: 92px;
+  height: 104px;
   object-fit: cover;
   flex-shrink: 0;
+  background: #fff;
+  padding: 4px 4px 14px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  box-shadow: 2px 2px 0 var(--shadow-ink);
+}
+
+.photo-strip-thumb:nth-child(odd) {
+  transform: rotate(-1.5deg);
+}
+
+.photo-strip-thumb:nth-child(even) {
+  transform: rotate(1.2deg);
 }
 
 /* --- Events --------------------------------------------------------------- */
@@ -624,9 +647,9 @@ button {
   align-items: center;
   justify-content: center;
   gap: 2px;
-  border: none;
+  border: 2px solid transparent;
   background: none;
-  border-radius: 10px;
+  border-radius: 50%;
   font-size: 0.85rem;
 }
 
@@ -638,6 +661,8 @@ button {
 .day-today {
   font-weight: 700;
   color: var(--accent);
+  border-color: var(--accent);
+  border-style: dashed;
 }
 
 .day-selected {
@@ -680,13 +705,13 @@ button {
 .mode-tab {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
   border: none;
   background: none;
   color: var(--text-muted);
   font-weight: 600;
-  font-size: 0.9rem;
-  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.55rem;
   border-radius: 999px;
   white-space: nowrap;
 }
@@ -739,7 +764,7 @@ button {
   align-items: center;
   justify-content: center;
   border: 2px solid var(--ink);
-  border-radius: 50%;
+  border-radius: 7px;
   background: var(--surface);
   color: #fff;
   padding: 0;
@@ -831,10 +856,10 @@ button {
 }
 
 .home-todo-dot {
-  width: 8px;
-  height: 8px;
-  border: 2px solid var(--accent);
-  border-radius: 50%;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--ink);
+  border-radius: 3px;
   flex-shrink: 0;
   align-self: center;
 }
@@ -966,12 +991,24 @@ button {
 }
 
 .photo-cell {
-  aspect-ratio: 1;
-  border: none;
-  padding: 0;
-  background: var(--border);
-  border-radius: 8px;
-  overflow: hidden;
+  aspect-ratio: 0.88;
+  border: 2px solid var(--ink);
+  padding: 4px 4px 16px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 3px 3px 0 var(--shadow-ink);
+}
+
+.photo-cell:nth-child(3n + 1) {
+  transform: rotate(-1.2deg);
+}
+
+.photo-cell:nth-child(3n + 2) {
+  transform: rotate(0.9deg);
+}
+
+.photo-cell:nth-child(3n) {
+  transform: rotate(-0.4deg);
 }
 
 .photo-cell img {
@@ -979,6 +1016,7 @@ button {
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 2px;
 }
 
 .photo-placeholder {
@@ -1437,7 +1475,7 @@ button {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(4.75rem + env(safe-area-inset-bottom));
+  bottom: calc(7rem + env(safe-area-inset-bottom));
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -1469,6 +1507,8 @@ button {
   text-align: center;
   padding: 2.25rem 1rem;
   color: var(--text-muted);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
 }
 
 .empty-title {
@@ -1481,4 +1521,38 @@ button {
   margin: 0;
   font-size: 0.85rem;
   max-width: 320px;
+}
+
+
+/* --- Scrapbook touches ------------------------------------------------------ */
+
+/* Marker-pen highlight behind the Home greeting. */
+.marker {
+  display: inline-block;
+  background: var(--pop);
+  color: #221c35;
+  padding: 0 0.45rem 0.1rem;
+  border-radius: 5px;
+  transform: rotate(-1.2deg);
+}
+
+/* Day cards sit slightly askew, like stuck-on notes. */
+.day-card:nth-of-type(odd),
+.week-day:nth-of-type(odd) {
+  transform: rotate(-0.5deg);
+}
+
+.day-card:nth-of-type(even),
+.week-day:nth-of-type(even) {
+  transform: rotate(0.45deg);
+}
+
+.week-day-today,
+.day-card.week-day-today {
+  transform: rotate(0deg);
+}
+
+/* Member name tags get a sticker outline. */
+.child-tag {
+  border: 1.5px solid var(--ink);
 }

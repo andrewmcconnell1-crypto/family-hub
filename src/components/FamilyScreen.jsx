@@ -34,6 +34,8 @@ export default function FamilyScreen({
   syncState,
   user,
   household,
+  theme,
+  onThemeChange,
   onSignIn,
   onSignOut,
 }) {
@@ -104,6 +106,27 @@ export default function FamilyScreen({
       </section>
 
       {user && household && <HouseholdSection household={household} />}
+
+      <section className="card">
+        <h2>Appearance</h2>
+        <div className="chip-row">
+          {[
+            { id: 'system', label: 'Match device' },
+            { id: 'light', label: 'Light' },
+            { id: 'dark', label: 'Dark' },
+          ].map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              className={`chip${theme === option.id ? ' chip-active' : ''}`}
+              aria-pressed={theme === option.id}
+              onClick={() => onThemeChange(option.id)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </section>
 
       {sheet && (
         <ChildSheet

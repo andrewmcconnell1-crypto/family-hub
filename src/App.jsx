@@ -12,6 +12,7 @@ import { useAuth } from './hooks/useAuth.js'
 import { useUpdatePrompt } from './hooks/useUpdatePrompt.js'
 import { useFamilyStore } from './hooks/useFamilyStore.js'
 import { useHousehold } from './hooks/useHousehold.js'
+import { useTheme } from './hooks/useTheme.js'
 import { captureJoinCodeFromUrl, clearPendingJoinCode } from './lib/household.js'
 import { isSupabaseConfigured } from './lib/supabase.js'
 
@@ -58,6 +59,7 @@ export default function App() {
     () => localStorage.getItem(LOCAL_ONLY_KEY) === '1',
   )
   const updateReady = useUpdatePrompt()
+  const { theme, setTheme } = useTheme()
 
   const dismissInvite = () => {
     clearPendingJoinCode()
@@ -118,6 +120,8 @@ export default function App() {
             syncState={store.syncState}
             user={auth.user}
             household={household}
+            theme={theme}
+            onThemeChange={setTheme}
             onSignIn={() => {
               localStorage.removeItem(LOCAL_ONLY_KEY)
               if (auth.user) return
