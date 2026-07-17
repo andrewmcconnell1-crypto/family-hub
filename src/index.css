@@ -104,6 +104,44 @@ button {
   padding: 1.25rem 1rem calc(7.25rem + env(safe-area-inset-bottom));
 }
 
+/* Photo-of-the-day backdrop: blurred, then washed with the theme background
+   so cards and text keep full contrast. Negative z-index paints it above the
+   body background but beneath all content WITHOUT forcing a stacking context
+   on the content (which would trap sheet/viewer layers under the dock). */
+.wallpaper {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.wallpaper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(10px) saturate(1.15);
+  transform: scale(1.12);
+}
+
+.wallpaper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  opacity: 0.82;
+}
+
+[data-theme='dark'] .wallpaper::after {
+  opacity: 0.87;
+}
+
+.appearance-label {
+  margin: 0.9rem 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .screen {
   display: flex;
   flex-direction: column;

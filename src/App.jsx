@@ -8,6 +8,7 @@ import FamilyScreen from './components/FamilyScreen.jsx'
 import SignInScreen from './components/SignInScreen.jsx'
 import InviteBanner from './components/InviteBanner.jsx'
 import UpdateBanner from './components/UpdateBanner.jsx'
+import Wallpaper from './components/Wallpaper.jsx'
 import { useAuth } from './hooks/useAuth.js'
 import { useUpdatePrompt } from './hooks/useUpdatePrompt.js'
 import { useFamilyStore } from './hooks/useFamilyStore.js'
@@ -18,6 +19,7 @@ import { isSupabaseConfigured } from './lib/supabase.js'
 
 const LOCAL_ONLY_KEY = 'treehouse:localOnly'
 const PLANNER_MODE_KEY = 'treehouse:plannerMode'
+const WALLPAPER_KEY = 'treehouse:wallpaper'
 
 export default function App() {
   const [tab, setTab] = useState('home')
@@ -60,6 +62,13 @@ export default function App() {
   )
   const updateReady = useUpdatePrompt()
   const { theme, setTheme } = useTheme()
+  const [wallpaper, setWallpaperState] = useState(
+    () => localStorage.getItem(WALLPAPER_KEY) !== '0',
+  )
+  const setWallpaper = (on) => {
+    localStorage.setItem(WALLPAPER_KEY, on ? '1' : '0')
+    setWallpaperState(on)
+  }
 
   const dismissInvite = () => {
     clearPendingJoinCode()
@@ -84,6 +93,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <Wallpaper photos={store.data.photos} enabled={wallpaper} />
       <main className="app-main">
         {pendingJoinCode && auth.user && (
           <InviteBanner
@@ -127,6 +137,8 @@ export default function App() {
             household={household}
             theme={theme}
             onThemeChange={setTheme}
+            wallpaper={wallpaper}
+            onWallpaperChange={setWallpaper}
             onSignIn={() => {
               localStorage.removeItem(LOCAL_ONLY_KEY)
               if (auth.user) return

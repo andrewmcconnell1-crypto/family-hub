@@ -36,6 +36,8 @@ export default function FamilyScreen({
   household,
   theme,
   onThemeChange,
+  wallpaper,
+  onWallpaperChange,
   onSignIn,
   onSignOut,
 }) {
@@ -121,6 +123,25 @@ export default function FamilyScreen({
               className={`chip${theme === option.id ? ' chip-active' : ''}`}
               aria-pressed={theme === option.id}
               onClick={() => onThemeChange(option.id)}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <p className="appearance-label">
+          Photo wallpaper <span className="muted">— one of your photos, softly, behind the app; a new one each day</span>
+        </p>
+        <div className="chip-row">
+          {[
+            { id: true, label: 'On' },
+            { id: false, label: 'Off' },
+          ].map((option) => (
+            <button
+              key={String(option.id)}
+              type="button"
+              className={`chip${wallpaper === option.id ? ' chip-active' : ''}`}
+              aria-pressed={wallpaper === option.id}
+              onClick={() => onWallpaperChange(option.id)}
             >
               {option.label}
             </button>
