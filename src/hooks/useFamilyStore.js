@@ -362,6 +362,13 @@ export function useFamilyStore(user, ownerId) {
     setData((d) => ({ ...d, photos: [...entries, ...d.photos] }))
   }, [])
 
+  const updatePhoto = useCallback((id, patch) => {
+    setData((d) => ({
+      ...d,
+      photos: d.photos.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+    }))
+  }, [])
+
   const removePhoto = useCallback((id) => {
     setData((d) => {
       const photo = d.photos.find((x) => x.id === id)
@@ -393,6 +400,7 @@ export function useFamilyStore(user, ownerId) {
     updateDocument,
     removeDocument,
     addPhotos,
+    updatePhoto,
     removePhoto,
   }
 }

@@ -1122,7 +1122,8 @@ button {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  z-index: 30;
+  /* Above the photo viewer (z 40) so "edit photo" opens over the photo. */
+  z-index: 45;
 }
 
 .sheet {
@@ -1555,4 +1556,77 @@ button {
 /* Member name tags get a sticker outline. */
 .child-tag {
   border: 1.5px solid var(--ink);
+}
+
+/* Calendar-leaf date blocks: a page off a desk calendar, so day cards read
+   unmistakably as dates. */
+.date-leaf {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  width: 40px;
+  flex-shrink: 0;
+  border: 2px solid var(--ink);
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.date-leaf-dow {
+  width: 100%;
+  text-align: center;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 1px 0;
+}
+
+.date-leaf-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.week-day-today .date-leaf-dow {
+  background: var(--pop);
+  color: #221c35;
+}
+
+.week-day-title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+/* The to-do card is a lined notepad, a different species from day cards. */
+.notepad-card {
+  background-color: #fff6da;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 26px,
+    rgba(34, 28, 53, 0.09) 26px,
+    rgba(34, 28, 53, 0.09) 28px
+  );
+}
+
+.notepad-card .link-button {
+  color: #7a5db8;
+}
+
+[data-theme='dark'] .notepad-card {
+  background-color: #2c2718;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 26px,
+    rgba(233, 228, 255, 0.08) 26px,
+    rgba(233, 228, 255, 0.08) 28px
+  );
 }

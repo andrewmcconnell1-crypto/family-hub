@@ -3,7 +3,7 @@ import { AlertCircle, ChevronDown, ChevronRight } from 'lucide-react'
 import Avatar from './Avatar.jsx'
 import { ChildTags } from './ChildChips.jsx'
 import { expiringDocuments } from '../lib/familyData.js'
-import { addDays, formatDateKey, parseDateKey, todayKey } from '../utils/dateUtils.js'
+import { addDays, dayParts, formatDateKey, parseDateKey, todayKey } from '../utils/dateUtils.js'
 import { birthdayOccurrences, calendarOccurrences, weekdayIndex } from '../utils/recurrence.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
 
@@ -136,7 +136,7 @@ export default function HomeScreen({ data, onNavigate }) {
       )}
 
       {activeTodos.length > 0 && (
-        <section className="card">
+        <section className="card notepad-card">
           <div className="card-title-row">
             <h2>To-do priorities</h2>
             <button type="button" className="link-button" onClick={() => onNavigate('todos')}>
@@ -186,6 +186,7 @@ export default function HomeScreen({ data, onNavigate }) {
 // open it shows the full rows (times, tags, due to-dos).
 function DayCard({ day, isToday, kids, expanded, onToggle }) {
   const count = day.events.length + day.todos.length
+  const { dow, num, weekdayLong } = dayParts(day.key)
   const summary = [
     ...day.events.map((e) => e.title),
     ...day.todos.map((t) => `☐ ${t.title}`),
@@ -200,8 +201,12 @@ function DayCard({ day, isToday, kids, expanded, onToggle }) {
         disabled={count === 0}
         onClick={onToggle}
       >
+        <span className="date-leaf" aria-hidden="true">
+          <span className="date-leaf-dow">{dow}</span>
+          <span className="date-leaf-num">{num}</span>
+        </span>
         <span className="day-card-title">
-          {formatDateKey(day.key, { weekday: true })}
+          {weekdayLong}
           {isToday && <span className="today-chip">Today</span>}
         </span>
         {!expanded && (

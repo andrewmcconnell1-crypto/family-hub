@@ -1,21 +1,23 @@
 import { useMemo, useState } from 'react'
-import { Image, Plus, Trash2, X } from 'lucide-react'
+import { Image, Pencil, Plus, Trash2, X } from 'lucide-react'
 import Sheet from './Sheet.jsx'
 import EmptyState from './EmptyState.jsx'
 import { ChildFilter, ChildMultiSelect, ChildTags } from './ChildChips.jsx'
 import { matchesChild } from '../lib/familyData.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
 
-export default function PhotosScreen({ data, addPhotos, removePhoto }) {
+export default function PhotosScreen({ data, addPhotos, updatePhoto, removePhoto }) {
   const [filter, setFilter] = useState('all')
   const [adding, setAdding] = useState(false)
   const [viewing, setViewing] = useState(null) // photo id
+  const [editing, setEditing] = useState(null) // photo id
 
   const visible = useMemo(
     () => data.photos.filter((photo) => matchesChild(photo, filter)),
     [data.photos, filter],
   )
   const viewingPhoto = viewing ? data.photos.find((p) => p.id === viewing) : null
+  const editingPhoto = editing ? data.photos.find((p) => p.id === editing) : null
 
   return (
     <div className="screen">
@@ -57,11 +59,24 @@ export default function PhotosScreen({ data, addPhotos, removePhoto }) {
         <PhotoViewer
           photo={viewingPhoto}
           kids={data.children}
+          onEdit={() => setEditing(viewingPhoto.id)}
           onDelete={() => {
             removePhoto(viewingPhoto.id)
             setViewing(null)
           }}
           onClose={() => setViewing(null)}
+        />
+      )}
+
+      {editingPhoto && (
+        <EditPhotoSheet
+          kids={data.children}
+          photo={editingPhoto}
+          onSave={(fields) => {
+            updatePhoto(editingPhoto.id, fields)
+            setEditing(null)
+          }}
+          onClose={() => setEditing(null)}
         />
       )}
     </div>
@@ -77,12 +92,20 @@ function PhotoCell({ photo, onOpen }) {
   )
 }
 
-function PhotoViewer({ photo, kids, onDelete, onClose }) {
+function PhotoViewer({ photo, kids, onEdit, onDelete, onClose }) {
   const url = useFileUrl(photo.fileId)
   return (
     <div className="viewer-backdrop" onClick={onClose}>
       <div className="viewer" role="dialog" aria-modal="true" aria-label="Photo" onClick={(e) => e.stopPropagation()}>
         <div className="viewer-actions">
+          <button
+            type="button"
+            className="icon-button viewer-button"
+            aria-label="Edit photo details"
+            onClick={onEdit}
+          >
+            <Pencil size={20} />
+          </button>
           <button
             type="button"
             className="icon-button viewer-button"
@@ -106,6 +129,39 @@ function PhotoViewer({ photo, kids, onDelete, onClose }) {
         )}
       </div>
     </div>
+  )
+}
+
+// Edit a photo's caption and tags after the fact (the image itself is fixed).
+function EditPhotoSheet({ kids, photo, onSave, onClose }) {
+  const [caption, setCaption] = useState(photo.caption || '')
+  const [childIds, setChildIds] = useState(photo.childIds || [])
+
+  const submit = (e) => {
+    e.preventDefault()
+    onSave({ caption: caption.trim(), childIds })
+  }
+
+  return (
+    <Sheet title="Edit photo" onClose={onClose}>
+      <form className="form" onSubmit={submit}>
+        <label>
+          Caption
+          <input value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Sports day 2026" autoFocus />
+        </label>
+        {kids.length > 0 && (
+          <div className="form-field">
+            <span className="form-label">Who's in it? <span className="label-hint">none = whole family</span></span>
+            <ChildMultiSelect kids={kids} value={childIds} onChange={setChildIds} />
+          </div>
+        )}
+        <div className="form-actions">
+          <button type="submit" className="primary-button">
+            Save
+          </button>
+        </div>
+      </form>
+    </Sheet>
   )
 }
 

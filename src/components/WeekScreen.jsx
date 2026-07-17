@@ -3,7 +3,7 @@ import { Check, ChevronLeft, ChevronRight, Plus, Repeat } from 'lucide-react'
 import EventSheet from './EventSheet.jsx'
 import { ChildTags } from './ChildChips.jsx'
 import { calendarOccurrences, weekdayIndex } from '../utils/recurrence.js'
-import { addDays, formatDateKey, todayKey } from '../utils/dateUtils.js'
+import { addDays, dayParts, formatDateKey, todayKey } from '../utils/dateUtils.js'
 
 const mondayOf = (key) => addDays(key, -weekdayIndex(key))
 
@@ -89,8 +89,12 @@ export default function WeekScreen({
       {days.map((day) => (
         <section key={day.key} className={`card week-day${day.key === today ? ' week-day-today' : ''}`}>
           <div className="card-title-row">
-            <h2>
-              {formatDateKey(day.key, { weekday: true })}
+            <h2 className="week-day-title">
+              <span className="date-leaf" aria-hidden="true">
+                <span className="date-leaf-dow">{dayParts(day.key).dow}</span>
+                <span className="date-leaf-num">{dayParts(day.key).num}</span>
+              </span>
+              {dayParts(day.key).weekdayLong}
               {day.key === today && <span className="today-chip">Today</span>}
             </h2>
             <button

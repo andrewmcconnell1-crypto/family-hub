@@ -85,6 +85,16 @@ export function upcomingEvents(events, fromKey, days) {
     )
 }
 
+// Pieces for rendering a date as a little calendar leaf.
+export function dayParts(key) {
+  const date = parseDateKey(key)
+  return {
+    dow: date.toLocaleDateString('en-GB', { weekday: 'short' }),
+    num: date.getDate(),
+    weekdayLong: date.toLocaleDateString('en-GB', { weekday: 'long' }),
+  }
+}
+
 // A friendly age from a date-of-birth key: "4 mo", "1", "7".
 export function ageFromDob(dobKey, onKey = todayKey()) {
   if (!dobKey) return null

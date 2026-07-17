@@ -109,7 +109,12 @@ export default function App() {
           />
         )}
         {tab === 'photos' && (
-          <PhotosScreen data={store.data} addPhotos={store.addPhotos} removePhoto={store.removePhoto} />
+          <PhotosScreen
+            data={store.data}
+            addPhotos={store.addPhotos}
+            updatePhoto={store.updatePhoto}
+            removePhoto={store.removePhoto}
+          />
         )}
         {tab === 'family' && (
           <FamilyScreen
