@@ -232,11 +232,19 @@ function TodoSheet({ kids, documents, todo, onSave, onDelete, onClose }) {
   const [childIds, setChildIds] = useState(todo?.childIds || [])
   const [notes, setNotes] = useState(todo?.notes || '')
   const [documentIds, setDocumentIds] = useState(todo?.documentIds || [])
+  const [remind, setRemind] = useState(todo?.remind || false)
 
   const submit = (e) => {
     e.preventDefault()
     if (!title.trim()) return
-    onSave({ title: title.trim(), dueDate, childIds, notes: notes.trim(), documentIds })
+    onSave({
+      title: title.trim(),
+      dueDate,
+      childIds,
+      notes: notes.trim(),
+      documentIds,
+      remind: dueDate ? remind : false,
+    })
   }
 
   return (
@@ -250,6 +258,12 @@ function TodoSheet({ kids, documents, todo, onSave, onDelete, onClose }) {
           Due date
           <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
         </label>
+        {dueDate && (
+          <label className="checkbox-row">
+            <input type="checkbox" checked={remind} onChange={(e) => setRemind(e.target.checked)} />
+            Remind me on the due date
+          </label>
+        )}
         {kids.length > 0 && (
           <div className="form-field">
             <span className="form-label">Who's it about? <span className="label-hint">none = whole family</span></span>

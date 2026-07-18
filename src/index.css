@@ -1677,6 +1677,23 @@ button {
   letter-spacing: 0.15em;
 }
 
+.checkbox-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
+}
+
+.checkbox-row input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
 /* --- External calendars (subscribed feeds) ----------------------------------- */
 
 .ext-cal-list {

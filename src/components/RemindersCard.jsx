@@ -10,8 +10,9 @@ export default function RemindersCard({ user }) {
     <section className="card">
       <h2>Reminders</h2>
       <p className="muted">
-        A morning notification on this device with the day ahead — events, to-dos due, and
-        documents about to expire. Nothing on? No notification.
+        Notifications on this device: a morning digest of the day ahead, a nudge before events
+        that have a reminder set, and a ping when a to-do is due. Set an event's reminder in its
+        Reminder field; turn a to-do's on with “Remind me on the due date”.
       </p>
 
       {reminders.status === 'ios-install' && (

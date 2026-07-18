@@ -52,6 +52,34 @@ export const EVENT_CATEGORIES = [
   { id: 'other', label: 'Other' },
 ]
 
+// Lead times for a per-event reminder (minutes before the start), or null.
+export const EVENT_REMINDER_OPTIONS = [
+  { value: null, label: 'No reminder' },
+  { value: 0, label: 'At start time' },
+  { value: 10, label: '10 minutes before' },
+  { value: 30, label: '30 minutes before' },
+  { value: 60, label: '1 hour before' },
+  { value: 1440, label: '1 day before' },
+]
+
+// Human phrase for a reminder lead time, used in the notification body.
+export function reminderLeadLabel(minutes) {
+  switch (minutes) {
+    case 0:
+      return 'starting now'
+    case 10:
+      return 'in 10 minutes'
+    case 30:
+      return 'in 30 minutes'
+    case 60:
+      return 'in 1 hour'
+    case 1440:
+      return 'tomorrow'
+    default:
+      return `in ${minutes} minutes`
+  }
+}
+
 export const DOC_CATEGORIES = [
   { id: 'medical', label: 'Medical' },
   { id: 'school', label: 'School' },
@@ -143,9 +171,12 @@ export function normalizeData(raw) {
       dueDate: '',
       notes: '',
       documentIds: [],
+      remind: false,
     }).map((todo) => ({
       ...todo,
       done: todo.done === true,
+      // Notify when the to-do is due (only meaningful with a due date).
+      remind: todo.remind === true,
       documentIds: Array.isArray(todo.documentIds) ? todo.documentIds.filter(isNonEmptyString) : [],
     })),
     events: normalizeList(raw.events, ['id', 'title', 'date'], {
@@ -156,6 +187,7 @@ export function normalizeData(raw) {
       weekdays: [],
       endDate: '',
       exceptions: [],
+      reminder: null,
     }).map((event) => ({
       ...event,
       weekdays: Array.isArray(event.weekdays)
@@ -164,6 +196,9 @@ export function normalizeData(raw) {
       exceptions: Array.isArray(event.exceptions)
         ? event.exceptions.filter(isNonEmptyString)
         : [],
+      // Minutes before the start to notify, or null for no reminder. Only
+      // timed events can carry one.
+      reminder: Number.isInteger(event.reminder) && event.time ? event.reminder : null,
       documentIds: Array.isArray(event.documentIds)
         ? event.documentIds.filter(isNonEmptyString)
         : [],

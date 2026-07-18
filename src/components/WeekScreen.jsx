@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Check, ChevronLeft, ChevronRight, Paperclip, Plus, Repeat } from 'lucide-react'
+import { Bell, Check, ChevronLeft, ChevronRight, Paperclip, Plus, Repeat } from 'lucide-react'
 import EventSheet from './EventSheet.jsx'
 import { ChildTags } from './ChildChips.jsx'
 import { calendarColor } from '../lib/familyData.js'
@@ -149,6 +149,9 @@ export default function WeekScreen({
                             )}
                             {occurrence.documentIds?.length > 0 && (
                               <Paperclip size={12} aria-label="Has attachments" />
+                            )}
+                            {Number.isInteger(occurrence.reminder) && (
+                              <Bell size={12} aria-label="Reminder set" />
                             )}
                             {occurrence.isExternal ? (
                               <span className="external-tag">{occurrence.calendarName}</span>

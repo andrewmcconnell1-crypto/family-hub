@@ -209,7 +209,7 @@ export function useFamilyStore(user, ownerId) {
       ...d,
       todos: [
         ...d.todos,
-        { done: false, doneAt: '', dueDate: '', notes: '', childIds: [], documentIds: [], ...todo, id },
+        { done: false, doneAt: '', dueDate: '', notes: '', childIds: [], documentIds: [], remind: false, ...todo, id },
       ],
     }))
     return id
@@ -265,6 +265,7 @@ export function useFamilyStore(user, ownerId) {
           endDate: '',
           exceptions: [],
           documentIds: [],
+          reminder: null,
           ...event,
           id,
         },

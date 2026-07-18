@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Sheet from './Sheet.jsx'
 import DocAttachments from './DocAttachments.jsx'
 import { ChildMultiSelect } from './ChildChips.jsx'
-import { EVENT_CATEGORIES } from '../lib/familyData.js'
+import { EVENT_CATEGORIES, EVENT_REMINDER_OPTIONS } from '../lib/familyData.js'
 import { REPEAT_OPTIONS, WEEKDAY_LABELS, weekdayIndex } from '../utils/recurrence.js'
 import { formatDateKey } from '../utils/dateUtils.js'
 
@@ -30,6 +30,9 @@ export default function EventSheet({
   const [weekdays, setWeekdays] = useState(event?.weekdays || [])
   const [endDate, setEndDate] = useState(event?.endDate || '')
   const [documentIds, setDocumentIds] = useState(event?.documentIds || [])
+  // New timed events default to a 30-minute nudge; existing events keep their
+  // saved choice (null = none). A reminder only applies once a time is set.
+  const [reminder, setReminder] = useState(event ? (event.reminder ?? null) : 30)
 
   const pickDays = repeat === 'weekly' || repeat === 'fortnightly'
 
@@ -59,6 +62,7 @@ export default function EventSheet({
       weekdays: pickDays ? weekdays : [],
       endDate: repeat === 'none' ? '' : endDate,
       documentIds,
+      reminder: time ? reminder : null,
     })
   }
 
@@ -107,6 +111,21 @@ export default function EventSheet({
             </select>
           </label>
         </div>
+        {time && (
+          <label>
+            Reminder
+            <select
+              value={reminder === null ? '' : String(reminder)}
+              onChange={(e) => setReminder(e.target.value === '' ? null : Number(e.target.value))}
+            >
+              {EVENT_REMINDER_OPTIONS.map((option) => (
+                <option key={String(option.value)} value={option.value === null ? '' : String(option.value)}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {pickDays && (
           <div className="form-field">
             <span className="form-label">On days</span>

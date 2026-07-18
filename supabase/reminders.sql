@@ -50,6 +50,19 @@ create table if not exists public.calendar_feeds (
   created_at timestamptz not null default now()
 );
 
+-- Dedupe log for per-event / per-to-do reminders, so the every-15-minutes
+-- send-due-reminders function never sends the same reminder twice. Keyed by
+-- household owner so a shared hub gets each reminder once. Written only by the
+-- edge function (service role, which bypasses RLS); no user policies needed.
+create table if not exists public.sent_notifications (
+  owner_id  uuid not null references auth.users (id) on delete cascade,
+  notif_key text not null,
+  sent_at   timestamptz not null default now(),
+  primary key (owner_id, notif_key)
+);
+
+alter table public.sent_notifications enable row level security;
+
 alter table public.calendar_feeds enable row level security;
 
 drop policy if exists calendar_feeds_select on public.calendar_feeds;
