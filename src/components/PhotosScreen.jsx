@@ -21,6 +21,26 @@ export default function PhotosScreen({ data, addPhotos, updatePhoto, removePhoto
     () => data.photos.filter((photo) => matchesChild(photo, filter)),
     [data.photos, filter],
   )
+
+  // Album-style month sections (photos are stored newest-first).
+  const months = useMemo(() => {
+    const map = new Map()
+    for (const photo of visible) {
+      const date = photo.addedAt ? new Date(photo.addedAt) : null
+      const valid = date && !Number.isNaN(date.getTime())
+      const key = valid ? `${date.getFullYear()}-${date.getMonth()}` : 'earlier'
+      if (!map.has(key)) {
+        map.set(key, {
+          label: valid
+            ? date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+            : 'Earlier',
+          photos: [],
+        })
+      }
+      map.get(key).photos.push(photo)
+    }
+    return [...map.values()]
+  }, [visible])
   const viewingPhoto = viewing ? data.photos.find((p) => p.id === viewing) : null
   const editingPhoto = editing ? data.photos.find((p) => p.id === editing) : null
 
@@ -42,11 +62,16 @@ export default function PhotosScreen({ data, addPhotos, updatePhoto, removePhoto
           hint="First days of school, birthdays, holidays — build the family album."
         />
       ) : (
-        <div className="photo-grid">
-          {visible.map((photo) => (
-            <PhotoCell key={photo.id} photo={photo} onOpen={() => setViewing(photo.id)} />
-          ))}
-        </div>
+        months.map((month) => (
+          <section key={month.label} className="photo-month">
+            <h2>{month.label}</h2>
+            <div className="photo-grid">
+              {month.photos.map((photo) => (
+                <PhotoCell key={photo.id} photo={photo} onOpen={() => setViewing(photo.id)} />
+              ))}
+            </div>
+          </section>
+        ))
       )}
 
       {adding && (

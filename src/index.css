@@ -1033,7 +1033,15 @@ button {
 .photo-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  gap: 8px;
+}
+
+.photo-month h2 {
+  margin-bottom: 0.5rem;
+}
+
+.photo-month + .photo-month {
+  margin-top: 0.5rem;
 }
 
 .photo-cell {
