@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { AlertCircle, ChevronDown, ChevronRight } from 'lucide-react'
+import { AlertCircle, ChevronDown, ChevronRight, Search } from 'lucide-react'
+import SearchOverlay from './SearchOverlay.jsx'
 import Avatar from './Avatar.jsx'
 import { ChildTags } from './ChildChips.jsx'
 import { expiringDocuments } from '../lib/familyData.js'
@@ -36,6 +37,7 @@ export default function HomeScreen({ data, onNavigate }) {
       todos: data.todos.filter((t) => !t.done && t.dueDate === key),
     })
   }
+  const [searching, setSearching] = useState(false)
   // Today starts expanded; tap a day's header to toggle it.
   const [expandedDays, setExpandedDays] = useState(() => new Set([today]))
   const toggleDay = (key) =>
@@ -53,11 +55,21 @@ export default function HomeScreen({ data, onNavigate }) {
 
   return (
     <div className="screen">
-      <header className="screen-header">
-        <p className="eyebrow">{formatDateKey(today, { long: true })}</p>
-        <h1>
-          <span className="marker">{greeting()}</span>
-        </h1>
+      <header className="screen-header home-header">
+        <div>
+          <p className="eyebrow">{formatDateKey(today, { long: true })}</p>
+          <h1>
+            <span className="marker">{greeting()}</span>
+          </h1>
+        </div>
+        <button
+          type="button"
+          className="icon-button search-button"
+          aria-label="Search everything"
+          onClick={() => setSearching(true)}
+        >
+          <Search size={22} />
+        </button>
       </header>
 
       {data.children.length > 0 && (
@@ -178,6 +190,9 @@ export default function HomeScreen({ data, onNavigate }) {
         )}
       </section>
 
+      {searching && (
+        <SearchOverlay data={data} onNavigate={onNavigate} onClose={() => setSearching(false)} />
+      )}
     </div>
   )
 }
