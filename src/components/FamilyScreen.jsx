@@ -5,7 +5,8 @@ import ImageCropper from './ImageCropper.jsx'
 import Sheet from './Sheet.jsx'
 import EmptyState from './EmptyState.jsx'
 import { CHILD_COLORS, childColor } from '../lib/familyData.js'
-import { deleteFile, putFile, releaseFileUrl } from '../lib/fileStore.js'
+import { buildZip, extensionFor, safeFileName } from '../lib/backupZip.js'
+import { deleteFile, getFile, putFile, releaseFileUrl } from '../lib/fileStore.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
 import { makeId } from '../utils/id.js'
 import {
@@ -17,7 +18,7 @@ import {
   leaveHousehold,
   removeMember,
 } from '../lib/household.js'
-import { ageFromDob, formatDateKey } from '../utils/dateUtils.js'
+import { ageFromDob, formatDateKey, todayKey } from '../utils/dateUtils.js'
 
 const SYNC_LABELS = {
   local: { dot: 'sync-dot-local', text: 'On this device only' },
@@ -42,6 +43,58 @@ export default function FamilyScreen({
   onSignOut,
 }) {
   const [sheet, setSheet] = useState(null) // null | { child? }
+  const [backingUp, setBackingUp] = useState(false)
+
+  // Bundle everything — data as JSON plus every document, photo and avatar
+  // blob — into a zip the user can archive anywhere.
+  const exportBackup = async () => {
+    if (backingUp) return
+    setBackingUp(true)
+    try {
+      const files = [{ name: 'treehouse/data.json', data: JSON.stringify(data, null, 2) }]
+      for (const doc of data.documents) {
+        const blob = await getFile(doc.fileId).catch(() => null)
+        if (blob) {
+          const name = safeFileName(doc.title, doc.id)
+          files.push({
+            name: `treehouse/documents/${name}-${doc.id}${extensionFor(doc.fileName, blob.type)}`,
+            data: blob,
+          })
+        }
+      }
+      for (const photo of data.photos) {
+        const blob = await getFile(photo.fileId).catch(() => null)
+        if (blob) {
+          files.push({
+            name: `treehouse/photos/${photo.id}${extensionFor('', blob.type) || '.jpg'}`,
+            data: blob,
+          })
+        }
+      }
+      for (const member of data.children) {
+        if (!member.avatarFileId) continue
+        const blob = await getFile(member.avatarFileId).catch(() => null)
+        if (blob) {
+          files.push({
+            name: `treehouse/avatars/${safeFileName(member.name, member.id)}${extensionFor('', blob.type) || '.jpg'}`,
+            data: blob,
+          })
+        }
+      }
+      const zip = await buildZip(files)
+      const url = URL.createObjectURL(zip)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `treehouse-backup-${todayKey()}.zip`
+      link.click()
+      setTimeout(() => URL.revokeObjectURL(url), 30000)
+    } catch (error) {
+      console.error('Backup failed', error)
+      window.alert("Couldn't build the backup — check your connection and try again.")
+    } finally {
+      setBackingUp(false)
+    }
+  }
 
   return (
     <div className="screen">
@@ -147,6 +200,17 @@ export default function FamilyScreen({
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="card">
+        <h2>Backup</h2>
+        <p className="muted">
+          Download everything — data, documents, photos and avatars — as a zip you can keep
+          anywhere safe.
+        </p>
+        <button type="button" className="primary-button" disabled={backingUp} onClick={exportBackup}>
+          {backingUp ? 'Preparing…' : 'Download backup'}
+        </button>
       </section>
 
       {sheet && (
@@ -479,18 +543,7 @@ function ChildSheet({ child, onSave, onDelete, onClose }) {
         </div>
         <div className="form-actions">
           {onDelete && (
-            <button
-              type="button"
-              className="danger-button"
-              onClick={() => {
-                if (
-                  window.confirm(
-                    `Remove ${child.name}? Their events, documents and photos stay, just untagged.`,
-                  )
-                )
-                  onDelete()
-              }}
-            >
+            <button type="button" className="danger-button" onClick={onDelete}>
               Remove
             </button>
           )}

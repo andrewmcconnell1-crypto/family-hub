@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import TabBar from './components/TabBar.jsx'
 import HomeScreen from './components/HomeScreen.jsx'
 import PlannerScreen from './components/PlannerScreen.jsx'
@@ -70,6 +70,74 @@ export default function App() {
     setWallpaperState(on)
   }
 
+  // Undo for deletes: mutate immediately, keep a snapshot for a few seconds.
+  // File blobs are only purged when the undo window closes, so undo restores
+  // documents/photos completely.
+  const [undoMessage, setUndoMessage] = useState(null)
+  const undoRef = useRef(null) // { snapshot, fileIds } for the pending delete
+  const undoTimerRef = useRef(null)
+
+  const finalizeUndo = () => {
+    clearTimeout(undoTimerRef.current)
+    const pending = undoRef.current
+    if (pending?.fileIds.length) store.purgeFiles(pending.fileIds)
+    undoRef.current = null
+    setUndoMessage(null)
+  }
+
+  const deleteWithUndo = (message, mutate, fileIds = []) => {
+    // A new delete finalizes any previous pending one first.
+    finalizeUndo()
+    undoRef.current = { snapshot: store.data, fileIds }
+    mutate()
+    setUndoMessage(message)
+    undoTimerRef.current = setTimeout(finalizeUndo, 6000)
+  }
+
+  const undo = () => {
+    clearTimeout(undoTimerRef.current)
+    if (undoRef.current) store.restore(undoRef.current.snapshot)
+    undoRef.current = null
+    setUndoMessage(null)
+  }
+
+  // The store, with destructive actions routed through the undo machinery.
+  const actions = useMemo(
+    () => ({
+      ...store,
+      removeEvent: (id) => {
+        const event = store.data.events.find((e) => e.id === id)
+        deleteWithUndo(
+          event?.repeat !== 'none' ? 'Series deleted' : 'Event deleted',
+          () => store.removeEvent(id),
+        )
+      },
+      skipEventOccurrence: (id, dateKey) =>
+        deleteWithUndo('Day removed from series', () => store.skipEventOccurrence(id, dateKey)),
+      removeTodo: (id) => deleteWithUndo('To-do deleted', () => store.removeTodo(id)),
+      clearDoneTodos: () =>
+        deleteWithUndo('Completed to-dos cleared', () => store.clearDoneTodos()),
+      removeDocument: (id) => {
+        const doc = store.data.documents.find((x) => x.id === id)
+        deleteWithUndo('Document deleted', () => store.removeDocument(id), doc ? [doc.fileId] : [])
+      },
+      removePhoto: (id) => {
+        const photo = store.data.photos.find((x) => x.id === id)
+        deleteWithUndo('Photo deleted', () => store.removePhoto(id), photo ? [photo.fileId] : [])
+      },
+      removeChild: (id) => {
+        const member = store.data.children.find((c) => c.id === id)
+        deleteWithUndo(
+          member ? `${member.name} removed` : 'Member removed',
+          () => store.removeChild(id),
+          member?.avatarFileId ? [member.avatarFileId] : [],
+        )
+      },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [store.data],
+  )
+
   const dismissInvite = () => {
     clearPendingJoinCode()
     setPendingJoinCode(null)
@@ -108,14 +176,14 @@ export default function App() {
         )}
         {tab === 'home' && <HomeScreen data={store.data} onNavigate={navigate} />}
         {tab === 'planner' && (
-          <PlannerScreen mode={plannerMode} onModeChange={setPlannerMode} store={store} />
+          <PlannerScreen mode={plannerMode} onModeChange={setPlannerMode} store={actions} />
         )}
         {tab === 'documents' && (
           <DocumentsScreen
             data={store.data}
             addDocument={store.addDocument}
             updateDocument={store.updateDocument}
-            removeDocument={store.removeDocument}
+            removeDocument={actions.removeDocument}
           />
         )}
         {tab === 'photos' && (
@@ -123,7 +191,7 @@ export default function App() {
             data={store.data}
             addPhotos={store.addPhotos}
             updatePhoto={store.updatePhoto}
-            removePhoto={store.removePhoto}
+            removePhoto={actions.removePhoto}
           />
         )}
         {tab === 'family' && (
@@ -131,7 +199,7 @@ export default function App() {
             data={store.data}
             addChild={store.addChild}
             updateChild={store.updateChild}
-            removeChild={store.removeChild}
+            removeChild={actions.removeChild}
             syncState={store.syncState}
             user={auth.user}
             household={household}
@@ -150,6 +218,14 @@ export default function App() {
         )}
       </main>
       <TabBar tab={tab} onChange={navigate} />
+      {undoMessage && (
+        <div className="undo-snackbar" role="status">
+          <span>{undoMessage}</span>
+          <button type="button" className="undo-button" onClick={undo}>
+            Undo
+          </button>
+        </div>
+      )}
       {updateReady && <UpdateBanner onReload={() => window.location.reload()} />}
     </div>
   )

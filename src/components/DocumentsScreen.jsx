@@ -121,9 +121,7 @@ function DocRow({ doc, kids, onEdit, onRemove }) {
         type="button"
         className="icon-button"
         aria-label={`Delete ${doc.title}`}
-        onClick={() => {
-          if (window.confirm(`Delete “${doc.title}”? This can't be undone.`)) onRemove()
-        }}
+        onClick={onRemove}
       >
         <Trash2 size={18} />
       </button>

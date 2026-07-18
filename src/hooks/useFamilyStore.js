@@ -183,7 +183,8 @@ export function useFamilyStore(user, ownerId) {
   }, [])
 
   // Removing a member keeps their events/documents/photos but untags them,
-  // so nothing is silently lost. Their avatar image, though, goes with them.
+  // so nothing is silently lost. Their avatar blob is purged separately (via
+  // purgeFiles) once any undo window has passed.
   const removeChild = useCallback((id) => {
     const untag = (list) =>
       list.map((item) =>
@@ -191,21 +192,14 @@ export function useFamilyStore(user, ownerId) {
           ? { ...item, childIds: item.childIds.filter((c) => c !== id) }
           : item,
       )
-    setData((d) => {
-      const member = d.children.find((c) => c.id === id)
-      if (member?.avatarFileId) {
-        releaseFileUrl(member.avatarFileId)
-        deleteFile(member.avatarFileId).catch(() => {})
-      }
-      return {
-        ...d,
-        children: d.children.filter((c) => c.id !== id),
-        todos: untag(d.todos),
-        events: untag(d.events),
-        documents: untag(d.documents),
-        photos: untag(d.photos),
-      }
-    })
+    setData((d) => ({
+      ...d,
+      children: d.children.filter((c) => c.id !== id),
+      todos: untag(d.todos),
+      events: untag(d.events),
+      documents: untag(d.documents),
+      photos: untag(d.photos),
+    }))
   }, [])
 
   const addTodo = useCallback((todo) => {
@@ -331,7 +325,8 @@ export function useFamilyStore(user, ownerId) {
     }))
   }, [])
 
-  // Deleting a document also unlinks it from any events/to-dos that attached it.
+  // Deleting a document also unlinks it from any events/to-dos that attached
+  // it. The blob itself is purged separately once any undo window has passed.
   const removeDocument = useCallback((id) => {
     const unlink = (list) =>
       list.map((item) =>
@@ -339,19 +334,12 @@ export function useFamilyStore(user, ownerId) {
           ? { ...item, documentIds: item.documentIds.filter((x) => x !== id) }
           : item,
       )
-    setData((d) => {
-      const doc = d.documents.find((x) => x.id === id)
-      if (doc) {
-        releaseFileUrl(doc.fileId)
-        deleteFile(doc.fileId).catch(() => {})
-      }
-      return {
-        ...d,
-        documents: d.documents.filter((x) => x.id !== id),
-        events: unlink(d.events),
-        todos: unlink(d.todos),
-      }
-    })
+    setData((d) => ({
+      ...d,
+      documents: d.documents.filter((x) => x.id !== id),
+      events: unlink(d.events),
+      todos: unlink(d.todos),
+    }))
   }, [])
 
   const addPhotos = useCallback(async ({ files, childIds, caption }) => {
@@ -383,14 +371,20 @@ export function useFamilyStore(user, ownerId) {
   }, [])
 
   const removePhoto = useCallback((id) => {
-    setData((d) => {
-      const photo = d.photos.find((x) => x.id === id)
-      if (photo) {
-        releaseFileUrl(photo.fileId)
-        deleteFile(photo.fileId).catch(() => {})
-      }
-      return { ...d, photos: d.photos.filter((x) => x.id !== id) }
-    })
+    setData((d) => ({ ...d, photos: d.photos.filter((x) => x.id !== id) }))
+  }, [])
+
+  // Undo support: restore a previous data snapshot wholesale, and purge file
+  // blobs once a delete is final (its undo window expired).
+  const restore = useCallback((snapshot) => {
+    setData(snapshot)
+  }, [])
+
+  const purgeFiles = useCallback((fileIds) => {
+    for (const fileId of fileIds) {
+      releaseFileUrl(fileId)
+      deleteFile(fileId).catch(() => {})
+    }
   }, [])
 
   return {
@@ -415,5 +409,7 @@ export function useFamilyStore(user, ownerId) {
     addPhotos,
     updatePhoto,
     removePhoto,
+    restore,
+    purgeFiles,
   }
 }

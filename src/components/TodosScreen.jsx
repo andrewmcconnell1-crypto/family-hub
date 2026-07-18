@@ -90,10 +90,7 @@ export default function TodosScreen({
             <button
               type="button"
               className="link-button"
-              onClick={() =>
-                window.confirm('Remove all completed to-dos? This can’t be undone.') &&
-                clearDoneTodos()
-              }
+              onClick={clearDoneTodos}
             >
               Clear
             </button>

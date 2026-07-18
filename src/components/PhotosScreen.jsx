@@ -145,9 +145,7 @@ function PhotoViewer({ photo, kids, onEdit, onDelete, onClose }) {
             type="button"
             className="icon-button viewer-button"
             aria-label="Delete photo"
-            onClick={() => {
-              if (window.confirm('Delete this photo? This can’t be undone.')) onDelete()
-            }}
+            onClick={onDelete}
           >
             <Trash2 size={20} />
           </button>
