@@ -32,6 +32,39 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(networkFirst(request))
 })
 
+// Web-push reminders: show the digest sent by the send-reminders edge
+// function, and focus (or open) the app when the notification is tapped.
+self.addEventListener('push', (event) => {
+  let data
+  try {
+    data = event.data ? event.data.json() : {}
+  } catch {
+    data = { body: event.data ? event.data.text() : '' }
+  }
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'Treehouse', {
+      body: data.body || '',
+      icon: './icon-512.png',
+      badge: './icon-512.png',
+      data: { url: data.url || './' },
+    }),
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = (event.notification.data && event.notification.data.url) || './'
+  event.waitUntil(
+    (async () => {
+      const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus()
+      }
+      return self.clients.openWindow(url)
+    })(),
+  )
+})
+
 async function networkFirst(request) {
   const cache = await caches.open(CACHE)
   try {

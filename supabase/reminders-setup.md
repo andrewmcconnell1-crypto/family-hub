@@ -1,0 +1,96 @@
+# Reminders & calendar feed — one-time Supabase setup
+
+Two features share this setup:
+
+- **Reminders** — a morning push notification with the day ahead (events,
+  to-dos due, documents expiring). Turned on per device from the app's
+  Family tab.
+- **Calendar feed** — a private link Google Calendar / Apple Calendar can
+  subscribe to, so Treehouse events appear alongside everything else.
+
+Everything below happens in the [Supabase dashboard](https://supabase.com/dashboard)
+for the Treehouse project. Allow ~10 minutes.
+
+## 1. Create the tables
+
+SQL Editor → New query → paste the whole of `supabase/reminders.sql` → Run.
+
+## 2. Deploy the two edge functions
+
+Edge Functions → **Deploy a new function** → *Via Editor*:
+
+1. Name it `calendar-feed`, replace the sample code with the contents of
+   `supabase/functions/calendar-feed/index.ts`, and deploy.
+2. Repeat with the name `send-reminders` and
+   `supabase/functions/send-reminders/index.ts`.
+
+Then for **each** function: open it → Details → turn **Enforce JWT
+verification OFF**. (Calendar apps and the scheduler can't send Supabase
+auth headers; access is protected by the secret token / cron key instead.)
+
+## 3. Set the secrets
+
+Edge Functions → Secrets (or Project Settings → Edge Functions). Add:
+
+| Name | Value |
+| --- | --- |
+| `VAPID_KEYS` | The JSON printed by `node scripts/generate-vapid-keys.mjs` (private — never commit it). If you were given this value in chat, use that one: it matches the public key already in the app. |
+| `CRON_SECRET` | Any long random string — the same one you put in the cron job below. |
+| `REMINDER_TZ` | Your IANA timezone, e.g. `Australia/Sydney`, `Europe/London`. Sets which day "today" means in the digest. |
+| `APP_URL` | Optional. Where tapping the notification opens. Defaults to the GitHub Pages app. |
+
+## 4. Schedule the morning digest
+
+The digest sends when something calls `send-reminders`. Use Supabase's
+built-in cron (Database → Extensions → enable **pg_cron** and **pg_net** if
+they aren't already), then run this in the SQL Editor — replacing
+`YOUR-PROJECT-REF` (the part before `.supabase.co` in your project URL),
+`YOUR-CRON-SECRET`, and the schedule:
+
+```sql
+select cron.schedule(
+  'treehouse-morning-digest',
+  '0 21 * * *',  -- runs at 21:00 UTC = 7:00am next day in Sydney (AEST is UTC+10)
+  $$
+  select net.http_post(
+    url := 'https://YOUR-PROJECT-REF.supabase.co/functions/v1/send-reminders',
+    headers := jsonb_build_object('x-cron-key', 'YOUR-CRON-SECRET')
+  );
+  $$
+);
+```
+
+Pick the UTC hour that matches the local time you want:
+`local time − UTC offset`. Examples for a 7am digest: Sydney (UTC+10) → `21`,
+London winter (UTC+0) → `7`, New York winter (UTC−5) → `12`.
+(pg_cron runs in UTC and doesn't follow daylight saving — the digest will
+drift an hour when the clocks change; adjust the schedule then if you care.)
+
+To test immediately, open a terminal (or use any HTTP tool):
+
+```
+curl "https://YOUR-PROJECT-REF.supabase.co/functions/v1/send-reminders?key=YOUR-CRON-SECRET"
+```
+
+It replies with `{"today":"…","sent":N,"skipped":N,…}`. `sent: 0, skipped: N`
+means it worked but nothing is on today for the subscribed devices.
+
+## 5. Turn things on in the app
+
+- **Reminders**: Family tab → Reminders → *Turn on reminders* on each device
+  that should get the digest. On iPhone the app must be opened from the Home
+  Screen icon (Add to Home Screen first) — iOS only allows notifications for
+  installed web apps.
+- **Calendar feed**: Family tab → Calendar feed → *Create feed link* → Copy,
+  then in Google Calendar: Settings → Add calendar → **From URL** → paste
+  (or iPhone: Settings → Apps → Calendar → Calendar Accounts → Add Account →
+  Other → **Add Subscribed Calendar**). Google refreshes subscribed feeds
+  every few hours — new Treehouse events appear with a delay, that's normal.
+
+## Rotating the push keys
+
+If the VAPID keys ever need replacing: run
+`node scripts/generate-vapid-keys.mjs`, put the printed public key into
+`PUSH_PUBLIC_KEY` in `src/lib/push.js` (commit + deploy), set the printed
+JSON as the `VAPID_KEYS` secret, and have every device turn reminders off
+and on again.

@@ -230,6 +230,37 @@ button {
   overflow-wrap: anywhere;
 }
 
+.feed-url-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.35rem 0 0.6rem;
+}
+
+.feed-url {
+  flex: 1;
+  min-width: 0;
+  padding: 0.45rem 0.55rem;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+  max-height: 4.6em;
+  overflow-y: auto;
+}
+
+.feed-url-row .primary-button {
+  flex-shrink: 0;
+  padding: 0.45rem 0.8rem;
+}
+
+.feed-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.35rem;
+}
+
 .appearance-label {
   margin: 0.9rem 0 0.4rem;
   font-size: 0.85rem;

@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Copy, Plus, Share2, Users } from 'lucide-react'
 import Avatar from './Avatar.jsx'
+import CalendarFeedCard from './CalendarFeedCard.jsx'
 import ImageCropper from './ImageCropper.jsx'
+import RemindersCard from './RemindersCard.jsx'
 import Sheet from './Sheet.jsx'
 import EmptyState from './EmptyState.jsx'
 import { CHILD_COLORS, childColor } from '../lib/familyData.js'
@@ -161,6 +163,9 @@ export default function FamilyScreen({
       </section>
 
       {user && household && <HouseholdSection household={household} />}
+
+      {user && <RemindersCard user={user} />}
+      {user && <CalendarFeedCard user={user} />}
 
       <section className="card">
         <h2>Appearance</h2>
