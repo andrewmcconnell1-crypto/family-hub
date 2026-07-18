@@ -50,7 +50,7 @@ export default function WeekScreen({
 
   return (
     <div className="screen">
-      <header className="screen-header screen-header-row">
+      <header className="screen-header screen-header-row planner-header">
         {tabs || <h1>Week</h1>}
         <button type="button" className="primary-button" onClick={() => setSheet({ defaultDate: isCurrentWeek ? today : weekStart })}>
           <Plus size={18} aria-hidden="true" /> Event

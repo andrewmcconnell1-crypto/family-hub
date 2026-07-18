@@ -53,7 +53,7 @@ export default function CalendarScreen({
 
   return (
     <div className="screen">
-      <header className="screen-header screen-header-row">
+      <header className="screen-header screen-header-row planner-header">
         {tabs || <h1>Calendar</h1>}
         <button type="button" className="primary-button" onClick={() => setSheet({})}>
           <Plus size={18} aria-hidden="true" /> Event

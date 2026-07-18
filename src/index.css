@@ -167,6 +167,19 @@ button {
   padding: 0.45rem 0.8rem;
 }
 
+/* Planner: keep the view pills + add button pinned while the list scrolls,
+   on a frosted strip so it reads over content and the photo wallpaper. */
+.planner-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: -1.25rem -1rem 0;
+  padding: 0.9rem 1rem 0.65rem;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
 .tab-bar {
   position: fixed;
   bottom: 0;
