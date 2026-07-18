@@ -81,6 +81,18 @@ describe('reorderTodo', () => {
   })
 })
 
+describe('document links', () => {
+  it('defaults documentIds and drops links to missing documents', () => {
+    const data = normalizeData({
+      documents: [{ id: 'd1', title: 'Invite', fileId: 'f1' }],
+      events: [{ id: 'e1', title: 'Party', date: '2026-07-20', documentIds: ['d1', 'ghost'] }],
+      todos: [{ id: 't1', title: 'RSVP', documentIds: 'junk' }],
+    })
+    expect(data.events[0].documentIds).toEqual(['d1'])
+    expect(data.todos[0].documentIds).toEqual([])
+  })
+})
+
 describe('expiringDocuments', () => {
   const docs = [
     { id: 'a', title: 'Passport', expiryDate: '2026-08-01' },

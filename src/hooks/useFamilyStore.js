@@ -214,7 +214,7 @@ export function useFamilyStore(user, ownerId) {
       ...d,
       todos: [
         ...d.todos,
-        { done: false, doneAt: '', dueDate: '', notes: '', childIds: [], ...todo, id },
+        { done: false, doneAt: '', dueDate: '', notes: '', childIds: [], documentIds: [], ...todo, id },
       ],
     }))
     return id
@@ -265,6 +265,7 @@ export function useFamilyStore(user, ownerId) {
           weekdays: [],
           endDate: '',
           exceptions: [],
+          documentIds: [],
           ...event,
           id,
         },
@@ -330,14 +331,26 @@ export function useFamilyStore(user, ownerId) {
     }))
   }, [])
 
+  // Deleting a document also unlinks it from any events/to-dos that attached it.
   const removeDocument = useCallback((id) => {
+    const unlink = (list) =>
+      list.map((item) =>
+        item.documentIds.includes(id)
+          ? { ...item, documentIds: item.documentIds.filter((x) => x !== id) }
+          : item,
+      )
     setData((d) => {
       const doc = d.documents.find((x) => x.id === id)
       if (doc) {
         releaseFileUrl(doc.fileId)
         deleteFile(doc.fileId).catch(() => {})
       }
-      return { ...d, documents: d.documents.filter((x) => x.id !== id) }
+      return {
+        ...d,
+        documents: d.documents.filter((x) => x.id !== id),
+        events: unlink(d.events),
+        todos: unlink(d.todos),
+      }
     })
   }, [])
 

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronRight, ListTodo, Plus } from 'lucide-react'
+import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronRight, ListTodo, Paperclip, Plus } from 'lucide-react'
 import Sheet from './Sheet.jsx'
+import DocAttachments from './DocAttachments.jsx'
 import EmptyState from './EmptyState.jsx'
 import { ChildFilter, ChildMultiSelect, ChildTags } from './ChildChips.jsx'
 import { matchesChild } from '../lib/familyData.js'
@@ -117,6 +118,7 @@ export default function TodosScreen({
       {sheet && (
         <TodoSheet
           kids={data.children}
+          documents={data.documents}
           todo={sheet.todo}
           onSave={(fields) => {
             if (sheet.todo) updateTodo(sheet.todo.id, fields)
@@ -154,7 +156,7 @@ function TodoRow({ todo, kids, onToggle, onEdit, onMove }) {
       </button>
       <button type="button" className="todo-main" onClick={onEdit}>
         <span className="todo-title">{todo.title}</span>
-        {(todo.dueDate || todo.childIds.length > 0 || todo.notes) && (
+        {(todo.dueDate || todo.childIds.length > 0 || todo.notes || todo.documentIds.length > 0) && (
           <span className="todo-meta">
             {todo.dueDate && (
               <span className={`todo-due${overdue ? ' todo-overdue' : ''}`}>
@@ -162,6 +164,7 @@ function TodoRow({ todo, kids, onToggle, onEdit, onMove }) {
                 {formatDateKey(todo.dueDate, { weekday: true })}
               </span>
             )}
+            {todo.documentIds.length > 0 && <Paperclip size={12} aria-label="Has attachments" />}
             <ChildTags kids={kids} childIds={todo.childIds} />
             {todo.notes && <span className="todo-notes">{todo.notes}</span>}
           </span>
@@ -193,16 +196,17 @@ function TodoRow({ todo, kids, onToggle, onEdit, onMove }) {
   )
 }
 
-function TodoSheet({ kids, todo, onSave, onDelete, onClose }) {
+function TodoSheet({ kids, documents, todo, onSave, onDelete, onClose }) {
   const [title, setTitle] = useState(todo?.title || '')
   const [dueDate, setDueDate] = useState(todo?.dueDate || '')
   const [childIds, setChildIds] = useState(todo?.childIds || [])
   const [notes, setNotes] = useState(todo?.notes || '')
+  const [documentIds, setDocumentIds] = useState(todo?.documentIds || [])
 
   const submit = (e) => {
     e.preventDefault()
     if (!title.trim()) return
-    onSave({ title: title.trim(), dueDate, childIds, notes: notes.trim() })
+    onSave({ title: title.trim(), dueDate, childIds, notes: notes.trim(), documentIds })
   }
 
   return (
@@ -226,6 +230,10 @@ function TodoSheet({ kids, todo, onSave, onDelete, onClose }) {
           Notes
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} />
         </label>
+        <div className="form-field">
+          <span className="form-label">Attachments</span>
+          <DocAttachments docs={documents || []} value={documentIds} onChange={setDocumentIds} />
+        </div>
         <div className="form-actions">
           {onDelete && (
             <button type="button" className="danger-button" onClick={onDelete}>

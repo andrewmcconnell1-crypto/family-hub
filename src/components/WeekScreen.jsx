@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Check, ChevronLeft, ChevronRight, Plus, Repeat } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Paperclip, Plus, Repeat } from 'lucide-react'
 import EventSheet from './EventSheet.jsx'
 import { ChildTags } from './ChildChips.jsx'
 import { calendarOccurrences, weekdayIndex } from '../utils/recurrence.js'
@@ -134,6 +134,9 @@ export default function WeekScreen({
                             {occurrence.repeat !== 'none' && !occurrence.isBirthday && (
                               <Repeat size={12} aria-label="Repeats" />
                             )}
+                            {occurrence.documentIds?.length > 0 && (
+                              <Paperclip size={12} aria-label="Has attachments" />
+                            )}
                             <ChildTags kids={data.children} childIds={occurrence.childIds} />
                           </span>
                         </div>
@@ -175,6 +178,7 @@ export default function WeekScreen({
       {sheet && (
         <EventSheet
           kids={data.children}
+          documents={data.documents}
           event={sheet.event}
           occurrenceDate={sheet.occurrenceDate}
           defaultDate={sheet.defaultDate || today}

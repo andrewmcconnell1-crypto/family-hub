@@ -1508,6 +1508,89 @@ button {
   letter-spacing: 0.15em;
 }
 
+/* --- Document attachments on events / to-dos ---------------------------------- */
+
+.attachments {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+.attachments .link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.attachments-empty {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.attached-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  color: var(--accent);
+}
+
+.attached-title {
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.attached-title:hover {
+  color: var(--accent);
+}
+
+.doc-picker {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0.25rem 0.5rem;
+  width: 100%;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: var(--bg);
+}
+
+.doc-picker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.doc-picker-row input {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+}
+
+.doc-picker-title {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .edit-photo-preview {
   display: flex;
   align-items: center;

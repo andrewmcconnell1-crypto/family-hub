@@ -109,7 +109,12 @@ export function normalizeData(raw) {
       doneAt: '',
       dueDate: '',
       notes: '',
-    }).map((todo) => ({ ...todo, done: todo.done === true })),
+      documentIds: [],
+    }).map((todo) => ({
+      ...todo,
+      done: todo.done === true,
+      documentIds: Array.isArray(todo.documentIds) ? todo.documentIds.filter(isNonEmptyString) : [],
+    })),
     events: normalizeList(raw.events, ['id', 'title', 'date'], {
       time: '',
       category: 'other',
@@ -125,6 +130,9 @@ export function normalizeData(raw) {
         : [],
       exceptions: Array.isArray(event.exceptions)
         ? event.exceptions.filter(isNonEmptyString)
+        : [],
+      documentIds: Array.isArray(event.documentIds)
+        ? event.documentIds.filter(isNonEmptyString)
         : [],
     })),
     documents: normalizeList(raw.documents, ['id', 'title', 'fileId'], {
@@ -146,6 +154,13 @@ export function normalizeData(raw) {
   for (const listName of ['todos', 'events', 'documents', 'photos']) {
     for (const item of data[listName]) {
       item.childIds = item.childIds.filter((id) => childIdSet.has(id))
+    }
+  }
+  // Same for links to documents that no longer exist.
+  const docIdSet = new Set(data.documents.map((doc) => doc.id))
+  for (const listName of ['todos', 'events']) {
+    for (const item of data[listName]) {
+      item.documentIds = item.documentIds.filter((id) => docIdSet.has(id))
     }
   }
   return data

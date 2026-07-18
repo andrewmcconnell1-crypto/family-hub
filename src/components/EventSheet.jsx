@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Sheet from './Sheet.jsx'
+import DocAttachments from './DocAttachments.jsx'
 import { ChildMultiSelect } from './ChildChips.jsx'
 import { EVENT_CATEGORIES } from '../lib/familyData.js'
 import { REPEAT_OPTIONS, WEEKDAY_LABELS, weekdayIndex } from '../utils/recurrence.js'
@@ -10,6 +11,7 @@ import { formatDateKey } from '../utils/dateUtils.js'
 // occurrence it was opened from.
 export default function EventSheet({
   kids,
+  documents,
   event,
   occurrenceDate,
   defaultDate,
@@ -27,6 +29,7 @@ export default function EventSheet({
   const [repeat, setRepeat] = useState(event?.repeat || 'none')
   const [weekdays, setWeekdays] = useState(event?.weekdays || [])
   const [endDate, setEndDate] = useState(event?.endDate || '')
+  const [documentIds, setDocumentIds] = useState(event?.documentIds || [])
 
   const pickDays = repeat === 'weekly' || repeat === 'fortnightly'
 
@@ -55,6 +58,7 @@ export default function EventSheet({
       repeat,
       weekdays: pickDays ? weekdays : [],
       endDate: repeat === 'none' ? '' : endDate,
+      documentIds,
     })
   }
 
@@ -137,6 +141,10 @@ export default function EventSheet({
           Notes
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Bring goggles" />
         </label>
+        <div className="form-field">
+          <span className="form-label">Attachments</span>
+          <DocAttachments docs={documents || []} value={documentIds} onChange={setDocumentIds} />
+        </div>
         <div className="form-actions">
           {onSkipDay && (
             <button type="button" className="danger-button" onClick={onSkipDay}>

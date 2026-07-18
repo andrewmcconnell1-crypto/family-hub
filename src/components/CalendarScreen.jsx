@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Repeat } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Paperclip, Plus, Repeat } from 'lucide-react'
 import EmptyState from './EmptyState.jsx'
 import EventSheet from './EventSheet.jsx'
 import { ChildTags } from './ChildChips.jsx'
@@ -148,6 +148,9 @@ export default function CalendarScreen({
                       {occurrence.repeat !== 'none' && !occurrence.isBirthday && (
                         <Repeat size={12} aria-label="Repeats" />
                       )}
+                      {occurrence.documentIds?.length > 0 && (
+                        <Paperclip size={12} aria-label="Has attachments" />
+                      )}
                       <ChildTags kids={data.children} childIds={occurrence.childIds} />
                     </span>
                     {occurrence.notes && <span className="event-notes">{occurrence.notes}</span>}
@@ -162,6 +165,7 @@ export default function CalendarScreen({
       {sheet && (
         <EventSheet
           kids={data.children}
+          documents={data.documents}
           event={sheet.event}
           occurrenceDate={sheet.occurrenceDate}
           defaultDate={selectedKey}
