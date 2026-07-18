@@ -12,6 +12,7 @@ import Wallpaper from './components/Wallpaper.jsx'
 import { useAuth } from './hooks/useAuth.js'
 import { useUpdatePrompt } from './hooks/useUpdatePrompt.js'
 import { useFamilyStore } from './hooks/useFamilyStore.js'
+import { useExternalCalendars } from './hooks/useExternalCalendars.js'
 import { useHousehold } from './hooks/useHousehold.js'
 import { useTheme } from './hooks/useTheme.js'
 import { captureJoinCodeFromUrl, clearPendingJoinCode } from './lib/household.js'
@@ -52,6 +53,7 @@ export default function App() {
   // finishes, which pauses cloud sync rather than loading the wrong row.
   const ownerId = household.loading ? null : household.ownerId
   const store = useFamilyStore(auth.user, ownerId)
+  const externalCalendars = useExternalCalendars(store.data.externalCalendars)
   // Invite code captured from a ?join=CODE link (survives the sign-in
   // redirect in sessionStorage).
   const [pendingJoinCode, setPendingJoinCode] = useState(() => captureJoinCodeFromUrl())
@@ -174,9 +176,20 @@ export default function App() {
             onDismiss={dismissInvite}
           />
         )}
-        {tab === 'home' && <HomeScreen data={store.data} onNavigate={navigate} />}
+        {tab === 'home' && (
+          <HomeScreen
+            data={store.data}
+            onNavigate={navigate}
+            externalOccurrences={externalCalendars.occurrencesInRange}
+          />
+        )}
         {tab === 'planner' && (
-          <PlannerScreen mode={plannerMode} onModeChange={setPlannerMode} store={actions} />
+          <PlannerScreen
+            mode={plannerMode}
+            onModeChange={setPlannerMode}
+            store={actions}
+            externalOccurrences={externalCalendars.occurrencesInRange}
+          />
         )}
         {tab === 'documents' && (
           <DocumentsScreen
@@ -200,6 +213,10 @@ export default function App() {
             addChild={store.addChild}
             updateChild={store.updateChild}
             removeChild={actions.removeChild}
+            addExternalCalendar={store.addExternalCalendar}
+            updateExternalCalendar={store.updateExternalCalendar}
+            removeExternalCalendar={store.removeExternalCalendar}
+            externalCalendars={externalCalendars}
             syncState={store.syncState}
             user={auth.user}
             household={household}

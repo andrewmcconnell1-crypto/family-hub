@@ -61,7 +61,23 @@ export const DOC_CATEGORIES = [
 ]
 
 export function emptyData() {
-  return { children: [], todos: [], events: [], documents: [], photos: [] }
+  return { children: [], todos: [], events: [], documents: [], photos: [], externalCalendars: [] }
+}
+
+// Colours for subscribed external calendars (Google/Outlook/etc.). Kept
+// separate from CHILD_COLORS so a feed reads as "not one of us".
+export const CALENDAR_COLORS = [
+  { id: 'grape', value: '#7c5cff' },
+  { id: 'teal', value: '#2aa9a0' },
+  { id: 'coral', value: '#e5683f' },
+  { id: 'gold', value: '#c99a1e' },
+  { id: 'rose', value: '#cf4d86' },
+  { id: 'slate', value: '#5a6b8c' },
+]
+
+export function calendarColor(calendar) {
+  const found = CALENDAR_COLORS.find((c) => c.id === calendar?.colorId)
+  return (found || CALENDAR_COLORS[0]).value
 }
 
 // Drag-reorder: place a todo at `targetActiveIndex` among the NOT-done todos,
@@ -166,6 +182,22 @@ export function normalizeData(raw) {
       fileType: '',
       addedAt: '',
     }),
+    externalCalendars: Array.isArray(raw.externalCalendars)
+      ? raw.externalCalendars
+          .filter(
+            (c) =>
+              c &&
+              typeof c === 'object' &&
+              ['id', 'name', 'url'].every((k) => isNonEmptyString(c[k])),
+          )
+          .map((c) => ({
+            id: c.id,
+            name: c.name,
+            url: c.url,
+            colorId: isNonEmptyString(c.colorId) ? c.colorId : 'grape',
+            addedAt: isNonEmptyString(c.addedAt) ? c.addedAt : '',
+          }))
+      : [],
   }
   // Drop tags pointing at children that no longer exist.
   for (const listName of ['todos', 'events', 'documents', 'photos']) {
@@ -206,7 +238,8 @@ export function hasContent(data) {
     data.todos.length > 0 ||
     data.events.length > 0 ||
     data.documents.length > 0 ||
-    data.photos.length > 0
+    data.photos.length > 0 ||
+    data.externalCalendars.length > 0
   )
 }
 

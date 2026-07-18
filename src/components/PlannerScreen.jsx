@@ -12,7 +12,7 @@ const MODES = [
 // the "Planner" slot with Bistro-style pill tabs at the top. The active view
 // is owned by App (persisted per device) so Home's shortcut links can
 // deep-link and the Planner reopens where you left it.
-export default function PlannerScreen({ mode, onModeChange, store }) {
+export default function PlannerScreen({ mode, onModeChange, store, externalOccurrences }) {
   const activeTodoCount = store.data.todos.filter((todo) => !todo.done).length
 
   const tabs = (
@@ -59,6 +59,7 @@ export default function PlannerScreen({ mode, onModeChange, store }) {
         updateEvent={store.updateEvent}
         removeEvent={store.removeEvent}
         skipEventOccurrence={store.skipEventOccurrence}
+        externalOccurrences={externalOccurrences}
       />
     )
   }
@@ -72,6 +73,7 @@ export default function PlannerScreen({ mode, onModeChange, store }) {
       removeEvent={store.removeEvent}
       skipEventOccurrence={store.skipEventOccurrence}
       toggleTodo={store.toggleTodo}
+      externalOccurrences={externalOccurrences}
     />
   )
 }

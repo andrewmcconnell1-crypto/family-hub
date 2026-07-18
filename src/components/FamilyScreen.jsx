@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Copy, Plus, Share2, Users } from 'lucide-react'
 import Avatar from './Avatar.jsx'
 import CalendarFeedCard from './CalendarFeedCard.jsx'
+import ExternalCalendarsCard from './ExternalCalendarsCard.jsx'
 import ImageCropper from './ImageCropper.jsx'
 import RemindersCard from './RemindersCard.jsx'
 import Sheet from './Sheet.jsx'
@@ -34,6 +35,9 @@ export default function FamilyScreen({
   addChild,
   updateChild,
   removeChild,
+  addExternalCalendar,
+  removeExternalCalendar,
+  externalCalendars,
   syncState,
   user,
   household,
@@ -166,6 +170,14 @@ export default function FamilyScreen({
 
       {user && <RemindersCard user={user} />}
       {user && <CalendarFeedCard user={user} />}
+
+      <ExternalCalendarsCard
+        calendars={data.externalCalendars}
+        feed={externalCalendars}
+        addExternalCalendar={addExternalCalendar}
+        removeExternalCalendar={removeExternalCalendar}
+        signedIn={Boolean(user)}
+      />
 
       <section className="card">
         <h2>Appearance</h2>

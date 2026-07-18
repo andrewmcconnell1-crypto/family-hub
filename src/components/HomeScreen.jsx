@@ -3,7 +3,7 @@ import { AlertCircle, ChevronDown, ChevronRight, Search } from 'lucide-react'
 import SearchOverlay from './SearchOverlay.jsx'
 import Avatar from './Avatar.jsx'
 import { ChildTags } from './ChildChips.jsx'
-import { expiringDocuments } from '../lib/familyData.js'
+import { calendarColor, expiringDocuments } from '../lib/familyData.js'
 import { addDays, dayParts, formatDateKey, parseDateKey, todayKey } from '../utils/dateUtils.js'
 import { birthdayOccurrences, calendarOccurrences, weekdayIndex } from '../utils/recurrence.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
@@ -18,10 +18,17 @@ function greeting() {
 // Bistro-style dashboard: today front and centre, the rest of the week
 // condensed, plus highlights (overdue to-dos, next birthday, top priorities).
 // The Planner holds the detail; everything here links into it.
-export default function HomeScreen({ data, onNavigate }) {
+export default function HomeScreen({ data, onNavigate, externalOccurrences }) {
   const today = todayKey()
   const weekEnd = addDays(today, 6 - weekdayIndex(today)) // Sunday of this week
-  const thisWeek = calendarOccurrences(data, today, weekEnd)
+  const thisWeek = [
+    ...calendarOccurrences(data, today, weekEnd),
+    ...(externalOccurrences ? externalOccurrences(today, weekEnd) : []),
+  ].sort((a, b) =>
+    a.date === b.date
+      ? (a.time || '99:99').localeCompare(b.time || '99:99')
+      : a.date.localeCompare(b.date),
+  )
 
   const overdueTodos = data.todos.filter((t) => !t.done && t.dueDate && t.dueDate < today)
   const expiringDocs = expiringDocuments(data.documents, today, addDays(today, 30))
@@ -239,7 +246,15 @@ function DayCard({ day, isToday, kids, expanded, onToggle }) {
       {expanded && count > 0 && (
         <ul className="event-list day-card-body">
           {day.events.map((event) => (
-            <li key={`${event.id}-${event.date}`} className="event-row">
+            <li
+              key={`${event.id}-${event.date}`}
+              className={`event-row${event.isExternal ? ' event-row-external' : ''}`}
+              style={
+                event.isExternal
+                  ? { borderLeftColor: calendarColor({ colorId: event.calendarColorId }) }
+                  : undefined
+              }
+            >
               <div className="event-when">
                 {event.time ? (
                   <span className="event-time">{event.time}</span>
@@ -249,7 +264,11 @@ function DayCard({ day, isToday, kids, expanded, onToggle }) {
               </div>
               <div className="event-main">
                 <span className="event-title">{event.title}</span>
-                <ChildTags kids={kids} childIds={event.childIds} />
+                {event.isExternal ? (
+                  <span className="external-tag">{event.calendarName}</span>
+                ) : (
+                  <ChildTags kids={kids} childIds={event.childIds} />
+                )}
               </div>
             </li>
           ))}

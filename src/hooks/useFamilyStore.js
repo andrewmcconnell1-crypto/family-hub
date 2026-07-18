@@ -379,6 +379,34 @@ export function useFamilyStore(user, ownerId) {
     setData((d) => ({ ...d, photos: d.photos.filter((x) => x.id !== id) }))
   }, [])
 
+  const addExternalCalendar = useCallback(({ name, url, colorId }) => {
+    const id = makeId('cal')
+    setData((d) => ({
+      ...d,
+      externalCalendars: [
+        ...(d.externalCalendars || []),
+        { id, name, url, colorId: colorId || 'grape', addedAt: new Date().toISOString() },
+      ],
+    }))
+    return id
+  }, [])
+
+  const updateExternalCalendar = useCallback((id, patch) => {
+    setData((d) => ({
+      ...d,
+      externalCalendars: (d.externalCalendars || []).map((c) =>
+        c.id === id ? { ...c, ...patch } : c,
+      ),
+    }))
+  }, [])
+
+  const removeExternalCalendar = useCallback((id) => {
+    setData((d) => ({
+      ...d,
+      externalCalendars: (d.externalCalendars || []).filter((c) => c.id !== id),
+    }))
+  }, [])
+
   // Undo support: restore a previous data snapshot wholesale, and purge file
   // blobs once a delete is final (its undo window expired).
   const restore = useCallback((snapshot) => {
@@ -415,6 +443,9 @@ export function useFamilyStore(user, ownerId) {
     addPhotos,
     updatePhoto,
     removePhoto,
+    addExternalCalendar,
+    updateExternalCalendar,
+    removeExternalCalendar,
     restore,
     purgeFiles,
   }

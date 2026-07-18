@@ -2,10 +2,14 @@ import { useMemo, useState } from 'react'
 import { Check, ChevronLeft, ChevronRight, Paperclip, Plus, Repeat } from 'lucide-react'
 import EventSheet from './EventSheet.jsx'
 import { ChildTags } from './ChildChips.jsx'
+import { calendarColor } from '../lib/familyData.js'
 import { calendarOccurrences, weekdayIndex } from '../utils/recurrence.js'
 import { addDays, dayParts, formatDateKey, todayKey } from '../utils/dateUtils.js'
 
 const mondayOf = (key) => addDays(key, -weekdayIndex(key))
+
+// Timed events sort before all-day within a day; external feeds sort with them.
+const byTime = (a, b) => (a.time || '99:99').localeCompare(b.time || '99:99')
 
 // The whole week at a glance, Bistro Plan-style: one section per day with the
 // day's events (recurrences and birthdays included) AND the to-dos due that
@@ -18,6 +22,7 @@ export default function WeekScreen({
   removeEvent,
   skipEventOccurrence,
   toggleTodo,
+  externalOccurrences,
 }) {
   const today = todayKey()
   const [weekStart, setWeekStart] = useState(() => mondayOf(today))
@@ -26,10 +31,13 @@ export default function WeekScreen({
 
   const days = useMemo(() => {
     const eventsByDay = new Map()
-    for (const occurrence of calendarOccurrences(data, weekStart, weekEnd)) {
+    const push = (occurrence) => {
       if (!eventsByDay.has(occurrence.date)) eventsByDay.set(occurrence.date, [])
       eventsByDay.get(occurrence.date).push(occurrence)
     }
+    for (const occurrence of calendarOccurrences(data, weekStart, weekEnd)) push(occurrence)
+    if (externalOccurrences) for (const occurrence of externalOccurrences(weekStart, weekEnd)) push(occurrence)
+    for (const list of eventsByDay.values()) list.sort(byTime)
     return Array.from({ length: 7 }, (_, i) => {
       const key = addDays(weekStart, i)
       return {
@@ -38,12 +46,12 @@ export default function WeekScreen({
         todos: data.todos.filter((todo) => !todo.done && todo.dueDate === key),
       }
     })
-  }, [data, weekStart, weekEnd])
+  }, [data, weekStart, weekEnd, externalOccurrences])
 
   const isCurrentWeek = weekStart === mondayOf(today)
 
   const openOccurrence = (occurrence) => {
-    if (occurrence.isBirthday) return
+    if (occurrence.isBirthday || occurrence.isExternal) return
     const series = data.events.find((e) => e.id === occurrence.id)
     if (series) setSheet({ event: series, occurrenceDate: occurrence.date })
   }
@@ -117,8 +125,13 @@ export default function WeekScreen({
                     <li key={`${occurrence.id}-${occurrence.date}`}>
                       <button
                         type="button"
-                        className="event-row event-row-button"
-                        disabled={occurrence.isBirthday}
+                        className={`event-row event-row-button${occurrence.isExternal ? ' event-row-external' : ''}`}
+                        style={
+                          occurrence.isExternal
+                            ? { borderLeftColor: calendarColor({ colorId: occurrence.calendarColorId }) }
+                            : undefined
+                        }
+                        disabled={occurrence.isBirthday || occurrence.isExternal}
                         onClick={() => openOccurrence(occurrence)}
                       >
                         <div className="event-when">
@@ -137,7 +150,11 @@ export default function WeekScreen({
                             {occurrence.documentIds?.length > 0 && (
                               <Paperclip size={12} aria-label="Has attachments" />
                             )}
-                            <ChildTags kids={data.children} childIds={occurrence.childIds} />
+                            {occurrence.isExternal ? (
+                              <span className="external-tag">{occurrence.calendarName}</span>
+                            ) : (
+                              <ChildTags kids={data.children} childIds={occurrence.childIds} />
+                            )}
                           </span>
                         </div>
                       </button>

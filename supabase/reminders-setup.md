@@ -1,12 +1,16 @@
-# Reminders & calendar feed — one-time Supabase setup
+# Reminders, calendar feed & subscribing to other calendars — one-time Supabase setup
 
-Two features share this setup:
+Three features share this setup:
 
 - **Reminders** — a morning push notification with the day ahead (events,
   to-dos due, documents expiring). Turned on per device from the app's
   Family tab.
 - **Calendar feed** — a private link Google Calendar / Apple Calendar can
-  subscribe to, so Treehouse events appear alongside everything else.
+  subscribe to, so Treehouse events appear alongside everything else
+  (Treehouse → other apps).
+- **Other calendars** — subscribe Treehouse to a Google/Outlook/Apple
+  calendar's iCal link, so those events show up read-only in Treehouse
+  (other apps → Treehouse). This one needs the `ics-proxy` function below.
 
 Everything below happens in the [Supabase dashboard](https://supabase.com/dashboard)
 for the Treehouse project. Allow ~10 minutes.
@@ -15,7 +19,7 @@ for the Treehouse project. Allow ~10 minutes.
 
 SQL Editor → New query → paste the whole of `supabase/reminders.sql` → Run.
 
-## 2. Deploy the two edge functions
+## 2. Deploy the edge functions
 
 Edge Functions → **Deploy a new function** → *Via Editor*:
 
@@ -23,10 +27,17 @@ Edge Functions → **Deploy a new function** → *Via Editor*:
    `supabase/functions/calendar-feed/index.ts`, and deploy.
 2. Repeat with the name `send-reminders` and
    `supabase/functions/send-reminders/index.ts`.
+3. Repeat with the name `ics-proxy` and
+   `supabase/functions/ics-proxy/index.ts`.
 
-Then for **each** function: open it → Details → turn **Enforce JWT
-verification OFF**. (Calendar apps and the scheduler can't send Supabase
-auth headers; access is protected by the secret token / cron key instead.)
+Then turn **Enforce JWT verification OFF** for `calendar-feed` and
+`send-reminders` only (open each → Details). Calendar apps and the scheduler
+can't send Supabase auth headers, so those two rely on the secret token /
+cron key instead.
+
+**Leave JWT verification ON for `ics-proxy`** — it should only be callable by
+signed-in Treehouse users, so it can't be abused as an open proxy. (It's on
+by default; just don't turn it off.)
 
 ## 3. Set the secrets
 
@@ -86,6 +97,13 @@ means it worked but nothing is on today for the subscribed devices.
   (or iPhone: Settings → Apps → Calendar → Calendar Accounts → Add Account →
   Other → **Add Subscribed Calendar**). Google refreshes subscribed feeds
   every few hours — new Treehouse events appear with a delay, that's normal.
+- **Other calendars** (Google/Outlook/Apple → Treehouse): Family tab → Other
+  calendars → *Add a calendar* → paste the calendar's private iCal / .ics
+  address (the card lists where to find it in each app). Those events then
+  show read-only in the Week, Calendar and Home views, colour-coded. Needs
+  the `ics-proxy` function from step 2 and you signed in. Treehouse refreshes
+  each feed on open and every few hours, so a brand-new event in the other
+  app can take a little while to appear.
 
 ## Rotating the push keys
 

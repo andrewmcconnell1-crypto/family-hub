@@ -783,6 +783,33 @@ button {
   cursor: default;
 }
 
+/* Subscribed external-calendar events: a coloured left edge + a small pill so
+   they read as "from another calendar, read-only". The bar colour is set
+   inline from the calendar's colour. */
+.event-row-external {
+  border-left: 4px solid var(--accent);
+  padding-left: 0.6rem;
+  border-radius: 4px;
+}
+
+.event-row-button.event-row-external:disabled {
+  opacity: 1;
+}
+
+.external-tag {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 12rem;
+}
+
 .series-note {
   margin: 0 0 0.75rem;
   font-size: 0.82rem;
@@ -1648,6 +1675,89 @@ button {
   padding: 0.5rem 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.15em;
+}
+
+/* --- External calendars (subscribed feeds) ----------------------------------- */
+
+.ext-cal-list {
+  list-style: none;
+  margin: 0.5rem 0 0.75rem;
+  padding: 0;
+}
+
+.ext-cal-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ext-cal-list > li:last-child {
+  border-bottom: none;
+}
+
+.ext-cal-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 2px solid var(--ink);
+  flex-shrink: 0;
+}
+
+.ext-cal-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.ext-cal-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ext-cal-status {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.ext-cal-error {
+  color: var(--danger);
+}
+
+.ext-cal-form {
+  margin-top: 0.75rem;
+}
+
+.ext-cal-help {
+  margin-top: 0.85rem;
+  font-size: 0.85rem;
+}
+
+.ext-cal-help summary {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.ext-cal-help ul {
+  margin: 0.5rem 0;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ext-cal-help code {
+  font-size: 0.8rem;
 }
 
 /* --- Document attachments on events / to-dos ---------------------------------- */

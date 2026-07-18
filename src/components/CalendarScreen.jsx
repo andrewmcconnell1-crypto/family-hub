@@ -3,7 +3,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Paperclip, Plus, Repeat } from
 import EmptyState from './EmptyState.jsx'
 import EventSheet from './EventSheet.jsx'
 import { ChildTags } from './ChildChips.jsx'
-import { EVENT_CATEGORIES, childColor } from '../lib/familyData.js'
+import { EVENT_CATEGORIES, calendarColor, childColor } from '../lib/familyData.js'
 import { calendarOccurrences } from '../utils/recurrence.js'
 import {
   addMonths,
@@ -22,6 +22,7 @@ export default function CalendarScreen({
   updateEvent,
   removeEvent,
   skipEventOccurrence,
+  externalOccurrences,
 }) {
   const today = todayKey()
   const [selectedKey, setSelectedKey] = useState(today)
@@ -31,22 +32,28 @@ export default function CalendarScreen({
   const weeks = useMemo(() => monthGrid(monthDate), [monthDate])
 
   // Everything visible in the grid: events expanded into occurrences (weekly /
-  // fortnightly / monthly / yearly) plus birthdays from members' DOBs.
+  // fortnightly / monthly / yearly), birthdays from members' DOBs, and any
+  // subscribed external calendars (read-only).
   const eventsByDate = useMemo(() => {
     const gridStart = weeks[0][0].key
     const gridEnd = weeks[weeks.length - 1][6].key
     const map = new Map()
-    for (const occurrence of calendarOccurrences(data, gridStart, gridEnd)) {
+    const push = (occurrence) => {
       if (!map.has(occurrence.date)) map.set(occurrence.date, [])
       map.get(occurrence.date).push(occurrence)
     }
+    for (const occurrence of calendarOccurrences(data, gridStart, gridEnd)) push(occurrence)
+    if (externalOccurrences) for (const occurrence of externalOccurrences(gridStart, gridEnd)) push(occurrence)
+    for (const list of map.values()) {
+      list.sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'))
+    }
     return map
-  }, [data, weeks])
+  }, [data, weeks, externalOccurrences])
 
   const dayEvents = eventsByDate.get(selectedKey) || []
 
   const openOccurrence = (occurrence) => {
-    if (occurrence.isBirthday) return
+    if (occurrence.isBirthday || occurrence.isExternal) return
     const series = data.events.find((e) => e.id === occurrence.id)
     if (series) setSheet({ event: series, occurrenceDate: occurrence.date })
   }
@@ -130,8 +137,13 @@ export default function CalendarScreen({
               <li key={`${occurrence.id}-${occurrence.date}`}>
                 <button
                   type="button"
-                  className="event-row event-row-button"
-                  disabled={occurrence.isBirthday}
+                  className={`event-row event-row-button${occurrence.isExternal ? ' event-row-external' : ''}`}
+                  style={
+                    occurrence.isExternal
+                      ? { borderLeftColor: calendarColor({ colorId: occurrence.calendarColorId }) }
+                      : undefined
+                  }
+                  disabled={occurrence.isBirthday || occurrence.isExternal}
                   onClick={() => openOccurrence(occurrence)}
                 >
                   <div className="event-when">
@@ -144,14 +156,18 @@ export default function CalendarScreen({
                   <div className="event-main">
                     <span className="event-title">{occurrence.title}</span>
                     <span className="event-meta">
-                      {EVENT_CATEGORIES.find((c) => c.id === occurrence.category)?.label}
+                      {occurrence.isExternal
+                        ? occurrence.calendarName
+                        : EVENT_CATEGORIES.find((c) => c.id === occurrence.category)?.label}
                       {occurrence.repeat !== 'none' && !occurrence.isBirthday && (
                         <Repeat size={12} aria-label="Repeats" />
                       )}
                       {occurrence.documentIds?.length > 0 && (
                         <Paperclip size={12} aria-label="Has attachments" />
                       )}
-                      <ChildTags kids={data.children} childIds={occurrence.childIds} />
+                      {!occurrence.isExternal && (
+                        <ChildTags kids={data.children} childIds={occurrence.childIds} />
+                      )}
                     </span>
                     {occurrence.notes && <span className="event-notes">{occurrence.notes}</span>}
                   </div>
@@ -202,6 +218,7 @@ export default function CalendarScreen({
 }
 
 function dotColor(event, kids) {
+  if (event.isExternal) return calendarColor({ colorId: event.calendarColorId })
   const child = kids.find((c) => event.childIds.includes(c.id))
   return child ? childColor(child) : 'var(--accent)'
 }
