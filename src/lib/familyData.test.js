@@ -5,6 +5,7 @@ import {
   loadData,
   normalizeData,
   reorderTodo,
+  reorderTodoToIndex,
   saveData,
 } from './familyData.js'
 
@@ -58,6 +59,27 @@ describe('todos', () => {
     expect(data.todos.map((t) => t.id)).toEqual(['t1', 't2'])
     expect(data.todos[0]).toMatchObject({ done: false, doneAt: '', dueDate: '', notes: '' })
     expect(data.todos[1].done).toBe(true)
+  })
+})
+
+describe('reorderTodoToIndex', () => {
+  const todos = [
+    { id: 'a', done: false },
+    { id: 'b', done: true },
+    { id: 'c', done: false },
+    { id: 'd', done: false },
+  ]
+
+  it('places a todo at the target index among actives, leaving done items put', () => {
+    // actives are [a, c, d]; move d to the front
+    expect(reorderTodoToIndex(todos, 'd', 0).map((t) => t.id)).toEqual(['d', 'a', 'b', 'c'])
+    // move a to the end
+    expect(reorderTodoToIndex(todos, 'a', 2).map((t) => t.id)).toEqual(['b', 'c', 'd', 'a'])
+  })
+
+  it('clamps out-of-range targets and ignores unknown ids', () => {
+    expect(reorderTodoToIndex(todos, 'a', 99).map((t) => t.id)).toEqual(['b', 'c', 'd', 'a'])
+    expect(reorderTodoToIndex(todos, 'nope', 1)).toBe(todos)
   })
 })
 

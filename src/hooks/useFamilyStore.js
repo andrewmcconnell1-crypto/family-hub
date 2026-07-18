@@ -6,6 +6,7 @@ import {
   loadData,
   normalizeData,
   reorderTodo,
+  reorderTodoToIndex,
   saveCloudData,
   saveData,
 } from '../lib/familyData.js'
@@ -236,6 +237,10 @@ export function useFamilyStore(user, ownerId) {
     setData((d) => ({ ...d, todos: reorderTodo(d.todos, id, delta) }))
   }, [])
 
+  const moveTodoToIndex = useCallback((id, targetActiveIndex) => {
+    setData((d) => ({ ...d, todos: reorderTodoToIndex(d.todos, id, targetActiveIndex) }))
+  }, [])
+
   const removeTodo = useCallback((id) => {
     setData((d) => ({ ...d, todos: d.todos.filter((t) => t.id !== id) }))
   }, [])
@@ -397,6 +402,7 @@ export function useFamilyStore(user, ownerId) {
     updateTodo,
     toggleTodo,
     moveTodo,
+    moveTodoToIndex,
     removeTodo,
     clearDoneTodos,
     addEvent,

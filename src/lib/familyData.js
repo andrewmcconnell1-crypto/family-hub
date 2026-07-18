@@ -64,6 +64,23 @@ export function emptyData() {
   return { children: [], todos: [], events: [], documents: [], photos: [] }
 }
 
+// Drag-reorder: place a todo at `targetActiveIndex` among the NOT-done todos,
+// leaving done items where they sit. Returns a new array.
+export function reorderTodoToIndex(todos, id, targetActiveIndex) {
+  const item = todos.find((t) => t.id === id)
+  if (!item) return todos
+  const without = todos.filter((t) => t.id !== id)
+  const activePositions = []
+  without.forEach((t, i) => {
+    if (!t.done) activePositions.push(i)
+  })
+  const clamped = Math.max(0, Math.min(targetActiveIndex, activePositions.length))
+  const insertAt = clamped < activePositions.length ? activePositions[clamped] : without.length
+  const next = [...without]
+  next.splice(insertAt, 0, item)
+  return next
+}
+
 // The todos array's order IS the priority order (actives only; done items are
 // displayed separately). Move a todo one step up/down past its nearest
 // not-done neighbour, returning a new array (or the same one at a boundary).

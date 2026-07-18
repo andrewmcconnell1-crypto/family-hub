@@ -958,14 +958,15 @@ button {
   flex-basis: 100%;
 }
 
-.todo-move {
-  display: flex;
+.todo-drag-handle {
+  touch-action: none;
+  cursor: grab;
   flex-shrink: 0;
 }
 
-.todo-move .icon-button:disabled {
-  opacity: 0.25;
-  cursor: default;
+.todo-dragging {
+  background: var(--accent-soft);
+  border-radius: 10px;
 }
 
 .done-toggle {

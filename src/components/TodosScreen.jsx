@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { ArrowDown, ArrowUp, Check, ChevronDown, ChevronRight, ListTodo, Paperclip, Plus } from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
+import { Check, ChevronDown, ChevronRight, GripVertical, ListTodo, Paperclip, Plus } from 'lucide-react'
 import Sheet from './Sheet.jsx'
 import DocAttachments from './DocAttachments.jsx'
 import EmptyState from './EmptyState.jsx'
@@ -13,7 +13,7 @@ export default function TodosScreen({
   addTodo,
   updateTodo,
   toggleTodo,
-  moveTodo,
+  moveTodoToIndex,
   removeTodo,
   clearDoneTodos,
 }) {
@@ -34,6 +34,48 @@ export default function TodosScreen({
   // Reordering is by position in the full list, so it only makes sense when
   // no child filter is hiding rows.
   const canReorder = filter === 'all'
+
+  // Drag-to-reorder: grabbing the handle live-reorders the list as the finger
+  // crosses row boundaries (the row heights are uniform enough to step by).
+  const dragRef = useRef(null) // { id, index, pointerId, startY, rowH }
+  const [draggingId, setDraggingId] = useState(null)
+
+  const startDrag = (e, id, index) => {
+    e.preventDefault()
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      // Synthetic pointers (tests) can't be captured.
+    }
+    const row = e.currentTarget.closest('li')
+    dragRef.current = {
+      id,
+      index,
+      pointerId: e.pointerId,
+      startY: e.clientY,
+      rowH: row ? row.getBoundingClientRect().height : 52,
+    }
+    setDraggingId(id)
+  }
+
+  const dragMove = (e) => {
+    const drag = dragRef.current
+    if (!drag || e.pointerId !== drag.pointerId) return
+    const delta = Math.round((e.clientY - drag.startY) / drag.rowH)
+    const target = Math.max(0, Math.min(active.length - 1, drag.index + delta))
+    if (target !== drag.index) {
+      moveTodoToIndex(drag.id, target)
+      drag.startY += (target - drag.index) * drag.rowH
+      drag.index = target
+    }
+  }
+
+  const endDrag = (e) => {
+    if (dragRef.current?.pointerId === e.pointerId) {
+      dragRef.current = null
+      setDraggingId(null)
+    }
+  }
 
   return (
     <div className="screen">
@@ -63,13 +105,16 @@ export default function TodosScreen({
                   key={todo.id}
                   todo={todo}
                   kids={data.children}
+                  dragging={draggingId === todo.id}
                   onToggle={() => toggleTodo(todo.id)}
                   onEdit={() => setSheet({ todo })}
-                  onMove={
+                  dragHandlers={
                     canReorder
                       ? {
-                          up: index > 0 ? () => moveTodo(todo.id, -1) : null,
-                          down: index < active.length - 1 ? () => moveTodo(todo.id, 1) : null,
+                          onPointerDown: (e) => startDrag(e, todo.id, index),
+                          onPointerMove: dragMove,
+                          onPointerUp: endDrag,
+                          onPointerCancel: endDrag,
                         }
                       : null
                   }
@@ -104,7 +149,7 @@ export default function TodosScreen({
                   kids={data.children}
                   onToggle={() => toggleTodo(todo.id)}
                   onEdit={() => setSheet({ todo })}
-                  onMove={null}
+                  dragHandlers={null}
                 />
               ))}
             </ul>
@@ -137,10 +182,10 @@ export default function TodosScreen({
   )
 }
 
-function TodoRow({ todo, kids, onToggle, onEdit, onMove }) {
+function TodoRow({ todo, kids, dragging, onToggle, onEdit, dragHandlers }) {
   const overdue = !todo.done && todo.dueDate && todo.dueDate < todayKey()
   return (
-    <li className={`todo-row${todo.done ? ' todo-done' : ''}`}>
+    <li className={`todo-row${todo.done ? ' todo-done' : ''}${dragging ? ' todo-dragging' : ''}`}>
       <button
         type="button"
         className="todo-check"
@@ -167,27 +212,15 @@ function TodoRow({ todo, kids, onToggle, onEdit, onMove }) {
           </span>
         )}
       </button>
-      {onMove && (
-        <span className="todo-move">
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Move up"
-            disabled={!onMove.up}
-            onClick={onMove.up || undefined}
-          >
-            <ArrowUp size={16} />
-          </button>
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Move down"
-            disabled={!onMove.down}
-            onClick={onMove.down || undefined}
-          >
-            <ArrowDown size={16} />
-          </button>
-        </span>
+      {dragHandlers && (
+        <button
+          type="button"
+          className="icon-button todo-drag-handle"
+          aria-label={`Reorder “${todo.title}”`}
+          {...dragHandlers}
+        >
+          <GripVertical size={18} />
+        </button>
       )}
     </li>
   )

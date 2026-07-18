@@ -43,7 +43,7 @@ export default function PlannerScreen({ mode, onModeChange, store }) {
         addTodo={store.addTodo}
         updateTodo={store.updateTodo}
         toggleTodo={store.toggleTodo}
-        moveTodo={store.moveTodo}
+        moveTodoToIndex={store.moveTodoToIndex}
         removeTodo={store.removeTodo}
         clearDoneTodos={store.clearDoneTodos}
       />
