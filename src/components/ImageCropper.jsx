@@ -27,6 +27,8 @@ export default function ImageCropper({ file, round = false, output = 2000, onUse
 
   const imgRef = useRef(null)
   const dragRef = useRef(null) // { pointerId, lastX, lastY }
+  const pointersRef = useRef(new Map()) // pointerId -> { x, y }
+  const pinchRef = useRef(null) // { startDist, startZoom }
   const [natural, setNatural] = useState(null) // { w, h }
   const [zoom, setZoom] = useState(1)
   // Image top-left relative to the viewport, in css px.
@@ -73,15 +75,39 @@ export default function ImageCropper({ file, round = false, output = 2000, onUse
     setZoom(z)
   }
 
+  const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y)
+
   const onPointerDown = (e) => {
-    if (dragRef.current) return
-    e.currentTarget.setPointerCapture(e.pointerId)
-    dragRef.current = { pointerId: e.pointerId, lastX: e.clientX, lastY: e.clientY }
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      // Synthetic pointers (tests) can't be captured — events still arrive.
+    }
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+    const points = [...pointersRef.current.values()]
+    if (points.length === 2) {
+      // Second finger down: switch from drag to pinch.
+      pinchRef.current = { startDist: distance(points[0], points[1]), startZoom: zoom }
+      dragRef.current = null
+    } else if (points.length === 1) {
+      dragRef.current = { pointerId: e.pointerId, lastX: e.clientX, lastY: e.clientY }
+    }
   }
 
   const onPointerMove = (e) => {
+    if (!pointersRef.current.has(e.pointerId) || !natural) return
+    pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    const pinch = pinchRef.current
+    if (pinch && pointersRef.current.size >= 2) {
+      const points = [...pointersRef.current.values()]
+      const dist = distance(points[0], points[1])
+      if (pinch.startDist > 0) applyZoom(pinch.startZoom * (dist / pinch.startDist))
+      return
+    }
+
     const drag = dragRef.current
-    if (!drag || drag.pointerId !== e.pointerId || !natural) return
+    if (!drag || drag.pointerId !== e.pointerId) return
     const dx = e.clientX - drag.lastX
     const dy = e.clientY - drag.lastY
     drag.lastX = e.clientX
@@ -90,7 +116,14 @@ export default function ImageCropper({ file, round = false, output = 2000, onUse
   }
 
   const onPointerEnd = (e) => {
+    pointersRef.current.delete(e.pointerId)
+    if (pointersRef.current.size < 2) pinchRef.current = null
     if (dragRef.current?.pointerId === e.pointerId) dragRef.current = null
+    // If one finger remains after a pinch, continue as a drag from where it is.
+    if (pointersRef.current.size === 1 && !dragRef.current) {
+      const [pointerId, point] = [...pointersRef.current.entries()][0]
+      dragRef.current = { pointerId, lastX: point.x, lastY: point.y }
+    }
   }
 
   const apply = async () => {
