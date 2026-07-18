@@ -46,7 +46,7 @@ export default function PhotosScreen({ data, addPhotos, updatePhoto, removePhoto
 
   return (
     <div className="screen">
-      <header className="screen-header screen-header-row">
+      <header className="screen-header screen-header-row planner-header">
         <h1>Photos</h1>
         <button type="button" className="primary-button" onClick={() => setAdding(true)}>
           <Plus size={18} aria-hidden="true" /> Add

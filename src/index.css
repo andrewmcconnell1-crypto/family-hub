@@ -261,7 +261,7 @@ button {
   padding: 0.45rem 0.8rem;
 }
 
-/* Planner: keep the view pills + add button pinned while the list scrolls,
+/* Keep each screen's title/pills + add button pinned while the list scrolls,
    on a solid strip so nothing shows through it. */
 .planner-header {
   position: sticky;
