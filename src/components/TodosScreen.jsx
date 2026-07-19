@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { Check, ChevronDown, ChevronRight, GripVertical, ListTodo, Paperclip, Plus } from 'lucide-react'
+import { Bell, Check, ChevronDown, ChevronRight, GripVertical, ListTodo, Paperclip, Plus } from 'lucide-react'
 import Sheet from './Sheet.jsx'
 import DocAttachments from './DocAttachments.jsx'
 import EmptyState from './EmptyState.jsx'
@@ -206,6 +206,7 @@ function TodoRow({ todo, kids, dragging, onToggle, onEdit, dragHandlers }) {
                 {formatDateKey(todo.dueDate, { weekday: true })}
               </span>
             )}
+            {todo.remind && todo.dueDate && !todo.done && <Bell size={12} aria-label="Reminder set" />}
             {todo.documentIds.length > 0 && <Paperclip size={12} aria-label="Has attachments" />}
             <ChildTags kids={kids} childIds={todo.childIds} />
             {todo.notes && <span className="todo-notes">{todo.notes}</span>}

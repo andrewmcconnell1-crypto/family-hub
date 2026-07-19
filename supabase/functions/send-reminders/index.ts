@@ -150,7 +150,7 @@ Deno.serve(async (req) => {
   if (!vapidJson) return new Response("VAPID_KEYS secret not set", { status: 500 });
   const vapidKeys = await webpush.importVapidKeys(JSON.parse(vapidJson), { extractable: false });
   const appServer = await webpush.ApplicationServer.new({
-    contactInformation: "mailto:noreply@treehouse.local",
+    contactInformation: "mailto:noreply@nest.app",
     vapidKeys,
   });
 

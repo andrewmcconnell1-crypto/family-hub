@@ -138,7 +138,7 @@ function icsForEvents(events: Ev[], calendarName: string): string {
   for (const event of events) {
     const day = event.date.replace(/-/g, "");
     lines.push("BEGIN:VEVENT");
-    lines.push(`UID:${event.id}-${day}@treehouse`);
+    lines.push(`UID:${event.id}-${day}@nest`);
     lines.push(`DTSTAMP:${stamp}`);
     lines.push(fold(`SUMMARY:${escapeText(event.title)}`));
     if (event.time) {
@@ -208,7 +208,7 @@ Deno.serve(async (req) => {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
       "Cache-Control": "private, max-age=900",
-      "Content-Disposition": 'inline; filename="treehouse.ics"',
+      "Content-Disposition": 'inline; filename="nest.ics"',
     },
   });
 });

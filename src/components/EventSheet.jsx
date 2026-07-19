@@ -27,7 +27,16 @@ export default function EventSheet({
   const [childIds, setChildIds] = useState(event?.childIds || [])
   const [notes, setNotes] = useState(event?.notes || '')
   const [repeat, setRepeat] = useState(event?.repeat || 'none')
-  const [weekdays, setWeekdays] = useState(event?.weekdays || [])
+  // A weekly/fortnightly event always recurs on at least its anchor weekday, so
+  // seed the chips from the anchor when the saved list is empty — otherwise the
+  // day chips would read as "none" while the event still repeats.
+  const [weekdays, setWeekdays] = useState(() => {
+    if (event?.weekdays?.length) return event.weekdays
+    if ((event?.repeat === 'weekly' || event?.repeat === 'fortnightly') && event?.date) {
+      return [weekdayIndex(event.date)]
+    }
+    return []
+  })
   const [endDate, setEndDate] = useState(event?.endDate || '')
   const [documentIds, setDocumentIds] = useState(event?.documentIds || [])
   // New timed events default to a 30-minute nudge; existing events keep their
