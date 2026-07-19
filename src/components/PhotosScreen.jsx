@@ -22,11 +22,16 @@ export default function PhotosScreen({ data, addPhotos, updatePhoto, removePhoto
     [data.photos, filter],
   )
 
-  // Album-style month sections (photos are stored newest-first).
+  // Album-style month sections grouped by when each photo was TAKEN (from its
+  // EXIF/file date), newest month first. Photos added before this was tracked
+  // fall back to their added date so they still land in a sensible month.
   const months = useMemo(() => {
+    const dated = visible
+      .map((photo) => ({ photo, when: photo.takenAt || photo.addedAt || '' }))
+      .sort((a, b) => b.when.localeCompare(a.when)) // newest first; undated sorts last
     const map = new Map()
-    for (const photo of visible) {
-      const date = photo.addedAt ? new Date(photo.addedAt) : null
+    for (const { photo, when } of dated) {
+      const date = when ? new Date(when) : null
       const valid = date && !Number.isNaN(date.getTime())
       const key = valid ? `${date.getFullYear()}-${date.getMonth()}` : 'earlier'
       if (!map.has(key)) {

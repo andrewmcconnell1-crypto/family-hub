@@ -215,6 +215,7 @@ export function normalizeData(raw) {
     photos: normalizeList(raw.photos, ['id', 'fileId'], {
       caption: '',
       fileType: '',
+      takenAt: '',
       addedAt: '',
     }),
     externalCalendars: Array.isArray(raw.externalCalendars)

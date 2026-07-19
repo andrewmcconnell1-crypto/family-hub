@@ -18,6 +18,7 @@ import {
   uploadLocalFiles,
 } from '../lib/fileStore.js'
 import { supabase } from '../lib/supabase.js'
+import { readTakenAt } from '../lib/exif.js'
 import { makeId } from '../utils/id.js'
 import { downscaleImage } from '../utils/imageUtils.js'
 
@@ -351,6 +352,8 @@ export function useFamilyStore(user, ownerId) {
   const addPhotos = useCallback(async ({ files, childIds, caption }) => {
     const entries = []
     for (const file of files) {
+      // Read the capture date from EXIF BEFORE downscaling, which strips it.
+      const takenAt = await readTakenAt(file).catch(() => '')
       // Full camera photos are huge; a ~2000px JPEG is indistinguishable on a
       // phone and stretches the storage quota ~10x. Fall back to the original
       // if the browser can't decode it.
@@ -363,6 +366,7 @@ export function useFamilyStore(user, ownerId) {
         childIds: childIds || [],
         fileId,
         fileType: blob.type || file.type,
+        takenAt,
         addedAt: new Date().toISOString(),
       })
     }
