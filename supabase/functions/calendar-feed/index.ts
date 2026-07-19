@@ -1,4 +1,4 @@
-// Treehouse calendar feed (Supabase Edge Function)
+// Nest calendar feed (Supabase Edge Function)
 // ================================================
 // Serves the household's calendar as an ICS feed that Google Calendar /
 // Apple Calendar can subscribe to:
@@ -129,7 +129,7 @@ function icsForEvents(events: Ev[], calendarName: string): string {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Treehouse//Family Hub//EN",
+    "PRODID:-//Nest//Family Hub//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${escapeText(calendarName)}`,
@@ -204,7 +204,7 @@ Deno.serve(async (req) => {
     ...birthdays(familyData.children, startKey, endKey),
   ].sort((a, b) => a.date.localeCompare(b.date));
 
-  return new Response(icsForEvents(all, "Treehouse"), {
+  return new Response(icsForEvents(all, "Nest"), {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
       "Cache-Control": "private, max-age=900",

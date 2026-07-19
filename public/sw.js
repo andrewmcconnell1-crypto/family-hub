@@ -1,4 +1,4 @@
-// Treehouse service worker: network-first with cache fallback for same-origin
+// Nest service worker: network-first with cache fallback for same-origin
 // GET requests. Online, every request hits the network (so deploys arrive
 // immediately and the in-app update prompt keeps working); each good response
 // refreshes the cache. Offline, the cached copy serves — the app shell and
@@ -42,7 +42,7 @@ self.addEventListener('push', (event) => {
     data = { body: event.data ? event.data.text() : '' }
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || 'Treehouse', {
+    self.registration.showNotification(data.title || 'Nest', {
       body: data.body || '',
       icon: './icon-512.png',
       badge: './icon-512.png',

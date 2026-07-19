@@ -18,7 +18,7 @@ export default function RemindersCard({ user }) {
       {reminders.status === 'ios-install' && (
         <p className="muted">
           On iPhone, reminders need the app on your Home Screen first: share button →{' '}
-          <strong>Add to Home Screen</strong>, then open Treehouse from there.
+          <strong>Add to Home Screen</strong>, then open Nest from there.
         </p>
       )}
       {reminders.status === 'unsupported' && (
@@ -26,7 +26,7 @@ export default function RemindersCard({ user }) {
       )}
       {reminders.status === 'denied' && (
         <p className="muted">
-          Notifications are blocked for Treehouse in your device settings — allow them there, then
+          Notifications are blocked for Nest in your device settings — allow them there, then
           come back.
         </p>
       )}

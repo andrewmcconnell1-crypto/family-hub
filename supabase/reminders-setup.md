@@ -6,14 +6,14 @@ Three features share this setup:
   nudge before events that have a reminder set, and a ping when a to-do is
   due. Turned on per device from the app's Family tab.
 - **Calendar feed** — a private link Google Calendar / Apple Calendar can
-  subscribe to, so Treehouse events appear alongside everything else
-  (Treehouse → other apps).
-- **Other calendars** — subscribe Treehouse to a Google/Outlook/Apple
-  calendar's iCal link, so those events show up read-only in Treehouse
-  (other apps → Treehouse). This one needs the `ics-proxy` function below.
+  subscribe to, so Nest events appear alongside everything else
+  (Nest → other apps).
+- **Other calendars** — subscribe Nest to a Google/Outlook/Apple
+  calendar's iCal link, so those events show up read-only in Nest
+  (other apps → Nest). This one needs the `ics-proxy` function below.
 
 Everything below happens in the [Supabase dashboard](https://supabase.com/dashboard)
-for the Treehouse project. Allow ~10 minutes.
+for the Nest project. Allow ~10 minutes.
 
 ## 1. Create the tables
 
@@ -38,7 +38,7 @@ apps and the scheduler can't send Supabase auth headers, so those rely on the
 secret token / cron key instead.
 
 **Leave JWT verification ON for `ics-proxy`** — it should only be callable by
-signed-in Treehouse users, so it can't be abused as an open proxy. (It's on
+signed-in Nest users, so it can't be abused as an open proxy. (It's on
 by default; just don't turn it off.)
 
 ## 3. Set the secrets
@@ -64,7 +64,7 @@ URL) and `YOUR-CRON-SECRET`:
 ```sql
 -- (a) Morning digest, once a day.
 select cron.schedule(
-  'treehouse-morning-digest',
+  'nest-morning-digest',
   '0 21 * * *',  -- runs at 21:00 UTC = 7:00am next day in Sydney (AEST is UTC+10)
   $$
   select net.http_post(
@@ -76,7 +76,7 @@ select cron.schedule(
 
 -- (b) Per-event / per-to-do reminders, every 15 minutes.
 select cron.schedule(
-  'treehouse-due-reminders',
+  'nest-due-reminders',
   '*/15 * * * *',
   $$
   select net.http_post(
@@ -117,12 +117,12 @@ just means nothing was due in that window.
   then in Google Calendar: Settings → Add calendar → **From URL** → paste
   (or iPhone: Settings → Apps → Calendar → Calendar Accounts → Add Account →
   Other → **Add Subscribed Calendar**). Google refreshes subscribed feeds
-  every few hours — new Treehouse events appear with a delay, that's normal.
-- **Other calendars** (Google/Outlook/Apple → Treehouse): Family tab → Other
+  every few hours — new Nest events appear with a delay, that's normal.
+- **Other calendars** (Google/Outlook/Apple → Nest): Family tab → Other
   calendars → *Add a calendar* → paste the calendar's private iCal / .ics
   address (the card lists where to find it in each app). Those events then
   show read-only in the Week, Calendar and Home views, colour-coded. Needs
-  the `ics-proxy` function from step 2 and you signed in. Treehouse refreshes
+  the `ics-proxy` function from step 2 and you signed in. Nest refreshes
   each feed on open and every few hours, so a brand-new event in the other
   app can take a little while to appear.
 

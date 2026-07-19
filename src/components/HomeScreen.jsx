@@ -93,7 +93,7 @@ export default function HomeScreen({ data, onNavigate, externalOccurrences }) {
       {data.children.length === 0 && (
         <button type="button" className="card card-cta" onClick={() => onNavigate('family')}>
           <strong>Start by adding your family</strong>
-          <span>Everything in Treehouse — events, documents, photos — can be tagged to them.</span>
+          <span>Everything in Nest — events, documents, photos — can be tagged to them.</span>
         </button>
       )}
 

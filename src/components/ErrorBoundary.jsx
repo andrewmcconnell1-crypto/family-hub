@@ -11,7 +11,7 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('Treehouse crashed', error, info)
+    console.error('Nest crashed', error, info)
   }
 
   render() {
@@ -29,7 +29,7 @@ export default class ErrorBoundary extends Component {
             className="primary-button"
             onClick={() => window.location.reload()}
           >
-            Reload Treehouse
+            Reload Nest
           </button>
         </div>
       </div>

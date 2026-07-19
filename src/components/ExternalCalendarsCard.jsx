@@ -44,7 +44,7 @@ export default function ExternalCalendarsCard({
     <section className="card">
       <h2>Other calendars</h2>
       <p className="muted">
-        See a Google, Outlook or Apple calendar inside Treehouse. Copy its private iCal / .ics
+        See a Google, Outlook or Apple calendar inside Nest. Copy its private iCal / .ics
         address and paste it here — those events show up read-only across your week and calendar.
       </p>
 

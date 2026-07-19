@@ -1,6 +1,6 @@
 {
-  "name": "Treehouse — the family hub",
-  "short_name": "Treehouse",
+  "name": "Nest — the family hub",
+  "short_name": "Nest",
   "description": "Calendar, to-dos, documents and photos for the whole family, all in one place.",
   "start_url": "./",
   "scope": "./",

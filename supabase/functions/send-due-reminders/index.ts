@@ -1,4 +1,4 @@
-// Treehouse per-event / per-to-do reminders (Supabase Edge Function)
+// Nest per-event / per-to-do reminders (Supabase Edge Function)
 // ==================================================================
 // Runs every ~15 minutes and sends a web-push the moment a reminder falls
 // due: an event whose lead time (e.g. 30 min before) has just arrived, or a

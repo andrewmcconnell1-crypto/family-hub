@@ -1,9 +1,9 @@
 /* ---------------------------------------------------------------------------
-   Treehouse — design tokens + base styles. Mobile-first; light & dark themes
+   Nest — design tokens + base styles. Mobile-first; light & dark themes
    driven by [data-theme] on <html> (set before paint in index.html).
 --------------------------------------------------------------------------- */
 
-/* Treehouse's own look: playful neo-brutalism. Bold ink outlines, hard
+/* Nest's own look: playful neo-brutalism. Bold ink outlines, hard
    offset shadows, electric violet + sunshine yellow on lavender paper. */
 :root {
   --accent: #6c5ce7;
@@ -1522,6 +1522,17 @@ button {
 
 .signin h1 {
   font-size: 2.1rem;
+}
+
+.wordmark {
+  display: block;
+  height: auto;
+}
+
+.signin-wordmark {
+  width: 190px;
+  max-width: 62%;
+  margin: 0.2rem 0 0.1rem;
 }
 
 .signin p {

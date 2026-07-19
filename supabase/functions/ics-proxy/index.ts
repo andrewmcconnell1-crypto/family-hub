@@ -1,9 +1,9 @@
-// Treehouse ICS proxy (Supabase Edge Function)
+// Nest ICS proxy (Supabase Edge Function)
 // ============================================
 // Fetches an external calendar feed (Google/Outlook/iCloud ".ics" URL) server
 // side and returns the raw text with CORS headers, because those feeds don't
 // allow the browser to read them directly. Deploy with JWT verification ON —
-// only signed-in Treehouse users may call it, so it isn't an open proxy.
+// only signed-in Nest users may call it, so it isn't an open proxy.
 //
 //   POST { "url": "https://calendar.google.com/…/basic.ics" }
 //
@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
     const upstream = await fetch(url.toString(), {
-      headers: { Accept: "text/calendar, text/plain, */*", "User-Agent": "Treehouse-Calendar/1.0" },
+      headers: { Accept: "text/calendar, text/plain, */*", "User-Agent": "Nest-Calendar/1.0" },
       signal: controller.signal,
       redirect: "follow",
     });

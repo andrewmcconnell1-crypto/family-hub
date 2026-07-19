@@ -13,7 +13,7 @@ const randomToken = () => {
 }
 
 // Settings card: a private ICS link other calendar apps can subscribe to, so
-// Treehouse events (recurring ones included, plus birthdays) show up in
+// Nest events (recurring ones included, plus birthdays) show up in
 // Google Calendar / Apple Calendar. Served by the calendar-feed edge function.
 export default function CalendarFeedCard({ user }) {
   const [token, setToken] = useState(null) // null = loading, '' = none yet
@@ -80,7 +80,7 @@ export default function CalendarFeedCard({ user }) {
     <section className="card">
       <h2>Calendar feed</h2>
       <p className="muted">
-        See Treehouse events inside Google Calendar or Apple Calendar: create your private link,
+        See Nest events inside Google Calendar or Apple Calendar: create your private link,
         then subscribe to it from the other calendar. It updates automatically (calendar apps
         refresh subscribed feeds every few hours).
       </p>

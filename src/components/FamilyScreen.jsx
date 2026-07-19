@@ -57,13 +57,13 @@ export default function FamilyScreen({
     if (backingUp) return
     setBackingUp(true)
     try {
-      const files = [{ name: 'treehouse/data.json', data: JSON.stringify(data, null, 2) }]
+      const files = [{ name: 'nest/data.json', data: JSON.stringify(data, null, 2) }]
       for (const doc of data.documents) {
         const blob = await getFile(doc.fileId).catch(() => null)
         if (blob) {
           const name = safeFileName(doc.title, doc.id)
           files.push({
-            name: `treehouse/documents/${name}-${doc.id}${extensionFor(doc.fileName, blob.type)}`,
+            name: `nest/documents/${name}-${doc.id}${extensionFor(doc.fileName, blob.type)}`,
             data: blob,
           })
         }
@@ -72,7 +72,7 @@ export default function FamilyScreen({
         const blob = await getFile(photo.fileId).catch(() => null)
         if (blob) {
           files.push({
-            name: `treehouse/photos/${photo.id}${extensionFor('', blob.type) || '.jpg'}`,
+            name: `nest/photos/${photo.id}${extensionFor('', blob.type) || '.jpg'}`,
             data: blob,
           })
         }
@@ -82,7 +82,7 @@ export default function FamilyScreen({
         const blob = await getFile(member.avatarFileId).catch(() => null)
         if (blob) {
           files.push({
-            name: `treehouse/avatars/${safeFileName(member.name, member.id)}${extensionFor('', blob.type) || '.jpg'}`,
+            name: `nest/avatars/${safeFileName(member.name, member.id)}${extensionFor('', blob.type) || '.jpg'}`,
             data: blob,
           })
         }
@@ -91,7 +91,7 @@ export default function FamilyScreen({
       const url = URL.createObjectURL(zip)
       const link = document.createElement('a')
       link.href = url
-      link.download = `treehouse-backup-${todayKey()}.zip`
+      link.download = `nest-backup-${todayKey()}.zip`
       link.click()
       setTimeout(() => URL.revokeObjectURL(url), 30000)
     } catch (error) {

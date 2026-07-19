@@ -13,7 +13,7 @@ createRoot(document.getElementById('root')).render(
 )
 
 // Offline support: a network-first service worker caches the app shell and
-// assets, so Treehouse opens with no signal (data is already on-device).
+// assets, so Nest opens with no signal (data is already on-device).
 if (import.meta.env.PROD && 'serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker

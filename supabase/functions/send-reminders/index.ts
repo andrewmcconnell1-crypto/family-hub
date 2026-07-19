@@ -1,4 +1,4 @@
-// Treehouse morning digest (Supabase Edge Function)
+// Nest morning digest (Supabase Edge Function)
 // =================================================
 // Sends one web-push notification per subscribed device summarising the day:
 // today's events (recurring ones expanded, birthdays included), to-dos due
@@ -207,7 +207,7 @@ Deno.serve(async (req) => {
       continue;
     }
     const payload = JSON.stringify({
-      title: `Treehouse — ${dayLabel}`,
+      title: `Nest — ${dayLabel}`,
       body: lines.join("\n"),
       url: appUrl,
     });

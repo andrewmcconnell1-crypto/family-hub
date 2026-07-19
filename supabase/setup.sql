@@ -1,4 +1,4 @@
--- Treehouse cloud setup. Run this once in the Supabase SQL editor
+-- Nest cloud setup. Run this once in the Supabase SQL editor
 -- (Dashboard → SQL Editor → New query → paste → Run).
 
 -- 1) Metadata: one private row of JSON per user.
