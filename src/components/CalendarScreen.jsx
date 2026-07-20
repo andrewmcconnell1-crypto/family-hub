@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Bell, CalendarDays, ChevronLeft, ChevronRight, Paperclip, Plus, Repeat } from 'lucide-react'
 import EmptyState from './EmptyState.jsx'
 import EventSheet from './EventSheet.jsx'
@@ -24,25 +24,22 @@ export default function CalendarScreen({
   skipEventOccurrence,
   externalOccurrences,
   focus,
-  onFocusHandled,
 }) {
   const today = todayKey()
-  const [selectedKey, setSelectedKey] = useState(today)
-  const [monthDate, setMonthDate] = useState(() => startOfMonth(parseDateKey(today)))
-  const [sheet, setSheet] = useState(null) // null | { event?, occurrenceDate? }
-
-  // Deep-link from Home: jump to the day and, for a real event, open its sheet.
-  useEffect(() => {
-    if (!focus?.date) return
-    setSelectedKey(focus.date)
-    setMonthDate(startOfMonth(parseDateKey(focus.date)))
-    if (focus.kind === 'event') {
+  // A deep-link from Home mounts this screen fresh with `focus` set, so we seed
+  // the day, month and open sheet straight from it (no effect / cascading
+  // render). App clears the focus on any other navigation.
+  const [selectedKey, setSelectedKey] = useState(focus?.date || today)
+  const [monthDate, setMonthDate] = useState(() =>
+    startOfMonth(parseDateKey(focus?.date || today)),
+  )
+  const [sheet, setSheet] = useState(() => {
+    if (focus?.kind === 'event') {
       const series = data.events.find((e) => e.id === focus.id)
-      if (series) setSheet({ event: series, occurrenceDate: focus.date })
+      if (series) return { event: series, occurrenceDate: focus.date }
     }
-    onFocusHandled?.()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focus])
+    return null
+  }) // null | { event?, occurrenceDate? }
 
   const weeks = useMemo(() => monthGrid(monthDate), [monthDate])
 

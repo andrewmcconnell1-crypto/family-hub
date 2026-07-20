@@ -18,7 +18,6 @@ export default function PlannerScreen({
   store,
   externalOccurrences,
   focus,
-  onFocusHandled,
 }) {
   const activeTodoCount = store.data.todos.filter((todo) => !todo.done).length
 
@@ -54,7 +53,6 @@ export default function PlannerScreen({
         removeTodo={store.removeTodo}
         clearDoneTodos={store.clearDoneTodos}
         focus={focus?.kind === 'todo' ? focus : null}
-        onFocusHandled={onFocusHandled}
       />
     )
   }
@@ -70,7 +68,6 @@ export default function PlannerScreen({
         skipEventOccurrence={store.skipEventOccurrence}
         externalOccurrences={externalOccurrences}
         focus={focus?.kind === 'event' || focus?.kind === 'date' ? focus : null}
-        onFocusHandled={onFocusHandled}
       />
     )
   }

@@ -209,11 +209,15 @@ export default function App() {
         {tab === 'planner' && (
           <PlannerScreen
             mode={plannerMode}
-            onModeChange={setPlannerMode}
+            onModeChange={(mode) => {
+              // Switching pills is a fresh navigation — drop any deep-link
+              // focus so it doesn't re-open when the view remounts.
+              setPlannerFocus(null)
+              setPlannerMode(mode)
+            }}
             store={actions}
             externalOccurrences={externalCalendars.occurrencesInRange}
             focus={plannerFocus}
-            onFocusHandled={() => setPlannerFocus(null)}
           />
         )}
         {tab === 'documents' && (
