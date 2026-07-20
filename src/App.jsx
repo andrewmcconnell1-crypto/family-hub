@@ -36,16 +36,38 @@ export default function App() {
     setPlannerModeState(mode)
   }
 
+  // A specific Planner item to open when we land there, set by Home's
+  // deep-links: { kind: 'event' | 'todo' | 'date', id?, date? }. Cleared once
+  // the target screen has opened it.
+  const [plannerFocus, setPlannerFocus] = useState(null)
+
   // Navigation targets are bottom-bar tabs, plus the virtual 'week' /
   // 'calendar' / 'todos' ids used by Home's shortcuts, which land on the
   // Planner tab.
   const navigate = (target) => {
+    setPlannerFocus(null)
     if (target === 'week' || target === 'calendar' || target === 'todos') {
       setPlannerMode(target)
       setTab('planner')
       return
     }
     setTab(target)
+  }
+
+  // Open a specific event or to-do (or just a calendar date) in the Planner —
+  // used by the clickable items on Home.
+  const openItem = (target) => {
+    if (target.type === 'todo') {
+      setPlannerMode('todos')
+      setPlannerFocus({ kind: 'todo', id: target.id })
+    } else if (target.type === 'event') {
+      setPlannerMode('calendar')
+      setPlannerFocus({ kind: 'event', id: target.id, date: target.date })
+    } else {
+      setPlannerMode('calendar')
+      setPlannerFocus({ kind: 'date', date: target.date })
+    }
+    setTab('planner')
   }
   const auth = useAuth()
   const household = useHousehold(auth.user)
@@ -180,6 +202,7 @@ export default function App() {
           <HomeScreen
             data={store.data}
             onNavigate={navigate}
+            onOpen={openItem}
             externalOccurrences={externalCalendars.occurrencesInRange}
           />
         )}
@@ -189,6 +212,8 @@ export default function App() {
             onModeChange={setPlannerMode}
             store={actions}
             externalOccurrences={externalCalendars.occurrencesInRange}
+            focus={plannerFocus}
+            onFocusHandled={() => setPlannerFocus(null)}
           />
         )}
         {tab === 'documents' && (

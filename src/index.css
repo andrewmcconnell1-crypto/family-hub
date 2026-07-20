@@ -609,6 +609,22 @@ button {
   font-size: 0.9rem;
 }
 
+.attention-item-button {
+  border: none;
+  background: none;
+  padding: 0.1rem 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.attention-item-button:not(.muted):hover {
+  text-decoration: underline;
+}
+
 .week-strip-header {
   margin-bottom: -0.35rem;
 }
@@ -664,6 +680,20 @@ button {
 
 .day-card-body {
   margin-top: 0.35rem;
+}
+
+/* Day-card rows are tappable (they open the item in the Planner): keep a light
+   divider between them and underline the title on hover. */
+.day-card-body .event-row-button {
+  border-bottom: 1px solid var(--border);
+}
+
+.day-card-body > li:last-child .event-row-button {
+  border-bottom: none;
+}
+
+.day-card-body .event-row-button:hover .event-title {
+  text-decoration: underline;
 }
 
 .bday-card {
@@ -1048,10 +1078,22 @@ button {
   gap: 0.4rem;
 }
 
-.home-todo-list li {
+.home-todo-button {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 0.15rem 0;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.home-todo-button:hover .home-todo-title {
+  text-decoration: underline;
 }
 
 .home-todo-dot {

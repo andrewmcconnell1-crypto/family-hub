@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Bell, Check, ChevronDown, ChevronRight, GripVertical, ListTodo, Paperclip, Plus } from 'lucide-react'
 import Sheet from './Sheet.jsx'
 import DocAttachments from './DocAttachments.jsx'
@@ -16,10 +16,21 @@ export default function TodosScreen({
   moveTodoToIndex,
   removeTodo,
   clearDoneTodos,
+  focus,
+  onFocusHandled,
 }) {
   const [filter, setFilter] = useState('all')
   const [sheet, setSheet] = useState(null) // null | { todo? }
   const [showDone, setShowDone] = useState(false)
+
+  // Deep-link from Home: open the tapped to-do's editor.
+  useEffect(() => {
+    if (focus?.kind !== 'todo') return
+    const todo = data.todos.find((t) => t.id === focus.id)
+    if (todo) setSheet({ todo })
+    onFocusHandled?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focus])
 
   const { active, done } = useMemo(() => {
     const visible = data.todos.filter((todo) => matchesChild(todo, filter))

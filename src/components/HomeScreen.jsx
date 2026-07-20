@@ -18,7 +18,7 @@ function greeting() {
 // Bistro-style dashboard: today front and centre, the rest of the week
 // condensed, plus highlights (overdue to-dos, next birthday, top priorities).
 // The Planner holds the detail; everything here links into it.
-export default function HomeScreen({ data, onNavigate, externalOccurrences }) {
+export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrences }) {
   const today = todayKey()
   const weekEnd = addDays(today, 6 - weekdayIndex(today)) // Sunday of this week
   const thisWeek = [
@@ -98,33 +98,43 @@ export default function HomeScreen({ data, onNavigate, externalOccurrences }) {
       )}
 
       {(overdueTodos.length > 0 || expiringDocs.length > 0) && (
-        <button
-          type="button"
-          className="card attention-card"
-          onClick={() => onNavigate(overdueTodos.length > 0 ? 'todos' : 'documents')}
-        >
+        <section className="card attention-card">
           <span className="attention-title">
             <AlertCircle size={16} aria-hidden="true" />
             Needs attention
           </span>
           {overdueTodos.slice(0, 3).map((todo) => (
-            <span key={todo.id} className="attention-item">
+            <button
+              key={todo.id}
+              type="button"
+              className="attention-item attention-item-button"
+              onClick={() => onOpen({ type: 'todo', id: todo.id })}
+            >
               {todo.title} — due {formatDateKey(todo.dueDate, { weekday: true })}
-            </span>
+            </button>
           ))}
           {overdueTodos.length > 3 && (
-            <span className="muted">+ {overdueTodos.length - 3} more overdue</span>
+            <button type="button" className="attention-item-button muted" onClick={() => onNavigate('todos')}>
+              + {overdueTodos.length - 3} more overdue
+            </button>
           )}
           {expiringDocs.slice(0, 3).map((doc) => (
-            <span key={doc.id} className="attention-item">
+            <button
+              key={doc.id}
+              type="button"
+              className="attention-item attention-item-button"
+              onClick={() => onNavigate('documents')}
+            >
               {doc.title} — {doc.expiryDate < today ? 'expired' : 'expires'}{' '}
               {formatDateKey(doc.expiryDate)}
-            </span>
+            </button>
           ))}
           {expiringDocs.length > 3 && (
-            <span className="muted">+ {expiringDocs.length - 3} more expiring</span>
+            <button type="button" className="attention-item-button muted" onClick={() => onNavigate('documents')}>
+              + {expiringDocs.length - 3} more expiring
+            </button>
           )}
-        </button>
+        </section>
       )}
 
       <div className="card-title-row week-strip-header">
@@ -141,11 +151,16 @@ export default function HomeScreen({ data, onNavigate, externalOccurrences }) {
           kids={data.children}
           expanded={expandedDays.has(day.key)}
           onToggle={() => toggleDay(day.key)}
+          onOpen={onOpen}
         />
       ))}
 
       {nextBirthday && (
-        <button type="button" className="card bday-card" onClick={() => onNavigate('calendar')}>
+        <button
+          type="button"
+          className="card bday-card"
+          onClick={() => onOpen({ type: 'date', date: nextBirthday.date })}
+        >
           <span className="bday-title">{nextBirthday.title}</span>
           <span className="muted">
             {formatDateKey(nextBirthday.date, { weekday: true })} — in {daysToBirthday}{' '}
@@ -165,13 +180,19 @@ export default function HomeScreen({ data, onNavigate, externalOccurrences }) {
           <ul className="home-todo-list">
             {activeTodos.slice(0, 3).map((todo) => (
               <li key={todo.id}>
-                <span className="home-todo-dot" aria-hidden="true" />
-                <span className="home-todo-title">{todo.title}</span>
-                {todo.dueDate && (
-                  <span className={`todo-due${todo.dueDate < today ? ' todo-overdue' : ''}`}>
-                    {formatDateKey(todo.dueDate)}
-                  </span>
-                )}
+                <button
+                  type="button"
+                  className="home-todo-button"
+                  onClick={() => onOpen({ type: 'todo', id: todo.id })}
+                >
+                  <span className="home-todo-dot" aria-hidden="true" />
+                  <span className="home-todo-title">{todo.title}</span>
+                  {todo.dueDate && (
+                    <span className={`todo-due${todo.dueDate < today ? ' todo-overdue' : ''}`}>
+                      {formatDateKey(todo.dueDate)}
+                    </span>
+                  )}
+                </button>
               </li>
             ))}
           </ul>
@@ -206,7 +227,7 @@ export default function HomeScreen({ data, onNavigate, externalOccurrences }) {
 
 // One Bistro-style card per day: collapsed it's a single summary line, tapped
 // open it shows the full rows (times, tags, due to-dos).
-function DayCard({ day, isToday, kids, expanded, onToggle }) {
+function DayCard({ day, isToday, kids, expanded, onToggle, onOpen }) {
   const count = day.events.length + day.todos.length
   const { dow, num, weekdayLong } = dayParts(day.key)
   const summary = [
@@ -246,41 +267,56 @@ function DayCard({ day, isToday, kids, expanded, onToggle }) {
       {expanded && count > 0 && (
         <ul className="event-list day-card-body">
           {day.events.map((event) => (
-            <li
-              key={`${event.id}-${event.date}`}
-              className={`event-row${event.isExternal ? ' event-row-external' : ''}`}
-              style={
-                event.isExternal
-                  ? { borderLeftColor: calendarColor({ colorId: event.calendarColorId }) }
-                  : undefined
-              }
-            >
-              <div className="event-when">
-                {event.time ? (
-                  <span className="event-time">{event.time}</span>
-                ) : (
-                  <span className="event-time muted">all day</span>
-                )}
-              </div>
-              <div className="event-main">
-                <span className="event-title">{event.title}</span>
-                {event.isExternal ? (
-                  <span className="external-tag">{event.calendarName}</span>
-                ) : (
-                  <ChildTags kids={kids} childIds={event.childIds} />
-                )}
-              </div>
+            <li key={`${event.id}-${event.date}`}>
+              <button
+                type="button"
+                className={`event-row event-row-button${event.isExternal ? ' event-row-external' : ''}`}
+                style={
+                  event.isExternal
+                    ? { borderLeftColor: calendarColor({ colorId: event.calendarColorId }) }
+                    : undefined
+                }
+                onClick={() =>
+                  onOpen(
+                    event.isBirthday || event.isExternal
+                      ? { type: 'date', date: event.date }
+                      : { type: 'event', id: event.id, date: event.date },
+                  )
+                }
+              >
+                <div className="event-when">
+                  {event.time ? (
+                    <span className="event-time">{event.time}</span>
+                  ) : (
+                    <span className="event-time muted">all day</span>
+                  )}
+                </div>
+                <div className="event-main">
+                  <span className="event-title">{event.title}</span>
+                  {event.isExternal ? (
+                    <span className="external-tag">{event.calendarName}</span>
+                  ) : (
+                    <ChildTags kids={kids} childIds={event.childIds} />
+                  )}
+                </div>
+              </button>
             </li>
           ))}
           {day.todos.map((todo) => (
-            <li key={todo.id} className="event-row">
-              <div className="event-when">
-                <span className="event-time muted">to-do</span>
-              </div>
-              <div className="event-main">
-                <span className="event-title">{todo.title}</span>
-                <ChildTags kids={kids} childIds={todo.childIds} />
-              </div>
+            <li key={todo.id}>
+              <button
+                type="button"
+                className="event-row event-row-button"
+                onClick={() => onOpen({ type: 'todo', id: todo.id })}
+              >
+                <div className="event-when">
+                  <span className="event-time muted">to-do</span>
+                </div>
+                <div className="event-main">
+                  <span className="event-title">{todo.title}</span>
+                  <ChildTags kids={kids} childIds={todo.childIds} />
+                </div>
+              </button>
             </li>
           ))}
         </ul>
