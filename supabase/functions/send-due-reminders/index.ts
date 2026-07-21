@@ -254,7 +254,12 @@ Deno.serve(async (req) => {
       let delivered = false;
       for (const sub of ownerSubs) {
         try {
-          await appServer.subscribe(sub.subscription).pushTextMessage(payload, {});
+          // urgency "high" so Android delivers promptly even in Doze/idle;
+          // ttl keeps it retained for an hour if the phone is briefly offline
+          // (a reminder older than that isn't worth showing).
+          await appServer
+            .subscribe(sub.subscription)
+            .pushTextMessage(payload, { urgency: "high", ttl: 60 * 60 });
           delivered = true;
           sent++;
         } catch (err) {

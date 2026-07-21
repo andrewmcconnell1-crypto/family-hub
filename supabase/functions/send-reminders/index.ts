@@ -213,7 +213,9 @@ Deno.serve(async (req) => {
     });
     try {
       const subscriber = appServer.subscribe(sub.subscription);
-      await subscriber.pushTextMessage(payload, {});
+      // urgency "high" so the digest isn't held back by Android Doze; ttl
+      // keeps the morning summary deliverable for a few hours.
+      await subscriber.pushTextMessage(payload, { urgency: "high", ttl: 6 * 60 * 60 });
       sent++;
     } catch (err) {
       // A gone/expired subscription (device turned reminders off, or the
