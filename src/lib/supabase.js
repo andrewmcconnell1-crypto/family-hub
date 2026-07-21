@@ -10,4 +10,17 @@ const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 // on-device), so it keeps working before cloud is configured.
 export const isSupabaseConfigured = Boolean(url && anonKey)
 
-export const supabase = isSupabaseConfigured ? createClient(url, anonKey) : null
+// PKCE flow so the native app can complete Google sign-in via a deep link:
+// the OAuth code comes back to a custom-scheme URL that the app intercepts and
+// exchanges for a session (see useAuth.js). persistSession keeps you signed in
+// across app restarts. These are safe defaults for the browser build too.
+export const supabase = isSupabaseConfigured
+  ? createClient(url, anonKey, {
+      auth: {
+        flowType: 'pkce',
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    })
+  : null
