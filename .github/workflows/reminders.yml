@@ -12,7 +12,7 @@ name: Nest reminders
 
 on:
   schedule:
-    - cron: '*/15 * * * *' # per-event / per-to-do reminders, every 15 min
+    - cron: '*/5 * * * *' # per-event / per-to-do reminders, every 5 min
     - cron: '0 21 * * *' # morning digest once a day (21:00 UTC = 7am Sydney)
   workflow_dispatch: {} # lets you run it on demand from the Actions tab
 
