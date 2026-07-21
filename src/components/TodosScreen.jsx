@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Bell, Check, ChevronDown, ChevronRight, GripVertical, ListTodo, Paperclip, Plus } from 'lucide-react'
 import Sheet from './Sheet.jsx'
 import DocAttachments from './DocAttachments.jsx'
@@ -6,6 +6,9 @@ import EmptyState from './EmptyState.jsx'
 import { ChildFilter, ChildMultiSelect, ChildTags } from './ChildChips.jsx'
 import { matchesChild } from '../lib/familyData.js'
 import { formatDateKey, todayKey } from '../utils/dateUtils.js'
+
+// How long a ticked item stays visible (checked) before sliding to Completed.
+const RECENT_DONE_MS = 2600
 
 export default function TodosScreen({
   tabs,
@@ -30,16 +33,62 @@ export default function TodosScreen({
     return null
   }) // null | { todo? }
   const [showDone, setShowDone] = useState(false)
+  // Ids ticked in the last few seconds: they stay in the list (checked) so the
+  // tick registers before the row slides down to Completed.
+  const [recentlyDone, setRecentlyDone] = useState(() => new Set())
+  const doneTimers = useRef(new Map())
 
-  const { active, done } = useMemo(() => {
+  useEffect(
+    () => () => {
+      for (const timer of doneTimers.current.values()) clearTimeout(timer)
+    },
+    [],
+  )
+
+  const { shown, active, activeIndex, done } = useMemo(() => {
     const visible = data.todos.filter((todo) => matchesChild(todo, filter))
+    const active = visible.filter((todo) => !todo.done)
     return {
-      active: visible.filter((todo) => !todo.done),
+      active, // truly not-done — drives reorder indices and the drag clamp
+      activeIndex: new Map(active.map((todo, i) => [todo.id, i])),
+      // Shown in the top card: the active ones plus any just-ticked stragglers.
+      shown: visible.filter((todo) => !todo.done || recentlyDone.has(todo.id)),
       done: visible
-        .filter((todo) => todo.done)
+        .filter((todo) => todo.done && !recentlyDone.has(todo.id))
         .sort((a, b) => (b.doneAt || '').localeCompare(a.doneAt || '')),
     }
-  }, [data.todos, filter])
+  }, [data.todos, filter, recentlyDone])
+
+  const forgetRecent = (id) =>
+    setRecentlyDone((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    })
+
+  // Tick / untick with a grace period so a completed item doesn't vanish the
+  // instant you check it.
+  const handleToggle = (todo) => {
+    toggleTodo(todo.id)
+    const existing = doneTimers.current.get(todo.id)
+    if (existing) {
+      clearTimeout(existing)
+      doneTimers.current.delete(todo.id)
+    }
+    if (!todo.done) {
+      setRecentlyDone((prev) => new Set(prev).add(todo.id))
+      doneTimers.current.set(
+        todo.id,
+        setTimeout(() => {
+          doneTimers.current.delete(todo.id)
+          forgetRecent(todo.id)
+        }, RECENT_DONE_MS),
+      )
+    } else {
+      forgetRecent(todo.id)
+    }
+  }
 
   // Reordering is by position in the full list, so it only makes sense when
   // no child filter is hiding rows.
@@ -98,7 +147,7 @@ export default function TodosScreen({
 
       <ChildFilter kids={data.children} value={filter} onChange={setFilter} />
 
-      {active.length === 0 && done.length === 0 ? (
+      {shown.length === 0 && done.length === 0 ? (
         <EmptyState
           icon={ListTodo}
           title="Nothing on the list"
@@ -106,22 +155,22 @@ export default function TodosScreen({
         />
       ) : (
         <section className="card">
-          {active.length === 0 ? (
+          {shown.length === 0 ? (
             <p className="muted">All done — nothing outstanding.</p>
           ) : (
             <ul className="todo-list">
-              {active.map((todo, index) => (
+              {shown.map((todo) => (
                 <TodoRow
                   key={todo.id}
                   todo={todo}
                   kids={data.children}
                   dragging={draggingId === todo.id}
-                  onToggle={() => toggleTodo(todo.id)}
+                  onToggle={() => handleToggle(todo)}
                   onEdit={() => setSheet({ todo })}
                   dragHandlers={
-                    canReorder
+                    canReorder && !todo.done
                       ? {
-                          onPointerDown: (e) => startDrag(e, todo.id, index),
+                          onPointerDown: (e) => startDrag(e, todo.id, activeIndex.get(todo.id)),
                           onPointerMove: dragMove,
                           onPointerUp: endDrag,
                           onPointerCancel: endDrag,
@@ -157,7 +206,7 @@ export default function TodosScreen({
                   key={todo.id}
                   todo={todo}
                   kids={data.children}
-                  onToggle={() => toggleTodo(todo.id)}
+                  onToggle={() => handleToggle(todo)}
                   onEdit={() => setSheet({ todo })}
                   dragHandlers={null}
                 />
