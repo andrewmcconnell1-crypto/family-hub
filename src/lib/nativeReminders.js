@@ -28,7 +28,36 @@ const HORIZON_DAYS = 60
 const MAX_PENDING = 60
 const TODO_HOUR = 9 // local hour a "to-do due today" alarm fires at
 
+// A dedicated high-importance channel for reminders. Using our own channel
+// means the reminder chime is bundled (res/raw/nest_chime.wav) AND the family
+// can change it to any sound they like in Android settings (Settings → Apps →
+// Nest → Notifications → Reminders → Sound). Note: Android freezes a channel's
+// settings after it's first created, so to ship a *different* default sound
+// later we'd bump the channel id.
+const CHANNEL_ID = 'nest-reminders-v1'
+const SOUND = 'nest_chime.wav'
+
 export const isNativeApp = () => Capacitor.isNativePlatform()
+
+let channelReady = false
+async function ensureChannel() {
+  if (!isNativeApp() || channelReady) return
+  channelReady = true
+  try {
+    await LocalNotifications.createChannel({
+      id: CHANNEL_ID,
+      name: 'Reminders',
+      description: 'Event and to-do reminders',
+      importance: 5, // high — makes a sound and pops a heads-up alert
+      visibility: 1,
+      sound: SOUND,
+      vibration: true,
+    })
+  } catch (err) {
+    channelReady = false
+    console.error('Creating the reminders channel failed', err)
+  }
+}
 
 // A stable positive 32-bit id for a reminder key, so re-scheduling the same
 // reminder replaces it in place rather than stacking duplicates (FNV-1a).
@@ -96,6 +125,7 @@ export async function syncNativeReminders(data, opts = {}) {
   if (!isNativeApp()) return { scheduled: 0, cancelled: 0 }
   const granted = await ensureNativePermission()
   if (!granted) return { scheduled: 0, cancelled: 0, blocked: true }
+  await ensureChannel()
 
   const desired = upcomingReminders(data, opts)
   const desiredIds = new Set(desired.map((r) => r.id))
@@ -113,6 +143,8 @@ export async function syncNativeReminders(data, opts = {}) {
         title: r.title,
         body: r.body,
         schedule: { at: r.at, allowWhileIdle: true },
+        channelId: CHANNEL_ID,
+        sound: SOUND, // used on Android < 8; on 8+ the channel's sound wins
         smallIcon: 'ic_stat_nest',
         extra: { key: r.key },
       })),

@@ -64,10 +64,16 @@ function NativeReminders({ data }) {
       </p>
 
       {status === 'on' && (
-        <p className="muted">
-          <BellRing size={16} aria-hidden="true" /> On — {armed} upcoming{' '}
-          {armed === 1 ? 'reminder is' : 'reminders are'} armed on this device.
-        </p>
+        <>
+          <p className="muted">
+            <BellRing size={16} aria-hidden="true" /> On — {armed} upcoming{' '}
+            {armed === 1 ? 'reminder is' : 'reminders are'} armed on this device.
+          </p>
+          <p className="muted">
+            To change the reminder sound, open Settings → Apps → Nest → Notifications → Reminders →
+            Sound (pick any tone, including alarm sounds).
+          </p>
+        </>
       )}
 
       {status === 'blocked' && (

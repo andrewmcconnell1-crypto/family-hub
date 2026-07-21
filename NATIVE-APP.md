@@ -48,6 +48,14 @@ In Nest, go to **Family → Reminders**. In the app this manages the on-device
 alarms and shows how many are currently armed. (In a plain browser the same card
 manages web-push notifications instead.)
 
+## Reminder sound
+
+Reminders play a bundled Nest chime on a dedicated **Reminders** notification
+channel at high importance. To use a different sound (including the phone's
+alarm tones), go to **Settings → Apps → Nest → Notifications → Reminders →
+Sound**. Android freezes a channel's sound once it's created, so a future build
+that ships a new default sound will appear as a fresh channel.
+
 ## Notes
 
 - `android/nest-release.keystore` is a committed, shared signing key. That's
