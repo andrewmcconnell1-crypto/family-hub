@@ -1,0 +1,45 @@
+name: Nest reminders
+
+# Triggers the reminder edge functions on a schedule from GitHub's runners,
+# instead of Supabase's pg_cron/pg_net (whose DNS proved unreliable). The
+# 30-minute look-back window inside send-due-reminders absorbs GitHub's cron
+# jitter, and the sent_notifications table dedupes, so this can safely run
+# alongside a Supabase cron without sending anything twice.
+#
+# Requires two repository secrets (Settings → Secrets and variables → Actions):
+#   NEST_FUNCTIONS_URL  e.g. https://YOUR-REF.supabase.co/functions/v1
+#   NEST_CRON_KEY       the same value as the function's CRON_SECRET
+
+on:
+  schedule:
+    - cron: '*/15 * * * *' # per-event / per-to-do reminders, every 15 min
+    - cron: '0 21 * * *' # morning digest once a day (21:00 UTC = 7am Sydney)
+  workflow_dispatch: {} # lets you run it on demand from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Due reminders (per-event / per-to-do)
+        if: github.event.schedule != '0 21 * * *'
+        run: |
+          code=$(curl -s -o /tmp/out -w '%{http_code}' -X POST \
+            -H "x-cron-key: ${NEST_CRON_KEY}" \
+            "${NEST_FUNCTIONS_URL}/send-due-reminders")
+          echo "send-due-reminders -> HTTP $code"; cat /tmp/out; echo
+          test "$code" = "200"
+        env:
+          NEST_FUNCTIONS_URL: ${{ secrets.NEST_FUNCTIONS_URL }}
+          NEST_CRON_KEY: ${{ secrets.NEST_CRON_KEY }}
+
+      - name: Morning digest
+        if: github.event.schedule == '0 21 * * *'
+        run: |
+          code=$(curl -s -o /tmp/out -w '%{http_code}' -X POST \
+            -H "x-cron-key: ${NEST_CRON_KEY}" \
+            "${NEST_FUNCTIONS_URL}/send-reminders")
+          echo "send-reminders -> HTTP $code"; cat /tmp/out; echo
+          test "$code" = "200"
+        env:
+          NEST_FUNCTIONS_URL: ${{ secrets.NEST_FUNCTIONS_URL }}
+          NEST_CRON_KEY: ${{ secrets.NEST_CRON_KEY }}
