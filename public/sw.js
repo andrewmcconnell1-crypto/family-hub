@@ -53,14 +53,20 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const url = (event.notification.data && event.notification.data.url) || './'
+  // Where to land. Resolve against this worker's scope so it's always an
+  // absolute Nest URL, never another app's.
+  const scope = self.registration.scope
+  const target = new URL((event.notification.data && event.notification.data.url) || scope, scope).href
   event.waitUntil(
     (async () => {
       const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
       for (const client of clientList) {
-        if ('focus' in client) return client.focus()
+        // Only re-use a window that's actually THIS app. Both Nest and the
+        // meal-planner live on the same github.io origin, so without the scope
+        // check we'd focus whichever tab happened to be open.
+        if (client.url.startsWith(scope) && 'focus' in client) return client.focus()
       }
-      return self.clients.openWindow(url)
+      return self.clients.openWindow(target)
     })(),
   )
 })
