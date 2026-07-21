@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Nest</string>
+    <string name="title_activity_main">Nest</string>
+    <string name="package_name">app.nest.family</string>
+    <string name="custom_url_scheme">app.nest.family</string>
+</resources>

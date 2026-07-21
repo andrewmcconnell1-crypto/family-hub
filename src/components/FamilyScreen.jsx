@@ -168,7 +168,7 @@ export default function FamilyScreen({
 
       {user && household && <HouseholdSection household={household} />}
 
-      {user && <RemindersCard user={user} />}
+      {user && <RemindersCard user={user} data={data} />}
       {user && <CalendarFeedCard user={user} />}
 
       <ExternalCalendarsCard

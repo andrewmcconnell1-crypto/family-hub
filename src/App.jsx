@@ -13,6 +13,7 @@ import { useAuth } from './hooks/useAuth.js'
 import { useUpdatePrompt } from './hooks/useUpdatePrompt.js'
 import { useFamilyStore } from './hooks/useFamilyStore.js'
 import { useExternalCalendars } from './hooks/useExternalCalendars.js'
+import { useNativeReminders } from './hooks/useNativeReminders.js'
 import { useHousehold } from './hooks/useHousehold.js'
 import { useTheme } from './hooks/useTheme.js'
 import { captureJoinCodeFromUrl, clearPendingJoinCode } from './lib/household.js'
@@ -76,6 +77,8 @@ export default function App() {
   const ownerId = household.loading ? null : household.ownerId
   const store = useFamilyStore(auth.user, ownerId)
   const externalCalendars = useExternalCalendars(store.data.externalCalendars)
+  // Native Android shell only: arm on-device alarms from the events/to-dos.
+  useNativeReminders(store.data)
   // Invite code captured from a ?join=CODE link (survives the sign-in
   // redirect in sessionStorage).
   const [pendingJoinCode, setPendingJoinCode] = useState(() => captureJoinCodeFromUrl())

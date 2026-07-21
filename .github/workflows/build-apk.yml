@@ -1,0 +1,80 @@
+name: Build Android app
+
+# Builds the Nest Android APK (the native shell that turns reminders into real
+# on-device alarms). Run it by hand from the Actions tab — each run publishes a
+# GitHub Release with the APK attached, so you can open the release on your
+# phone and tap the file to install.
+#
+# The shell loads the live site (https://andrewmcconnell1-crypto.github.io/
+# family-hub/), so day-to-day content changes deploy as normal with no rebuild.
+# Only rebuild the APK when the native side changes (permissions, plugins,
+# scheduling code).
+
+on:
+  workflow_dispatch: {}
+  push:
+    tags:
+      - 'android-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install web dependencies
+        run: npm ci
+
+      - name: Build web assets
+        run: npm run build
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build release APK
+        run: ./gradlew assembleRelease --no-daemon
+        working-directory: android
+
+      - name: Name the APK
+        id: apk
+        run: |
+          src=android/app/build/outputs/apk/release/app-release.apk
+          dest="nest-${{ github.run_number }}.apk"
+          cp "$src" "$dest"
+          echo "path=$dest" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nest-apk
+          path: ${{ steps.apk.outputs.path }}
+
+      - name: Publish release with the APK
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-build-${{ github.run_number }}
+          name: Nest Android (build ${{ github.run_number }})
+          body: |
+            Nest Android app.
+
+            Install: open this page on your phone, download the `.apk` below and
+            tap it (allow "install unknown apps" for your browser if asked).
+            Then open Nest, allow notifications, and — for exact timing — allow
+            "Alarms & reminders" if prompted.
+          files: ${{ steps.apk.outputs.path }}

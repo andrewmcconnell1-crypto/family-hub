@@ -1,0 +1,15 @@
+{
+  "appId": "app.nest.family",
+  "appName": "Nest",
+  "webDir": "dist",
+  "server": {
+    "url": "https://andrewmcconnell1-crypto.github.io/family-hub/",
+    "cleartext": false
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_nest",
+      "iconColor": "#7c5cff"
+    }
+  }
+}
