@@ -200,19 +200,49 @@ Deno.serve(async (req) => {
     subsByOwner.get(owner)!.push(sub);
   }
 
+  // ?debug=1 reports what the function sees (times, due reminders) WITHOUT
+  // sending — the fastest way to see why a reminder isn't firing.
+  const debug = url.searchParams.get("debug") === "1";
+
   let sent = 0;
   let deduped = 0;
   let removed = 0;
+  const failures: string[] = [];
+  // deno-lint-ignore no-explicit-any
+  const diag: any[] = [];
+
   for (const [ownerId, ownerSubs] of subsByOwner) {
     const { data: row } = await supabase
       .from("family_data")
       .select("data")
       .eq("user_id", ownerId)
       .maybeSingle();
+
+    const due = row?.data ? collectDue(row.data, tz, windowStartMs, now, todoHour) : [];
+
+    if (debug) {
+      diag.push({
+        ownerId,
+        devices: ownerSubs.length,
+        hasData: Boolean(row?.data),
+        eventsWithReminder: (row?.data?.events || [])
+          .filter((e: Ev) => e?.time && Number.isInteger(e?.reminder))
+          .map((e: Ev) => ({
+            title: e.title,
+            date: e.date,
+            time: e.time,
+            reminder: e.reminder,
+            fireAt: new Date(localWallToUtcMs(e.date, e.time, tz) - e.reminder * 60000).toISOString(),
+          })),
+        dueNow: due.map((r) => r.key),
+      });
+      continue;
+    }
+
     if (!row?.data) continue;
 
-    for (const reminder of collectDue(row.data, tz, windowStartMs, now, todoHour)) {
-      // Claim the reminder: insert wins → we send; conflict → already sent.
+    for (const reminder of due) {
+      // Claim the reminder first so overlapping runs can't double-send.
       const { error: insErr } = await supabase
         .from("sent_notifications")
         .insert({ owner_id: ownerId, notif_key: reminder.key });
@@ -221,19 +251,43 @@ Deno.serve(async (req) => {
         continue;
       }
       const payload = JSON.stringify({ title: reminder.title, body: reminder.body, url: appUrl });
+      let delivered = false;
       for (const sub of ownerSubs) {
         try {
           await appServer.subscribe(sub.subscription).pushTextMessage(payload, {});
+          delivered = true;
           sent++;
         } catch (err) {
           if (err instanceof webpush.PushMessageError && err.isGone()) {
             await supabase.from("push_subscriptions").delete().eq("id", sub.id);
             removed++;
+          } else {
+            failures.push(`${reminder.key}: ${err instanceof Error ? err.message : String(err)}`);
           }
         }
+      }
+      // Nothing delivered? Release the claim so the next run retries instead of
+      // stranding the reminder as permanently "sent".
+      if (!delivered) {
+        await supabase
+          .from("sent_notifications")
+          .delete()
+          .eq("owner_id", ownerId)
+          .eq("notif_key", reminder.key);
       }
     }
   }
 
-  return Response.json({ now: new Date(now).toISOString(), sent, deduped, removed });
+  if (debug) {
+    return Response.json({
+      debug: true,
+      tz,
+      now: new Date(now).toISOString(),
+      windowStart: new Date(windowStartMs).toISOString(),
+      todoHour,
+      totalDevices: (subs || []).length,
+      owners: diag,
+    });
+  }
+  return Response.json({ now: new Date(now).toISOString(), sent, deduped, removed, failures });
 });
