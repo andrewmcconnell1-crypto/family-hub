@@ -4,4 +4,6 @@
     <string name="title_activity_main">Nest</string>
     <string name="package_name">app.nest.family</string>
     <string name="custom_url_scheme">app.nest.family</string>
+    <string name="sc_calendar">Calendar</string>
+    <string name="sc_todos">To-dos</string>
 </resources>

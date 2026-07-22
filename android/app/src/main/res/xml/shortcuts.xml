@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="calendar"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_calendar"
+        android:shortcutShortLabel="@string/sc_calendar"
+        android:shortcutLongLabel="@string/sc_calendar">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="app.nest.family://go/calendar"
+            android:targetPackage="app.nest.family"
+            android:targetClass="app.nest.family.MainActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="todos"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_todos"
+        android:shortcutShortLabel="@string/sc_todos"
+        android:shortcutLongLabel="@string/sc_todos">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="app.nest.family://go/todos"
+            android:targetPackage="app.nest.family"
+            android:targetClass="app.nest.family.MainActivity" />
+    </shortcut>
+</shortcuts>

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import TabBar from './components/TabBar.jsx'
 import HomeScreen from './components/HomeScreen.jsx'
 import PlannerScreen from './components/PlannerScreen.jsx'
@@ -18,6 +18,9 @@ import { useHousehold } from './hooks/useHousehold.js'
 import { useTheme } from './hooks/useTheme.js'
 import { captureJoinCodeFromUrl, clearPendingJoinCode } from './lib/household.js'
 import { isSupabaseConfigured } from './lib/supabase.js'
+import { applyStatusBarTheme, initNativeChrome } from './lib/nativeChrome.js'
+import { Capacitor } from '@capacitor/core'
+import { App as CapacitorApp } from '@capacitor/app'
 
 const LOCAL_ONLY_KEY = 'treehouse:localOnly'
 const PLANNER_MODE_KEY = 'treehouse:plannerMode'
@@ -89,6 +92,36 @@ export default function App() {
   )
   const updateReady = useUpdatePrompt()
   const { theme, setTheme } = useTheme()
+  // Native shell only: hide the launch splash and keep the status bar in step
+  // with the theme.
+  useEffect(() => {
+    initNativeChrome()
+  }, [])
+  useEffect(() => {
+    applyStatusBarTheme()
+  }, [theme])
+  // Native shell only: home-screen shortcuts open app.nest.family://go/<view>.
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return undefined
+    const go = (url) => {
+      const target = /^app\.nest\.family:\/\/go\/(calendar|todos|home)/.exec(url || '')?.[1]
+      if (target === 'calendar' || target === 'todos') {
+        setPlannerMode(target)
+        setPlannerFocus(null)
+        setTab('planner')
+      } else if (target === 'home') {
+        setTab('home')
+      }
+    }
+    CapacitorApp.getLaunchUrl()
+      .then((res) => go(res?.url))
+      .catch(() => {})
+    let handle
+    CapacitorApp.addListener('appUrlOpen', (event) => go(event.url)).then((h) => {
+      handle = h
+    })
+    return () => handle?.remove()
+  }, [])
   const [wallpaper, setWallpaperState] = useState(
     () => localStorage.getItem(WALLPAPER_KEY) !== '0',
   )

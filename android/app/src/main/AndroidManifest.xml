@@ -33,6 +33,11 @@
                 <data android:scheme="app.nest.family" android:host="auth" />
             </intent-filter>
 
+            <!-- Long-press the app icon → jump straight to Calendar / To-dos. -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
+
         </activity>
 
         <provider
