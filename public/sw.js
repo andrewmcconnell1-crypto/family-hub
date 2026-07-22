@@ -1,10 +1,17 @@
-// Nest service worker: network-first with cache fallback for same-origin
-// GET requests. Online, every request hits the network (so deploys arrive
-// immediately and the in-app update prompt keeps working); each good response
-// refreshes the cache. Offline, the cached copy serves — the app shell and
-// assets open with no signal, and the on-device data does the rest.
+// Nest service worker.
+//
+// Navigations and most requests are network-first (deploys arrive immediately,
+// the in-app update prompt keeps working) with a cache fallback for offline.
+// Hashed build assets under /assets/ are immutable — their name changes when
+// their content changes — so those are served cache-first: once a good copy is
+// cached it's reused, which means a page can never end up referencing a
+// stylesheet the CDN is briefly serving inconsistently mid-deploy (that showed
+// up once as an unstyled screen in the native app).
 
-const CACHE = 'treehouse-v1'
+const CACHE = 'nest-v2'
+
+// A hashed, content-addressed build asset, e.g. /assets/index-AbC123.css
+const isImmutableAsset = (pathname) => /\/assets\/.+-[A-Za-z0-9_-]{6,}\.\w+$/.test(pathname)
 
 self.addEventListener('install', () => {
   self.skipWaiting()
@@ -28,6 +35,14 @@ self.addEventListener('fetch', (event) => {
   // version.json must never be served stale — the update prompt polls it.
   // Offline it simply fails, which the app treats as "no update news".
   if (url.pathname.endsWith('/version.json')) return
+
+  // Immutable hashed assets: cache-first, so styling/JS is reliable even if the
+  // CDN hiccups right after a deploy. Everything else (incl. navigations)
+  // stays network-first so new deploys show up straight away.
+  if (request.mode !== 'navigate' && isImmutableAsset(url.pathname)) {
+    event.respondWith(cacheFirst(request))
+    return
+  }
 
   event.respondWith(networkFirst(request))
 })
@@ -82,4 +97,16 @@ async function networkFirst(request) {
     if (cached) return cached
     throw error
   }
+}
+
+// Immutable assets: serve the cached copy if we have one, otherwise fetch and
+// cache it. Because the filename encodes the content, a cached copy is always
+// correct for that URL.
+async function cacheFirst(request) {
+  const cache = await caches.open(CACHE)
+  const cached = await cache.match(request)
+  if (cached) return cached
+  const fresh = await fetch(request)
+  if (fresh.ok) cache.put(request, fresh.clone())
+  return fresh
 }
