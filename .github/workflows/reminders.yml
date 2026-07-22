@@ -1,18 +1,22 @@
 name: Nest reminders
 
-# RETIRED: the native Nest Android app now schedules reminders as real
-# on-device alarms, which are far more reliable than web push on Android. The
-# automatic schedule has been removed so nothing sends web-push reminders
-# anymore. The manual "Run workflow" button is kept only as a fallback for a
-# browser-only device — the edge functions and dedupe table are untouched, so
-# it's still safe to trigger by hand if ever needed.
+# Sends web-push reminders on a schedule. The native Android app uses its own
+# on-device alarms and doesn't rely on this, but the iPhone Home-Screen (PWA)
+# does — iOS delivers web push to installed web apps, so this is what makes the
+# iPhone's reminders fire. GitHub's scheduler is jittery (it can run every 1-2h
+# under load), so for on-time alerts also run cron-job.org against the same
+# endpoints every 5 min; the 30-min look-back and the dedupe table make running
+# both safe.
 #
 # Requires two repository secrets (Settings → Secrets and variables → Actions):
 #   NEST_FUNCTIONS_URL  e.g. https://YOUR-REF.supabase.co/functions/v1
 #   NEST_CRON_KEY       the same value as the function's CRON_SECRET
 
 on:
-  workflow_dispatch: {} # manual only — no automatic schedule
+  schedule:
+    - cron: '*/5 * * * *' # per-event / per-to-do reminders
+    - cron: '0 21 * * *' # morning digest (21:00 UTC = 7am Sydney)
+  workflow_dispatch: {} # run on demand from the Actions tab
 
 jobs:
   ping:
