@@ -53,23 +53,6 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
     ? Math.round((parseDateKey(nextBirthday.date) - parseDateKey(today)) / 86400000)
     : null
 
-  // "Today at a glance": the next thing still to come today, plus a count of
-  // what else is on. All-day items always count as still-to-come.
-  const nowStr = new Date().toTimeString().slice(0, 5)
-  const todayEvents = weekDays[0].events
-  const todayTodos = weekDays[0].todos
-  const upcomingToday = todayEvents.filter((e) => !e.time || e.time >= nowStr)
-  const nextEvent = upcomingToday[0] || null
-  const laterEvents = nextEvent ? upcomingToday.length - 1 : 0
-  const glanceParts = []
-  if (laterEvents > 0) glanceParts.push(`+${laterEvents} more event${laterEvents > 1 ? 's' : ''}`)
-  if (todayTodos.length > 0) glanceParts.push(`${todayTodos.length} to-do${todayTodos.length > 1 ? 's' : ''} due`)
-  const openNext = () => {
-    if (!nextEvent) return
-    if (nextEvent.isExternal || nextEvent.isBirthday) onOpen({ type: 'date', date: nextEvent.date })
-    else onOpen({ type: 'event', id: nextEvent.id, date: nextEvent.date })
-  }
-
   return (
     <div className="screen">
       <div className="home-masthead">
@@ -84,24 +67,37 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
         </button>
       </div>
       <p className="today-date">{formatDateKey(today, { long: true })}</p>
-      <div className="today-glance">
-        {nextEvent ? (
-          <>
-            <button type="button" className="today-next" onClick={openNext}>
-              <span className="today-next-time">{nextEvent.time || 'all day'}</span>
-              <span className="today-next-title">{nextEvent.title}</span>
-              <ChevronRight size={18} className="today-next-arrow" aria-hidden="true" />
+
+      {activeTodos.length > 0 && (
+        <section className="card notepad-card">
+          <div className="card-title-row">
+            <h2>To-do priorities</h2>
+            <button type="button" className="link-button" onClick={() => onNavigate('todos')}>
+              All to-dos
             </button>
-            {glanceParts.length > 0 && <p className="today-sub">{glanceParts.join(' · ')}</p>}
-          </>
-        ) : todayTodos.length > 0 ? (
-          <p className="today-sub today-sub-lead">
-            No events today · {todayTodos.length} to-do{todayTodos.length > 1 ? 's' : ''} due
-          </p>
-        ) : (
-          <p className="today-sub today-sub-lead">Nothing on today 🎉</p>
-        )}
-      </div>
+          </div>
+          <ul className="home-todo-list">
+            {activeTodos.slice(0, 4).map((todo) => (
+              <li key={todo.id}>
+                <button
+                  type="button"
+                  className="home-todo-button"
+                  onClick={() => onOpen({ type: 'todo', id: todo.id })}
+                >
+                  <span className="home-todo-dot" aria-hidden="true" />
+                  <span className="home-todo-title">{todo.title}</span>
+                  {todo.dueDate && (
+                    <span className={`todo-due${todo.dueDate < today ? ' todo-overdue' : ''}`}>
+                      {formatDateKey(todo.dueDate)}
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+          {activeTodos.length > 4 && <p className="muted">+ {activeTodos.length - 4} more</p>}
+        </section>
+      )}
 
       {data.children.length === 0 && (
         <button type="button" className="card card-cta" onClick={() => onNavigate('family')}>
@@ -180,37 +176,6 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
             {daysToBirthday === 1 ? 'day' : 'days'}
           </span>
         </button>
-      )}
-
-      {activeTodos.length > 0 && (
-        <section className="card notepad-card">
-          <div className="card-title-row">
-            <h2>To-do priorities</h2>
-            <button type="button" className="link-button" onClick={() => onNavigate('todos')}>
-              All to-dos
-            </button>
-          </div>
-          <ul className="home-todo-list">
-            {activeTodos.slice(0, 3).map((todo) => (
-              <li key={todo.id}>
-                <button
-                  type="button"
-                  className="home-todo-button"
-                  onClick={() => onOpen({ type: 'todo', id: todo.id })}
-                >
-                  <span className="home-todo-dot" aria-hidden="true" />
-                  <span className="home-todo-title">{todo.title}</span>
-                  {todo.dueDate && (
-                    <span className={`todo-due${todo.dueDate < today ? ' todo-overdue' : ''}`}>
-                      {formatDateKey(todo.dueDate)}
-                    </span>
-                  )}
-                </button>
-              </li>
-            ))}
-          </ul>
-          {activeTodos.length > 3 && <p className="muted">+ {activeTodos.length - 3} more</p>}
-        </section>
       )}
 
       <section className="card">
