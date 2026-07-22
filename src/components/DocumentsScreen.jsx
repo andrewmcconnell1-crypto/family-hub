@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from 'react'
-import { FileText, FolderOpen, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Camera, FileText, FolderOpen, Pencil, Plus, Trash2 } from 'lucide-react'
 import Sheet from './Sheet.jsx'
 import EmptyState from './EmptyState.jsx'
 import { ChildFilter, ChildMultiSelect, ChildTags } from './ChildChips.jsx'
 import { DOC_CATEGORIES, matchesChild } from '../lib/familyData.js'
+import { capturePhoto, isNativeCamera } from '../lib/nativeCamera.js'
 import { addDays, formatDateKey, toDateKey, todayKey } from '../utils/dateUtils.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
 
@@ -175,6 +176,27 @@ function DocumentSheet({ kids, doc, onSave, onClose }) {
                 if (f && !title) setTitle(f.name.replace(/\.[^.]+$/, ''))
               }}
             />
+            {isNativeCamera() && (
+              <button
+                type="button"
+                className="link-button"
+                onClick={async () => {
+                  try {
+                    const photo = await capturePhoto()
+                    if (photo) {
+                      setFile(photo)
+                      if (!title) setTitle('Scan')
+                    }
+                  } catch (error) {
+                    console.error('Camera capture failed', error)
+                    window.alert("Couldn't open the camera — try again.")
+                  }
+                }}
+              >
+                <Camera size={14} aria-hidden="true" /> Photograph a document
+              </button>
+            )}
+            {file && <span className="muted">{file.name}</span>}
           </div>
         )}
         <label>

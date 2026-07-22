@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Crop, Image, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Camera, Crop, Image, Pencil, Plus, Trash2, X } from 'lucide-react'
 import ImageCropper from './ImageCropper.jsx'
 import Sheet from './Sheet.jsx'
 import EmptyState from './EmptyState.jsx'
 import { ChildFilter, ChildMultiSelect, ChildTags } from './ChildChips.jsx'
 import { matchesChild } from '../lib/familyData.js'
+import { capturePhoto, isNativeCamera } from '../lib/nativeCamera.js'
 import { deleteFile, getFile, putFile, releaseFileUrl } from '../lib/fileStore.js'
 import { makeId } from '../utils/id.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
@@ -266,6 +267,23 @@ function AddPhotosSheet({ kids, onAdd, onClose }) {
             multiple
             onChange={(e) => setFiles(Array.from(e.target.files || []))}
           />
+          {isNativeCamera() && (
+            <button
+              type="button"
+              className="link-button"
+              onClick={async () => {
+                try {
+                  const photo = await capturePhoto()
+                  if (photo) setFiles([photo])
+                } catch (error) {
+                  console.error('Camera capture failed', error)
+                  window.alert("Couldn't open the camera — try again.")
+                }
+              }}
+            >
+              <Camera size={14} aria-hidden="true" /> Take a photo
+            </button>
+          )}
           {files.length > 1 && <span className="muted">{files.length} photos selected</span>}
           {files.length === 1 && (
             <button type="button" className="link-button" onClick={() => setCropFile(files[0])}>
