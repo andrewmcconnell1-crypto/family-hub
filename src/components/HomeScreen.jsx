@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AlertCircle, ChevronDown, ChevronRight, Search } from 'lucide-react'
 import SearchOverlay from './SearchOverlay.jsx'
+import Wordmark from './Wordmark.jsx'
 import { ChildTags } from './ChildChips.jsx'
 import { calendarColor, expiringDocuments } from '../lib/familyData.js'
 import { addDays, dayParts, formatDateKey, parseDateKey, todayKey } from '../utils/dateUtils.js'
@@ -72,8 +73,8 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
   return (
     <div className="screen">
       <header className="home-header">
-        <div className="today-head">
-          <p className="eyebrow">{formatDateKey(today, { weekday: true })}</p>
+        <div className="home-masthead">
+          <Wordmark className="home-wordmark" />
           <button
             type="button"
             className="icon-button search-button"
@@ -83,6 +84,7 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
             <Search size={22} />
           </button>
         </div>
+        <p className="today-date">{formatDateKey(today, { long: true })}</p>
         <div className="today-glance">
           {nextEvent ? (
             <>

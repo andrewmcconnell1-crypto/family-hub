@@ -142,22 +142,27 @@ button {
   display: block;
 }
 
-.today-head {
+.home-masthead {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
 }
 
-.today-head .eyebrow {
-  margin: 0;
+.home-wordmark {
+  width: 116px;
+  height: auto;
+}
+
+.today-date {
+  margin: 0.5rem 0 0;
   color: var(--text-muted);
   font-size: 0.9rem;
   font-weight: 600;
 }
 
 .today-glance {
-  margin-top: 0.55rem;
+  margin-top: 0.4rem;
 }
 
 /* The next thing on today, as a tappable card matching the app's style. */
