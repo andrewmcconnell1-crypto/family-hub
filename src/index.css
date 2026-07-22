@@ -751,8 +751,8 @@ button {
 
 .event-row {
   display: flex;
-  gap: 0.75rem;
-  padding: 0.55rem 0;
+  gap: 0.65rem;
+  padding: 0.4rem 0;
   border-bottom: 1px solid var(--border);
   align-items: baseline;
 }
@@ -788,8 +788,10 @@ button {
 
 .event-main {
   display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 0.5rem;
+  row-gap: 0.1rem;
 }
 
 .event-title {
