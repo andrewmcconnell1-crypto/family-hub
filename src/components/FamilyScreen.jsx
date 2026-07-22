@@ -5,6 +5,7 @@ import CalendarFeedCard from './CalendarFeedCard.jsx'
 import ExternalCalendarsCard from './ExternalCalendarsCard.jsx'
 import ImageCropper from './ImageCropper.jsx'
 import RemindersCard from './RemindersCard.jsx'
+import AppLockCard from './AppLockCard.jsx'
 import Sheet from './Sheet.jsx'
 import EmptyState from './EmptyState.jsx'
 import { CHILD_COLORS, childColor } from '../lib/familyData.js'
@@ -169,6 +170,7 @@ export default function FamilyScreen({
       {user && household && <HouseholdSection household={household} />}
 
       {user && <RemindersCard user={user} data={data} />}
+      <AppLockCard />
       {user && <CalendarFeedCard user={user} />}
 
       <ExternalCalendarsCard

@@ -9,6 +9,8 @@ import SignInScreen from './components/SignInScreen.jsx'
 import InviteBanner from './components/InviteBanner.jsx'
 import UpdateBanner from './components/UpdateBanner.jsx'
 import Wallpaper from './components/Wallpaper.jsx'
+import LockScreen from './components/LockScreen.jsx'
+import { useAppLock } from './hooks/useAppLock.js'
 import { useAuth } from './hooks/useAuth.js'
 import { useUpdatePrompt } from './hooks/useUpdatePrompt.js'
 import { useFamilyStore } from './hooks/useFamilyStore.js'
@@ -82,6 +84,7 @@ export default function App() {
   const externalCalendars = useExternalCalendars(store.data.externalCalendars)
   // Native Android shell only: arm on-device alarms from the events/to-dos.
   useNativeReminders(store.data)
+  const appLock = useAppLock()
   // Invite code captured from a ?join=CODE link (survives the sign-in
   // redirect in sessionStorage).
   const [pendingJoinCode, setPendingJoinCode] = useState(() => captureJoinCodeFromUrl())
@@ -201,6 +204,10 @@ export default function App() {
   const dismissInvite = () => {
     clearPendingJoinCode()
     setPendingJoinCode(null)
+  }
+
+  if (appLock.locked) {
+    return <LockScreen onUnlock={appLock.unlock} />
   }
 
   if (auth.loading) {
