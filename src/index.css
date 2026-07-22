@@ -1205,6 +1205,18 @@ button {
 .doc-title:hover {
   color: var(--accent);
 }
+/* The native-app variant is a <button> so it can open the file via the OS;
+   strip the button chrome so it reads exactly like the link. */
+.doc-title-button {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
 
 .doc-meta {
   display: flex;

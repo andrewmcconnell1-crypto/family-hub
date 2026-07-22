@@ -5,6 +5,8 @@ import EmptyState from './EmptyState.jsx'
 import { ChildFilter, ChildMultiSelect, ChildTags } from './ChildChips.jsx'
 import { DOC_CATEGORIES, matchesChild } from '../lib/familyData.js'
 import { capturePhoto, isNativeCamera } from '../lib/nativeCamera.js'
+import { canOpenNative, openBlobNative } from '../lib/nativeFiles.js'
+import { getFile } from '../lib/fileStore.js'
 import { addDays, formatDateKey, toDateKey, todayKey } from '../utils/dateUtils.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
 
@@ -94,11 +96,32 @@ function expiryLabel(doc) {
 function DocRow({ doc, kids, onEdit, onRemove }) {
   const url = useFileUrl(doc.fileId)
   const expiry = expiryLabel(doc)
+
+  // In the native app the OS opens the file; the WebView can't handle a blob
+  // download link. In a browser, the link below does the job.
+  const openNative = async () => {
+    try {
+      const blob = await getFile(doc.fileId)
+      if (!blob) {
+        window.alert("Couldn't load this document — it may still be syncing from the cloud.")
+        return
+      }
+      await openBlobNative(blob, doc.fileName || doc.title)
+    } catch (error) {
+      console.error('Opening document failed', error)
+      window.alert('No app on this device can open this type of file.')
+    }
+  }
+
   return (
     <li className="doc-row">
       <FileText size={20} className="doc-icon" aria-hidden="true" />
       <div className="doc-main">
-        {url ? (
+        {canOpenNative() ? (
+          <button type="button" className="doc-title doc-title-button" onClick={openNative}>
+            {doc.title}
+          </button>
+        ) : url ? (
           <a className="doc-title" href={url} target="_blank" rel="noreferrer" download={doc.fileName}>
             {doc.title}
           </a>
