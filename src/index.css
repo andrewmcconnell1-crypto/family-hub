@@ -139,10 +139,73 @@ button {
 /* --- Search ------------------------------------------------------------------- */
 
 .home-header {
+  display: block;
+}
+
+.today-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
+}
+
+.today-head .eyebrow {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.today-glance {
+  margin-top: 0.55rem;
+}
+
+/* The next thing on today, as a tappable card matching the app's style. */
+.today-next {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  background: var(--surface);
+  padding: 0.6rem 0.8rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.today-next-time {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.today-next-title {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.today-next-arrow {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.today-sub {
+  margin: 0.45rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.today-sub-lead {
+  margin-top: 0.55rem;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .search-button {

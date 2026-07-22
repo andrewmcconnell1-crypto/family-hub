@@ -1,19 +1,11 @@
 import { useState } from 'react'
 import { AlertCircle, ChevronDown, ChevronRight, Search } from 'lucide-react'
 import SearchOverlay from './SearchOverlay.jsx'
-import Avatar from './Avatar.jsx'
 import { ChildTags } from './ChildChips.jsx'
 import { calendarColor, expiringDocuments } from '../lib/familyData.js'
 import { addDays, dayParts, formatDateKey, parseDateKey, todayKey } from '../utils/dateUtils.js'
 import { birthdayOccurrences, calendarOccurrences, weekdayIndex } from '../utils/recurrence.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
-
-function greeting() {
-  const hour = new Date().getHours()
-  if (hour < 12) return 'Good morning'
-  if (hour < 18) return 'Good afternoon'
-  return 'Good evening'
-}
 
 // Bistro-style dashboard: today front and centre, the rest of the week
 // condensed, plus highlights (overdue to-dos, next birthday, top priorities).
@@ -60,35 +52,56 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
     ? Math.round((parseDateKey(nextBirthday.date) - parseDateKey(today)) / 86400000)
     : null
 
+  // "Today at a glance": the next thing still to come today, plus a count of
+  // what else is on. All-day items always count as still-to-come.
+  const nowStr = new Date().toTimeString().slice(0, 5)
+  const todayEvents = weekDays[0].events
+  const todayTodos = weekDays[0].todos
+  const upcomingToday = todayEvents.filter((e) => !e.time || e.time >= nowStr)
+  const nextEvent = upcomingToday[0] || null
+  const laterEvents = nextEvent ? upcomingToday.length - 1 : 0
+  const glanceParts = []
+  if (laterEvents > 0) glanceParts.push(`+${laterEvents} more event${laterEvents > 1 ? 's' : ''}`)
+  if (todayTodos.length > 0) glanceParts.push(`${todayTodos.length} to-do${todayTodos.length > 1 ? 's' : ''} due`)
+  const openNext = () => {
+    if (!nextEvent) return
+    if (nextEvent.isExternal || nextEvent.isBirthday) onOpen({ type: 'date', date: nextEvent.date })
+    else onOpen({ type: 'event', id: nextEvent.id, date: nextEvent.date })
+  }
+
   return (
     <div className="screen">
-      <header className="screen-header home-header">
-        <div>
-          <p className="eyebrow">{formatDateKey(today, { long: true })}</p>
-          <h1>
-            <span className="marker">{greeting()}</span>
-          </h1>
+      <header className="home-header">
+        <div className="today-head">
+          <p className="eyebrow">{formatDateKey(today, { weekday: true })}</p>
+          <button
+            type="button"
+            className="icon-button search-button"
+            aria-label="Search everything"
+            onClick={() => setSearching(true)}
+          >
+            <Search size={22} />
+          </button>
         </div>
-        <button
-          type="button"
-          className="icon-button search-button"
-          aria-label="Search everything"
-          onClick={() => setSearching(true)}
-        >
-          <Search size={22} />
-        </button>
+        <div className="today-glance">
+          {nextEvent ? (
+            <>
+              <button type="button" className="today-next" onClick={openNext}>
+                <span className="today-next-time">{nextEvent.time || 'all day'}</span>
+                <span className="today-next-title">{nextEvent.title}</span>
+                <ChevronRight size={18} className="today-next-arrow" aria-hidden="true" />
+              </button>
+              {glanceParts.length > 0 && <p className="today-sub">{glanceParts.join(' · ')}</p>}
+            </>
+          ) : todayTodos.length > 0 ? (
+            <p className="today-sub today-sub-lead">
+              No events today · {todayTodos.length} to-do{todayTodos.length > 1 ? 's' : ''} due
+            </p>
+          ) : (
+            <p className="today-sub today-sub-lead">Nothing on today 🎉</p>
+          )}
+        </div>
       </header>
-
-      {data.children.length > 0 && (
-        <div className="home-kids">
-          {data.children.map((child) => (
-            <div key={child.id} className="home-kid">
-              <Avatar child={child} size={44} />
-              <span>{child.name}</span>
-            </div>
-          ))}
-        </div>
-      )}
 
       {data.children.length === 0 && (
         <button type="button" className="card card-cta" onClick={() => onNavigate('family')}>
