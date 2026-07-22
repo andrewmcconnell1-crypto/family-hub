@@ -11,6 +11,7 @@ const RELOCK_AFTER_MS = 15000
 export function useAppLock() {
   const [locked, setLocked] = useState(() => isLockEnabled())
   const backgroundedAt = useRef(0)
+  const wasBackgrounded = useRef(false)
 
   useEffect(() => {
     if (!isNativeApp()) return undefined
@@ -18,9 +19,15 @@ export function useAppLock() {
     CapacitorApp.addListener('appStateChange', ({ isActive }) => {
       if (!isActive) {
         backgroundedAt.current = Date.now()
-      } else if (isLockEnabled() && Date.now() - backgroundedAt.current > RELOCK_AFTER_MS) {
+        wasBackgrounded.current = true
+        return
+      }
+      // Only re-lock if we genuinely returned from the background after the
+      // grace period — never on a stray "active" event mid-use.
+      if (wasBackgrounded.current && isLockEnabled() && Date.now() - backgroundedAt.current > RELOCK_AFTER_MS) {
         setLocked(true)
       }
+      wasBackgrounded.current = false
     }).then((h) => {
       handle = h
     })
