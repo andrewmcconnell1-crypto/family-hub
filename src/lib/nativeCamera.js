@@ -17,7 +17,10 @@ export async function capturePhoto() {
   try {
     photo = await Camera.getPhoto({
       source: CameraSource.Camera,
-      resultType: CameraResultType.Uri,
+      // DataUrl returns the image inline. Uri would hand back a file URL on
+      // Capacitor's local origin, which the app (loaded from the remote site)
+      // can't fetch cross-origin — so the shot never made it back into Nest.
+      resultType: CameraResultType.DataUrl,
       quality: 90,
       correctOrientation: true,
       saveToGallery: false,
@@ -27,8 +30,9 @@ export async function capturePhoto() {
     if (/cancel/i.test(err?.message || '')) return null
     throw err
   }
-  const blob = await fetch(photo.webPath).then((r) => r.blob())
-  const ext = photo.format === 'png' ? 'png' : 'jpg'
+  // A data: URL is always fetchable (no origin), so this can't be blocked.
+  const blob = await fetch(photo.dataUrl).then((r) => r.blob())
+  const ext = blob.type === 'image/png' ? 'png' : 'jpg'
   const name = `nest-${Date.now()}.${ext}`
-  return new File([blob], name, { type: blob.type || `image/${ext === 'png' ? 'png' : 'jpeg'}` })
+  return new File([blob], name, { type: blob.type || 'image/jpeg' })
 }
