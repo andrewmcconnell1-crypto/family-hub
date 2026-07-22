@@ -6,8 +6,16 @@
 
 import { Capacitor } from '@capacitor/core'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
+import { Filesystem } from '@capacitor/filesystem'
 
 export const isNativeCamera = () => Capacitor.isNativePlatform()
+
+function base64ToBlob(base64, type) {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return new Blob([bytes], { type })
+}
 
 // Open the camera and return the captured photo as a File, or null if the user
 // backs out. Throws only on an unexpected error the caller should surface.
@@ -17,11 +25,12 @@ export async function capturePhoto() {
   try {
     photo = await Camera.getPhoto({
       source: CameraSource.Camera,
-      // DataUrl returns the image inline. Uri would hand back a file URL on
-      // Capacitor's local origin, which the app (loaded from the remote site)
-      // can't fetch cross-origin — so the shot never made it back into Nest.
-      resultType: CameraResultType.DataUrl,
-      quality: 90,
+      // Uri gives us the saved file's path; we read its bytes natively below.
+      // (DataUrl asks the WebView to encode the whole image inline, which runs
+      // out of memory on big photos and comes back black.)
+      resultType: CameraResultType.Uri,
+      quality: 88,
+      width: 1600, // cap the longest side natively — plenty for a phone, far lighter
       correctOrientation: true,
       saveToGallery: false,
     })
@@ -30,9 +39,11 @@ export async function capturePhoto() {
     if (/cancel/i.test(err?.message || '')) return null
     throw err
   }
-  // A data: URL is always fetchable (no origin), so this can't be blocked.
-  const blob = await fetch(photo.dataUrl).then((r) => r.blob())
-  const ext = blob.type === 'image/png' ? 'png' : 'jpg'
-  const name = `nest-${Date.now()}.${ext}`
-  return new File([blob], name, { type: blob.type || 'image/jpeg' })
+  // Read the file's bytes through the filesystem plugin (native, no
+  // cross-origin fetch and no in-WebView re-encoding).
+  const type = photo.format === 'png' ? 'image/png' : 'image/jpeg'
+  const { data } = await Filesystem.readFile({ path: photo.path || photo.webPath })
+  const blob = base64ToBlob(data, type)
+  const ext = type === 'image/png' ? 'png' : 'jpg'
+  return new File([blob], `nest-${Date.now()}.${ext}`, { type })
 }
