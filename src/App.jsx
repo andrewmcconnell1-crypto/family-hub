@@ -16,6 +16,7 @@ import { useUpdatePrompt } from './hooks/useUpdatePrompt.js'
 import { useFamilyStore } from './hooks/useFamilyStore.js'
 import { useExternalCalendars } from './hooks/useExternalCalendars.js'
 import { useNativeReminders } from './hooks/useNativeReminders.js'
+import { useWidgetSync } from './hooks/useWidgetSync.js'
 import { useHousehold } from './hooks/useHousehold.js'
 import { useTheme } from './hooks/useTheme.js'
 import { captureJoinCodeFromUrl, clearPendingJoinCode } from './lib/household.js'
@@ -84,6 +85,8 @@ export default function App() {
   const externalCalendars = useExternalCalendars(store.data.externalCalendars)
   // Native Android shell only: arm on-device alarms from the events/to-dos.
   useNativeReminders(store.data)
+  // Native Android shell only: feed today's items to the home-screen widget.
+  useWidgetSync(store.data)
   const appLock = useAppLock()
   // Invite code captured from a ?join=CODE link (survives the sign-in
   // redirect in sessionStorage).
