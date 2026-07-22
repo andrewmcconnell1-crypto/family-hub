@@ -1158,6 +1158,21 @@ button {
   font-size: 0.85rem;
 }
 
+/* Day cards were as roomy as a settings card; tighten the top/bottom so a
+   busy day reads dense, closer to the Home page. */
+.week-day {
+  padding: 0.6rem 0.85rem;
+}
+.week-day .card-title-row {
+  margin-bottom: 0.1rem;
+}
+/* Drop the divider under the last row so it doesn't add a line before the
+   card's bottom padding. */
+.event-list li:last-child .event-row,
+.week-todos li:last-child .todo-row {
+  border-bottom: none;
+}
+
 .week-todos {
   margin-top: 0.25rem;
 }
