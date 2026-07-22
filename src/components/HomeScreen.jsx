@@ -56,10 +56,8 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
   return (
     <div className="screen">
       <div className="home-masthead">
-        <div className="masthead-titles">
-          <Wordmark className="home-wordmark" />
-          <p className="masthead-date">{formatDateKey(today, { long: true })}</p>
-        </div>
+        <Wordmark className="home-wordmark" />
+        <p className="masthead-date">{formatDateKey(today, { weekday: true })}</p>
         <button
           type="button"
           className="icon-button search-button"

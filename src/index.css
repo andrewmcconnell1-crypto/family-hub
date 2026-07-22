@@ -158,23 +158,24 @@ button {
   gap: 0.5rem;
 }
 
-.masthead-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  min-width: 0;
-}
-
 .home-wordmark {
   width: 104px;
   height: auto;
+  flex-shrink: 0;
 }
 
+/* Date centred in the gap between the logo and the search button. */
 .masthead-date {
+  flex: 1;
+  min-width: 0;
   margin: 0;
+  text-align: center;
   color: var(--text-muted);
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .today-glance {
