@@ -142,7 +142,16 @@ button {
   display: block;
 }
 
+/* Pin the Nest masthead + search to the top on a solid strip, matching the
+   Planner's pinned header, so "you're on Home" stays put while the rest scrolls. */
 .home-masthead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: -1.25rem -1rem 0;
+  padding: 0.7rem 1rem 0.6rem;
+  background: var(--bg);
+  border-bottom: 2px solid var(--ink);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -150,7 +159,7 @@ button {
 }
 
 .home-wordmark {
-  width: 116px;
+  width: 112px;
   height: auto;
 }
 

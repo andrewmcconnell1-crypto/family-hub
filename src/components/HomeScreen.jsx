@@ -72,38 +72,36 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
 
   return (
     <div className="screen">
-      <header className="home-header">
-        <div className="home-masthead">
-          <Wordmark className="home-wordmark" />
-          <button
-            type="button"
-            className="icon-button search-button"
-            aria-label="Search everything"
-            onClick={() => setSearching(true)}
-          >
-            <Search size={22} />
-          </button>
-        </div>
-        <p className="today-date">{formatDateKey(today, { long: true })}</p>
-        <div className="today-glance">
-          {nextEvent ? (
-            <>
-              <button type="button" className="today-next" onClick={openNext}>
-                <span className="today-next-time">{nextEvent.time || 'all day'}</span>
-                <span className="today-next-title">{nextEvent.title}</span>
-                <ChevronRight size={18} className="today-next-arrow" aria-hidden="true" />
-              </button>
-              {glanceParts.length > 0 && <p className="today-sub">{glanceParts.join(' · ')}</p>}
-            </>
-          ) : todayTodos.length > 0 ? (
-            <p className="today-sub today-sub-lead">
-              No events today · {todayTodos.length} to-do{todayTodos.length > 1 ? 's' : ''} due
-            </p>
-          ) : (
-            <p className="today-sub today-sub-lead">Nothing on today 🎉</p>
-          )}
-        </div>
-      </header>
+      <div className="home-masthead">
+        <Wordmark className="home-wordmark" />
+        <button
+          type="button"
+          className="icon-button search-button"
+          aria-label="Search everything"
+          onClick={() => setSearching(true)}
+        >
+          <Search size={22} />
+        </button>
+      </div>
+      <p className="today-date">{formatDateKey(today, { long: true })}</p>
+      <div className="today-glance">
+        {nextEvent ? (
+          <>
+            <button type="button" className="today-next" onClick={openNext}>
+              <span className="today-next-time">{nextEvent.time || 'all day'}</span>
+              <span className="today-next-title">{nextEvent.title}</span>
+              <ChevronRight size={18} className="today-next-arrow" aria-hidden="true" />
+            </button>
+            {glanceParts.length > 0 && <p className="today-sub">{glanceParts.join(' · ')}</p>}
+          </>
+        ) : todayTodos.length > 0 ? (
+          <p className="today-sub today-sub-lead">
+            No events today · {todayTodos.length} to-do{todayTodos.length > 1 ? 's' : ''} due
+          </p>
+        ) : (
+          <p className="today-sub today-sub-lead">Nothing on today 🎉</p>
+        )}
+      </div>
 
       {data.children.length === 0 && (
         <button type="button" className="card card-cta" onClick={() => onNavigate('family')}>
