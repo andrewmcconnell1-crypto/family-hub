@@ -80,9 +80,8 @@ export default function CalendarFeedCard({ user }) {
     <section className="card">
       <h2>Calendar feed</h2>
       <p className="muted">
-        See Nest events inside Google Calendar or Apple Calendar: create your private link,
-        then subscribe to it from the other calendar. It updates automatically (calendar apps
-        refresh subscribed feeds every few hours).
+        Show Nest events in Google or Apple Calendar — create a private link and subscribe to it
+        there.
       </p>
 
       {setupNeeded && (

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Copy, Plus, Share2, Users } from 'lucide-react'
+import { Copy, Plus, Share2 } from 'lucide-react'
 import Avatar from './Avatar.jsx'
 import CalendarFeedCard from './CalendarFeedCard.jsx'
 import ExternalCalendarsCard from './ExternalCalendarsCard.jsx'
@@ -7,7 +7,6 @@ import ImageCropper from './ImageCropper.jsx'
 import RemindersCard from './RemindersCard.jsx'
 import AppLockCard from './AppLockCard.jsx'
 import Sheet from './Sheet.jsx'
-import EmptyState from './EmptyState.jsx'
 import { CHILD_COLORS, childColor } from '../lib/familyData.js'
 import { buildZip, extensionFor, safeFileName } from '../lib/backupZip.js'
 import { deleteFile, getFile, putFile, releaseFileUrl } from '../lib/fileStore.js'
@@ -105,21 +104,23 @@ export default function FamilyScreen({
 
   return (
     <div className="screen">
-      <header className="screen-header screen-header-row planner-header">
-        <h1>Family</h1>
-        <button type="button" className="primary-button" onClick={() => setSheet({})}>
-          <Plus size={18} aria-hidden="true" /> Person
-        </button>
+      <header className="screen-header planner-header">
+        <h1>Setup</h1>
       </header>
 
-      {data.children.length === 0 ? (
-        <EmptyState
-          icon={Users}
-          title="No family members yet"
-          hint="Add everyone — kids and grown-ups — so events, documents and photos can be tagged to them."
-        />
-      ) : (
-        <section className="card">
+      <section className="card">
+        <div className="card-title-row">
+          <h2>Family</h2>
+          <button type="button" className="link-button" onClick={() => setSheet({})}>
+            <Plus size={16} aria-hidden="true" /> Add person
+          </button>
+        </div>
+        {data.children.length === 0 ? (
+          <p className="muted">
+            Add everyone — kids and grown-ups — so events, documents and photos can be tagged to
+            them.
+          </p>
+        ) : (
           <ul className="kid-list">
             {data.children.map((child) => (
               <li key={child.id}>
@@ -138,8 +139,8 @@ export default function FamilyScreen({
               </li>
             ))}
           </ul>
-        </section>
-      )}
+        )}
+      </section>
 
       <section className="card">
         <h2>Account & sync</h2>
@@ -201,7 +202,7 @@ export default function FamilyScreen({
           ))}
         </div>
         <p className="appearance-label">
-          Photo wallpaper <span className="muted">— one of your photos, softly, behind the app; a new one each day</span>
+          Photo wallpaper <span className="muted">— a different photo behind the app each day</span>
         </p>
         <div className="chip-row">
           {[
@@ -223,10 +224,7 @@ export default function FamilyScreen({
 
       <section className="card">
         <h2>Backup</h2>
-        <p className="muted">
-          Download everything — data, documents, photos and avatars — as a zip you can keep
-          anywhere safe.
-        </p>
+        <p className="muted">Download everything as a zip — data, documents, photos and avatars.</p>
         <button type="button" className="primary-button" disabled={backingUp} onClick={exportBackup}>
           {backingUp ? 'Preparing…' : 'Download backup'}
         </button>

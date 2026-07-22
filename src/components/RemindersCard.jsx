@@ -57,30 +57,21 @@ function NativeReminders({ data }) {
   return (
     <section className="card">
       <h2>Reminders</h2>
-      <p className="muted">
-        This is the Nest app, so reminders are real on-device alarms — they ring even with no
-        signal and aren't dropped by battery saving. Set an event's reminder in its Reminder field,
-        or turn a to-do's on with “Remind me on the due date”.
-      </p>
-
-      {status === 'on' && (
-        <>
-          <p className="muted">
-            <BellRing size={16} aria-hidden="true" /> On — {armed} upcoming{' '}
-            {armed === 1 ? 'reminder is' : 'reminders are'} armed on this device.
-          </p>
-          <p className="muted">
-            To change the reminder sound, open Settings → Apps → Nest → Notifications → Reminders →
-            Sound (pick any tone, including alarm sounds).
-          </p>
-        </>
+      {status === 'on' ? (
+        <p className="muted">
+          <BellRing size={16} aria-hidden="true" /> On — {armed} armed. On-device alarms that ring
+          even with no signal. Change the sound in Android Settings → Apps → Nest → Notifications.
+        </p>
+      ) : (
+        <p className="muted">
+          Real on-device alarms — they ring even with no signal. Set one per event, or on a to-do
+          with “Remind me on the due date”.
+        </p>
       )}
 
       {status === 'blocked' && (
         <p className="muted">
-          Notifications are blocked for Nest in Android settings. Open Settings → Apps → Nest →
-          Notifications and allow them, then reopen the app. For exact timing, also allow “Alarms &
-          reminders”.
+          Notifications are blocked in Android settings — allow them for Nest, then reopen.
         </p>
       )}
 
@@ -101,9 +92,8 @@ function WebReminders({ user }) {
     <section className="card">
       <h2>Reminders</h2>
       <p className="muted">
-        Notifications on this device: a morning digest of the day ahead, a nudge before events
-        that have a reminder set, and a ping when a to-do is due. Set an event's reminder in its
-        Reminder field; turn a to-do's on with “Remind me on the due date”.
+        A nudge before events with a reminder set, a ping when a to-do is due, and a morning
+        digest — on this device.
       </p>
 
       {reminders.status === 'ios-install' && (

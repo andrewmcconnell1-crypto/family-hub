@@ -1,11 +1,11 @@
-import { CalendarDays, FolderOpen, Home, Image, Users } from 'lucide-react'
+import { CalendarDays, FolderOpen, Home, Image, Settings } from 'lucide-react'
 
 const TABS = [
   { id: 'home', label: 'Home', icon: Home },
   { id: 'planner', label: 'Planner', icon: CalendarDays },
   { id: 'documents', label: 'Docs', icon: FolderOpen },
   { id: 'photos', label: 'Photos', icon: Image },
-  { id: 'family', label: 'Family', icon: Users },
+  { id: 'family', label: 'Setup', icon: Settings },
 ]
 
 export default function TabBar({ tab, onChange }) {

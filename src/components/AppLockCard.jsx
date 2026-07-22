@@ -41,14 +41,10 @@ export default function AppLockCard() {
     <section className="card">
       <h2>App lock</h2>
       <p className="muted">
-        Require your fingerprint, face, or device PIN to open Nest on this device — a private
-        layer over the family’s documents and photos.
+        Require your fingerprint, face or PIN to open Nest on this device.
       </p>
       {!available && (
-        <p className="muted">
-          This device has no screen lock set up yet. Add a fingerprint or PIN in Android settings
-          to use this.
-        </p>
+        <p className="muted">Set up a screen lock in Android settings first.</p>
       )}
       <button type="button" className="primary-button" disabled={busy} onClick={toggle}>
         {enabled ? (

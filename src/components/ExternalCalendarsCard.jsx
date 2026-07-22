@@ -44,16 +44,11 @@ export default function ExternalCalendarsCard({
     <section className="card">
       <h2>Other calendars</h2>
       <p className="muted">
-        See a Google, Outlook or Apple calendar inside Nest. Copy its private iCal / .ics
-        address and paste it here — those events show up read-only across your week and calendar.
+        Show a Google, Outlook or Apple calendar in Nest (read-only) — paste its private iCal /
+        .ics address below.
       </p>
 
-      {!signedIn && (
-        <p className="muted">
-          Sign in first — external calendars are fetched through your account so they don't get
-          blocked.
-        </p>
-      )}
+      {!signedIn && <p className="muted">Sign in first so these can be fetched.</p>}
 
       {list.length > 0 && (
         <ul className="ext-cal-list">
