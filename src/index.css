@@ -158,15 +158,22 @@ button {
   gap: 0.5rem;
 }
 
+.masthead-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
 .home-wordmark {
-  width: 112px;
+  width: 104px;
   height: auto;
 }
 
-.today-date {
-  margin: 0.5rem 0 0;
+.masthead-date {
+  margin: 0;
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
 }
 

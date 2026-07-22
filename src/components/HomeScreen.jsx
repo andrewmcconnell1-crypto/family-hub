@@ -56,7 +56,10 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
   return (
     <div className="screen">
       <div className="home-masthead">
-        <Wordmark className="home-wordmark" />
+        <div className="masthead-titles">
+          <Wordmark className="home-wordmark" />
+          <p className="masthead-date">{formatDateKey(today, { long: true })}</p>
+        </div>
         <button
           type="button"
           className="icon-button search-button"
@@ -66,7 +69,6 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
           <Search size={22} />
         </button>
       </div>
-      <p className="today-date">{formatDateKey(today, { long: true })}</p>
 
       {activeTodos.length > 0 && (
         <section className="card notepad-card">
