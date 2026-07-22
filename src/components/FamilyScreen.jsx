@@ -328,7 +328,7 @@ function HouseholdSection({ household }) {
 
   return (
     <section className="card">
-      <h2>Share with your partner</h2>
+      <h2>{household.available && household.isShared ? 'Household' : 'Share with your partner'}</h2>
 
       {!household.available && (
         <p className="muted">
@@ -342,11 +342,11 @@ function HouseholdSection({ household }) {
           <ul className="member-list">
             {household.members.map((member) => (
               <li key={member.memberId} className="member-row">
-                <span className="member-main">
+                <span className="member-email">
                   {member.email || 'Unknown'}
                   {member.memberId === household.currentUserId && ' (you)'}
-                  <span className="member-role">{member.role}</span>
                 </span>
+                <span className="member-role">{member.role}</span>
                 {household.role === 'owner' && member.memberId !== household.currentUserId && (
                   <button
                     type="button"

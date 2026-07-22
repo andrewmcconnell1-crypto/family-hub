@@ -1817,6 +1817,15 @@ button {
   overflow-wrap: anywhere;
 }
 
+.member-email {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
 .member-role {
   flex-shrink: 0;
   white-space: nowrap;
@@ -1826,6 +1835,18 @@ button {
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 0.05rem 0.5rem;
+}
+
+/* A clean status line (icon + label) for cards like Reminders. */
+.setup-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-weight: 600;
+}
+.setup-status svg {
+  color: var(--accent);
 }
 
 .danger-link {

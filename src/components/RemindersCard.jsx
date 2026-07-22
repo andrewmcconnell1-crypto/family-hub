@@ -58,9 +58,9 @@ function NativeReminders({ data }) {
     <section className="card">
       <h2>Reminders</h2>
       {status === 'on' ? (
-        <p className="muted">
-          <BellRing size={16} aria-hidden="true" /> On — {armed} armed. On-device alarms that ring
-          even with no signal. Change the sound in Android Settings → Apps → Nest → Notifications.
+        <p className="setup-status">
+          <BellRing size={16} aria-hidden="true" /> On
+          {armed > 0 && <span className="muted"> · {armed} upcoming armed</span>}
         </p>
       ) : (
         <p className="muted">
