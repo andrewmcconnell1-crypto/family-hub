@@ -818,12 +818,9 @@ button {
 /* Subscribed external-calendar events: a coloured left edge + a small pill so
    they read as "from another calendar, read-only". The bar colour is set
    inline from the calendar's colour. */
-.event-row-external {
-  border-left: 4px solid var(--accent);
-  padding-left: 0.6rem;
-  border-radius: 4px;
-}
-
+/* External (synced) events look like any other row now — the calendar-name
+   pill in the meta is the only marker. They stay read-only, so keep them at
+   full opacity rather than dimmed like a disabled button. */
 .event-row-button.event-row-external:disabled {
   opacity: 1;
 }
