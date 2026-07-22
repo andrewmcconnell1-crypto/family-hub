@@ -164,18 +164,21 @@ button {
   flex-shrink: 0;
 }
 
-/* Date centred in the gap between the logo and the search button. */
+/* Dead-centre in the header (absolute, so the wider logo doesn't push it
+   off-centre), in the display font so it reads as a deliberate title. */
 .masthead-date {
-  flex: 1;
-  min-width: 0;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   margin: 0;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  pointer-events: none;
 }
 
 .today-glance {
