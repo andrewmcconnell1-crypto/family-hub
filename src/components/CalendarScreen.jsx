@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
-import { Bell, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Paperclip, Plus, Repeat } from 'lucide-react'
+import { Bell, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Paperclip, Plus, Repeat } from 'lucide-react'
+import EmptyState from './EmptyState.jsx'
 import EventSheet from './EventSheet.jsx'
 import { ChildTags } from './ChildChips.jsx'
 import { EVENT_CATEGORIES, calendarColor, childColor } from '../lib/familyData.js'
@@ -277,9 +278,19 @@ export default function CalendarScreen({
       </div>
 
       <section className="card">
-        <h2>{formatDateKey(selectedKey, { weekday: true })}</h2>
+        <div className="card-title-row">
+          <h2>{formatDateKey(selectedKey, { weekday: true })}</h2>
+          <button type="button" className="link-button" onClick={() => setSheet({ date: selectedKey })}>
+            <Plus size={16} aria-hidden="true" /> Add event
+          </button>
+        </div>
         {dayEvents.length === 0 ? (
-          <p className="muted agenda-empty">Nothing planned.</p>
+          <EmptyState
+            compact
+            icon={CalendarDays}
+            title="Nothing planned"
+            hint="Tap “Add event” to plan something."
+          />
         ) : (
           <ul className="event-list">
             {dayEvents.map((occurrence) => (
