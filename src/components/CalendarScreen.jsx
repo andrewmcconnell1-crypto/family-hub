@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Bell, CalendarDays, ChevronLeft, ChevronRight, Paperclip, Plus, Repeat } from 'lucide-react'
-import EmptyState from './EmptyState.jsx'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import EventSheet from './EventSheet.jsx'
-import { ChildTags } from './ChildChips.jsx'
-import { EVENT_CATEGORIES, calendarColor, childColor } from '../lib/familyData.js'
+import { calendarColor, childColor } from '../lib/familyData.js'
 import { calendarOccurrences } from '../utils/recurrence.js'
 import {
   addMonths,
@@ -27,9 +25,8 @@ export default function CalendarScreen({
 }) {
   const today = todayKey()
   // A deep-link from Home mounts this screen fresh with `focus` set, so we seed
-  // the day, month and open sheet straight from it (no effect / cascading
-  // render). App clears the focus on any other navigation.
-  const [selectedKey, setSelectedKey] = useState(focus?.date || today)
+  // the month and open sheet straight from it (no effect / cascading render).
+  // App clears the focus on any other navigation.
   const [monthDate, setMonthDate] = useState(() =>
     startOfMonth(parseDateKey(focus?.date || today)),
   )
@@ -62,8 +59,6 @@ export default function CalendarScreen({
     return map
   }, [data, weeks, externalOccurrences])
 
-  const dayEvents = eventsByDate.get(selectedKey) || []
-
   const openOccurrence = (occurrence) => {
     if (occurrence.isBirthday || occurrence.isExternal) return
     const series = data.events.find((e) => e.id === occurrence.id)
@@ -74,7 +69,7 @@ export default function CalendarScreen({
     <div className="screen">
       <header className="screen-header screen-header-row planner-header">
         {tabs || <h1>Calendar</h1>}
-        <button type="button" className="primary-button" onClick={() => setSheet({})}>
+        <button type="button" className="primary-button" onClick={() => setSheet({ date: today })}>
           <Plus size={18} aria-hidden="true" /> Event
         </button>
       </header>
@@ -108,90 +103,47 @@ export default function CalendarScreen({
           {weeks.flat().map((cell) => {
             const cellEvents = eventsByDate.get(cell.key) || []
             return (
-              <button
+              <div
                 key={cell.key}
-                type="button"
                 className={[
                   'day-cell',
                   cell.inMonth ? '' : 'day-out',
                   cell.key === today ? 'day-today' : '',
-                  cell.key === selectedKey ? 'day-selected' : '',
                 ]
                   .filter(Boolean)
                   .join(' ')}
-                onClick={() => setSelectedKey(cell.key)}
               >
-                <span>{cell.dayNumber}</span>
-                {cellEvents.length > 0 && (
-                  <span className="day-dots">
-                    {cellEvents.slice(0, 3).map((event, i) => (
-                      <span
-                        key={`${event.id}-${i}`}
-                        className="day-dot"
-                        style={{ background: dotColor(event, data.children) }}
-                      />
-                    ))}
-                  </span>
-                )}
-              </button>
+                <button
+                  type="button"
+                  className="day-num"
+                  aria-label={`Add event on ${formatDateKey(cell.key, { weekday: true })}`}
+                  onClick={() => setSheet({ date: cell.key })}
+                >
+                  {cell.dayNumber}
+                </button>
+                <div className="day-events">
+                  {cellEvents.slice(0, 3).map((event, i) => (
+                    <button
+                      key={`${event.id}-${i}`}
+                      type="button"
+                      className="day-event"
+                      style={{ '--evt': dotColor(event, data.children) }}
+                      disabled={event.isBirthday || event.isExternal}
+                      onClick={() => openOccurrence(event)}
+                      title={event.title}
+                    >
+                      {event.title}
+                    </button>
+                  ))}
+                  {cellEvents.length > 3 && (
+                    <span className="day-more">+{cellEvents.length - 3}</span>
+                  )}
+                </div>
+              </div>
             )
           })}
         </div>
       </div>
-
-      <section className="card">
-        <h2>{formatDateKey(selectedKey, { weekday: true })}</h2>
-        {dayEvents.length === 0 ? (
-          <EmptyState icon={CalendarDays} title="Nothing planned" hint="Tap “Event” to add something for this day." />
-        ) : (
-          <ul className="event-list">
-            {dayEvents.map((occurrence) => (
-              <li key={`${occurrence.id}-${occurrence.date}`}>
-                <button
-                  type="button"
-                  className={`event-row event-row-button${occurrence.isExternal ? ' event-row-external' : ''}`}
-                  style={
-                    occurrence.isExternal
-                      ? { borderLeftColor: calendarColor({ colorId: occurrence.calendarColorId }) }
-                      : undefined
-                  }
-                  disabled={occurrence.isBirthday || occurrence.isExternal}
-                  onClick={() => openOccurrence(occurrence)}
-                >
-                  <div className="event-when">
-                    {occurrence.time ? (
-                      <span className="event-time">{occurrence.time}</span>
-                    ) : (
-                      <span className="event-time muted">all day</span>
-                    )}
-                  </div>
-                  <div className="event-main">
-                    <span className="event-title">{occurrence.title}</span>
-                    <span className="event-meta">
-                      {occurrence.isExternal
-                        ? occurrence.calendarName
-                        : EVENT_CATEGORIES.find((c) => c.id === occurrence.category)?.label}
-                      {occurrence.repeat !== 'none' && !occurrence.isBirthday && (
-                        <Repeat size={12} aria-label="Repeats" />
-                      )}
-                      {occurrence.documentIds?.length > 0 && (
-                        <Paperclip size={12} aria-label="Has attachments" />
-                      )}
-                      {Number.isInteger(occurrence.reminder) && (
-                        <Bell size={12} aria-label="Reminder set" />
-                      )}
-                      {!occurrence.isExternal && (
-                        <ChildTags kids={data.children} childIds={occurrence.childIds} />
-                      )}
-                    </span>
-                    {occurrence.notes && <span className="event-notes">{occurrence.notes}</span>}
-                  </div>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
 
       {sheet && (
         <EventSheet
@@ -199,12 +151,11 @@ export default function CalendarScreen({
           documents={data.documents}
           event={sheet.event}
           occurrenceDate={sheet.occurrenceDate}
-          defaultDate={selectedKey}
+          defaultDate={sheet.date || today}
           onSave={(fields) => {
             if (sheet.event) updateEvent(sheet.event.id, fields)
             else addEvent(fields)
             if (fields.repeat === 'none') {
-              setSelectedKey(fields.date)
               setMonthDate(startOfMonth(parseDateKey(fields.date)))
             }
             setSheet(null)
