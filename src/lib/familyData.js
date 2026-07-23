@@ -45,10 +45,13 @@ export function expiringDocuments(documents, fromKey, horizonKey) {
 }
 
 export const EVENT_CATEGORIES = [
-  { id: 'school', label: 'School' },
-  { id: 'medical', label: 'Medical' },
-  { id: 'activity', label: 'Activity' },
   { id: 'birthday', label: 'Birthday' },
+  { id: 'work', label: 'Work' },
+  { id: 'running', label: 'Running' },
+  { id: 'medical', label: 'Medical' },
+  { id: 'girls', label: 'Girls' },
+  { id: 'holiday', label: 'Holiday' },
+  { id: 'family', label: 'Family' },
   { id: 'other', label: 'Other' },
 ]
 
@@ -190,6 +193,9 @@ export function normalizeData(raw) {
       reminder: null,
     }).map((event) => ({
       ...event,
+      // Fall back to "other" for events saved under a category that no longer
+      // exists (e.g. the old School/Activity set).
+      category: EVENT_CATEGORIES.some((c) => c.id === event.category) ? event.category : 'other',
       weekdays: Array.isArray(event.weekdays)
         ? event.weekdays.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
         : [],
