@@ -50,6 +50,15 @@ html,
 body {
   margin: 0;
   padding: 0;
+  /* Clip any element that pokes past the viewport width so iOS can't
+     rubber-band the whole page sideways, and stop vertical overscroll from
+     chaining into a bounce that drags the layout around. `clip` (not
+     `hidden`) does this WITHOUT creating a scroll container, so the sticky
+     Home/Planner headers keep working. */
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  overscroll-behavior: none;
 }
 
 body {
