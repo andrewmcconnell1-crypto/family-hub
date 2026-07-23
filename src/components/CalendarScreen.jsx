@@ -219,7 +219,7 @@ export default function CalendarScreen({
 
         <div className="cal-dow">
           {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
-            <span key={i} className="dow">
+            <span key={i} className={`dow${i >= 5 ? ' dow-weekend' : ''}`}>
               {d}
             </span>
           ))}

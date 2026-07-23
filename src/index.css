@@ -1005,16 +1005,30 @@ button {
 }
 
 .dow {
+  /* Match the day-number pill's footprint so each letter sits directly above
+     its column's numbers: 22px box nudged 2px in, like .cw-num inside .cw-day. */
+  width: 22px;
+  margin-left: 2px;
+  justify-self: start;
   text-align: center;
-  font-size: 0.7rem;
-  font-weight: 600;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: var(--text-muted);
+}
+
+.dow-weekend {
+  color: color-mix(in srgb, var(--accent) 70%, var(--text-muted));
 }
 
 .cal-dow {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  padding-bottom: 0.15rem;
+  padding: 0.32rem 0;
+  margin-bottom: 0.25rem;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  border-radius: 9px;
 }
 
 .cal-weeks {
