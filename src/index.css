@@ -947,9 +947,20 @@ button {
   touch-action: pan-y; /* keep vertical scroll; we handle horizontal swipes */
 }
 
-.empty-state-compact {
-  padding: 0.9rem 1rem;
-  gap: 0.3rem;
+.empty-state.empty-state-compact {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: fit-content;
+  margin: 0.15rem auto;
+  padding: 0.3rem 0.6rem;
+  border-width: 1px;
+  border-radius: 999px;
+}
+.empty-state.empty-state-compact .empty-title {
+  font-size: 0.85rem;
+  color: var(--text-muted);
 }
 
 .month-nav {

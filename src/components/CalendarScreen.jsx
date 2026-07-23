@@ -285,12 +285,7 @@ export default function CalendarScreen({
           </button>
         </div>
         {dayEvents.length === 0 ? (
-          <EmptyState
-            compact
-            icon={CalendarDays}
-            title="Nothing planned"
-            hint="Tap “Add event” to plan something."
-          />
+          <EmptyState compact icon={CalendarDays} title="Nothing planned" />
         ) : (
           <ul className="event-list">
             {dayEvents.map((occurrence) => (
