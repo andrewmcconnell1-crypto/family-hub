@@ -934,8 +934,15 @@ button {
 
 /* --- Calendar -------------------------------------------------------------- */
 
+/* Break the calendar out of the screen's side padding so the grid gets the
+   full width — wider columns make the bands far more readable. */
 .calendar-card {
-  padding: 0.55rem;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
+  padding: 0.5rem 0.5rem 0.6rem;
 }
 
 .month-nav {

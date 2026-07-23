@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Bell, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Paperclip, Plus, Repeat } from 'lucide-react'
 import EmptyState from './EmptyState.jsx'
 import EventSheet from './EventSheet.jsx'
@@ -125,13 +125,28 @@ export default function CalendarScreen({
   const visibleWeeks = expanded || !selectedWeek ? weekViews : [selectedWeek]
   const dayEvents = eventsByDate.get(selectedKey) || []
 
-  const selectDay = (key) => {
-    setSelectedKey(key)
-    if (expanded) setExpanded(false)
-  }
+  // Tapping a day just selects it (the agenda below updates). The month only
+  // collapses when you ask it to via the chevron — no point stealing space
+  // when the day's agenda already fits.
+  const selectDay = (key) => setSelectedKey(key)
   const goMonth = (delta) => {
     setMonthDate((m) => addMonths(m, delta))
     setExpanded(true)
+  }
+
+  // Swipe left/right across the calendar to change months.
+  const touch = useRef(null)
+  const onTouchStart = (e) => {
+    const t = e.touches[0]
+    touch.current = { x: t.clientX, y: t.clientY }
+  }
+  const onTouchEnd = (e) => {
+    if (!touch.current) return
+    const t = e.changedTouches[0]
+    const dx = t.clientX - touch.current.x
+    const dy = t.clientY - touch.current.y
+    touch.current = null
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.6) goMonth(dx < 0 ? 1 : -1)
   }
 
   const openOccurrence = (occurrence) => {
@@ -149,7 +164,7 @@ export default function CalendarScreen({
         </button>
       </header>
 
-      <div className="card calendar-card">
+      <div className="card calendar-card" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div className="month-nav">
           <button type="button" className="icon-button" aria-label="Previous month" onClick={() => goMonth(-1)}>
             <ChevronLeft size={20} />
