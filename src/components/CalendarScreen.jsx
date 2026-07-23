@@ -122,7 +122,7 @@ export default function CalendarScreen({
                   {cell.dayNumber}
                 </button>
                 <div className="day-events">
-                  {cellEvents.slice(0, 3).map((event, i) => (
+                  {cellEvents.slice(0, 4).map((event, i) => (
                     <button
                       key={`${event.id}-${i}`}
                       type="button"
@@ -135,8 +135,8 @@ export default function CalendarScreen({
                       {event.title}
                     </button>
                   ))}
-                  {cellEvents.length > 3 && (
-                    <span className="day-more">+{cellEvents.length - 3}</span>
+                  {cellEvents.length > 4 && (
+                    <span className="day-more">+{cellEvents.length - 4}</span>
                   )}
                 </div>
               </div>
