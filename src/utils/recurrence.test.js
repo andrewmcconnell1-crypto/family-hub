@@ -35,6 +35,28 @@ describe('occurrencesInRange', () => {
     expect(out.map((o) => o.id)).toEqual(['e1'])
   })
 
+  it('expands a multi-day (spanning) one-off across each day it covers', () => {
+    const events = [{ ...base, date: '2026-07-15', endDate: '2026-07-18', repeat: 'none' }]
+    const out = occurrencesInRange(events, '2026-07-01', '2026-07-31')
+    expect(out.map((o) => o.date)).toEqual(['2026-07-15', '2026-07-16', '2026-07-17', '2026-07-18'])
+    expect(out[0].spanFirst).toBe(true)
+    expect(out[3].spanLast).toBe(true)
+    expect(out.every((o) => o.spanDays)).toBe(true)
+  })
+
+  it('clips a multi-day span to the query range', () => {
+    const events = [{ ...base, date: '2026-07-15', endDate: '2026-07-25', repeat: 'none' }]
+    const out = occurrencesInRange(events, '2026-07-17', '2026-07-19')
+    expect(out.map((o) => o.date)).toEqual(['2026-07-17', '2026-07-18', '2026-07-19'])
+  })
+
+  it('treats an endDate on or before the start as a single day', () => {
+    const events = [{ ...base, date: '2026-07-15', endDate: '2026-07-15', repeat: 'none' }]
+    const out = occurrencesInRange(events, '2026-07-01', '2026-07-31')
+    expect(out.map((o) => o.date)).toEqual(['2026-07-15'])
+    expect(out[0].spanDays).toBe(false)
+  })
+
   it('expands weekly repeats on multiple weekdays', () => {
     // Anchor Mon 13 Jul, runs Mon (0) and Wed (2).
     const events = [{ ...base, date: '2026-07-13', repeat: 'weekly', weekdays: [0, 2] }]

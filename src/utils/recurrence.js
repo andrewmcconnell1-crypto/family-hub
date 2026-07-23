@@ -60,8 +60,23 @@ export function occurrencesInRange(events, startKey, endKey) {
   const out = []
   for (const event of events) {
     if (!event.repeat || event.repeat === 'none') {
-      if (event.date >= startKey && event.date <= endKey) {
-        out.push({ ...event, seriesDate: event.date })
+      // A non-repeating event whose endDate is after its start spans those days
+      // (a multi-day event) and appears on each day it covers. Single-day
+      // events (no endDate) collapse to one occurrence, as before.
+      const spanEnd = event.endDate && event.endDate > event.date ? event.endDate : event.date
+      const from = event.date > startKey ? event.date : startKey
+      const to = spanEnd < endKey ? spanEnd : endKey
+      for (let key = from; key <= to; key = addDays(key, 1)) {
+        out.push({
+          ...event,
+          date: key,
+          seriesDate: event.date,
+          spanStart: event.date,
+          spanEnd,
+          spanDays: spanEnd !== event.date,
+          spanFirst: key === event.date,
+          spanLast: key === spanEnd,
+        })
       }
       continue
     }

@@ -69,7 +69,9 @@ export default function EventSheet({
       notes: notes.trim(),
       repeat,
       weekdays: pickDays ? weekdays : [],
-      endDate: repeat === 'none' ? '' : endDate,
+      // For a repeating event endDate is "repeats until"; for a one-off it's
+      // the multi-day span end. Only keep it when it's after the start.
+      endDate: endDate && endDate > date ? endDate : repeat === 'none' ? '' : endDate,
       documentIds,
       reminder: time ? reminder : null,
     })
@@ -98,6 +100,17 @@ export default function EventSheet({
             <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
           </label>
         </div>
+        {repeat === 'none' && (
+          <label>
+            Ends <span className="label-hint">optional — spans multiple days</span>
+            <input
+              type="date"
+              value={endDate}
+              min={date}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </label>
+        )}
         <div className="form-row">
           <label>
             Repeat
