@@ -943,6 +943,12 @@ button {
   border-right: 0;
   border-radius: 0;
   padding: 0.5rem 0.5rem 0.6rem;
+  overflow: hidden; /* clip the month sliding in/out on swipe */
+  touch-action: pan-y; /* keep vertical scroll; we handle horizontal swipes */
+}
+
+.agenda-empty {
+  margin: 0.25rem 0 0;
 }
 
 .month-nav {

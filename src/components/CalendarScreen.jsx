@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { Bell, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Paperclip, Plus, Repeat } from 'lucide-react'
-import EmptyState from './EmptyState.jsx'
+import { Bell, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Paperclip, Plus, Repeat } from 'lucide-react'
 import EventSheet from './EventSheet.jsx'
 import { ChildTags } from './ChildChips.jsx'
 import { EVENT_CATEGORIES, calendarColor, childColor } from '../lib/familyData.js'
@@ -134,19 +133,48 @@ export default function CalendarScreen({
     setExpanded(true)
   }
 
-  // Swipe left/right across the calendar to change months.
-  const touch = useRef(null)
+  // Swipe left/right to change months: the grid follows the finger, then
+  // slides out and the new month slides in — so it feels physical, not a jump.
+  const [drag, setDrag] = useState({ x: 0, anim: false })
+  const swipe = useRef(null) // { x, y, axis, dx, w }
   const onTouchStart = (e) => {
     const t = e.touches[0]
-    touch.current = { x: t.clientX, y: t.clientY }
+    swipe.current = { x: t.clientX, y: t.clientY, axis: null, dx: 0, w: e.currentTarget.offsetWidth }
   }
-  const onTouchEnd = (e) => {
-    if (!touch.current) return
-    const t = e.changedTouches[0]
-    const dx = t.clientX - touch.current.x
-    const dy = t.clientY - touch.current.y
-    touch.current = null
-    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.6) goMonth(dx < 0 ? 1 : -1)
+  const onTouchMove = (e) => {
+    const s = swipe.current
+    if (!s) return
+    const t = e.touches[0]
+    const dx = t.clientX - s.x
+    const dy = t.clientY - s.y
+    if (!s.axis) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return
+      s.axis = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v'
+    }
+    if (s.axis === 'h') {
+      s.dx = dx
+      setDrag({ x: dx, anim: false })
+    }
+  }
+  const onTouchEnd = () => {
+    const s = swipe.current
+    swipe.current = null
+    if (!s || s.axis !== 'h') {
+      setDrag({ x: 0, anim: true })
+      return
+    }
+    const w = s.w || 320
+    if (Math.abs(s.dx) > 45) {
+      const dir = s.dx < 0 ? 1 : -1 // swipe left → next month
+      setDrag({ x: -dir * w, anim: true }) // current slides out
+      setTimeout(() => {
+        goMonth(dir)
+        setDrag({ x: dir * w, anim: false }) // new month waits off the other edge
+        requestAnimationFrame(() => requestAnimationFrame(() => setDrag({ x: 0, anim: true })))
+      }, 180)
+    } else {
+      setDrag({ x: 0, anim: true }) // spring back
+    }
   }
 
   const openOccurrence = (occurrence) => {
@@ -164,7 +192,12 @@ export default function CalendarScreen({
         </button>
       </header>
 
-      <div className="card calendar-card" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+      <div
+        className="card calendar-card"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
         <div className="month-nav">
           <button type="button" className="icon-button" aria-label="Previous month" onClick={() => goMonth(-1)}>
             <ChevronLeft size={20} />
@@ -191,7 +224,13 @@ export default function CalendarScreen({
           ))}
         </div>
 
-        <div className="cal-weeks">
+        <div
+          className="cal-weeks"
+          style={{
+            transform: `translateX(${drag.x}px)`,
+            transition: drag.anim ? 'transform 0.18s ease' : 'none',
+          }}
+        >
           {visibleWeeks.map(({ week, segments, overflow }, wi) => (
             <div className="cw" key={`${week[0].key}-${wi}`}>
               <div className="cw-days">
@@ -240,7 +279,7 @@ export default function CalendarScreen({
       <section className="card">
         <h2>{formatDateKey(selectedKey, { weekday: true })}</h2>
         {dayEvents.length === 0 ? (
-          <EmptyState icon={CalendarDays} title="Nothing planned" hint="Tap “Event” to add something for this day." />
+          <p className="muted agenda-empty">Nothing planned.</p>
         ) : (
           <ul className="event-list">
             {dayEvents.map((occurrence) => (
