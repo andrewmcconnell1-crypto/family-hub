@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Bell, CalendarDays, ChevronLeft, ChevronRight, Paperclip, Plus, Repeat } from 'lucide-react'
+import { Bell, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Paperclip, Plus, Repeat } from 'lucide-react'
 import EmptyState from './EmptyState.jsx'
 import EventSheet from './EventSheet.jsx'
 import { ChildTags } from './ChildChips.jsx'
@@ -15,8 +15,8 @@ import {
   todayKey,
 } from '../utils/dateUtils.js'
 
-// How many event lanes fit in a week row before the rest collapse to a "+N".
-const MAX_LANES = 4
+// Event bar lanes shown per day before the rest collapse into a "+N" badge.
+const MAX_LANES = 3
 
 export default function CalendarScreen({
   tabs,
@@ -29,10 +29,11 @@ export default function CalendarScreen({
   focus,
 }) {
   const today = todayKey()
-  // A deep-link from Home mounts this fresh with `focus` set; seed the day,
-  // month and open sheet from it. App clears focus on any other navigation.
   const [selectedKey, setSelectedKey] = useState(focus?.date || today)
   const [monthDate, setMonthDate] = useState(() => startOfMonth(parseDateKey(focus?.date || today)))
+  // The month starts expanded (full grid); tapping a day collapses it to that
+  // week so the day's agenda has room, iOS-style. The chevron toggles back.
+  const [expanded, setExpanded] = useState(true)
   const [sheet, setSheet] = useState(() => {
     if (focus?.kind === 'event') {
       const series = data.events.find((e) => e.id === focus.id)
@@ -43,8 +44,6 @@ export default function CalendarScreen({
 
   const weeks = useMemo(() => monthGrid(monthDate), [monthDate])
 
-  // Occurrences (recurring expanded, birthdays, externals) grouped by day. A
-  // multi-day event appears once per day it covers (each with spanStart/End).
   const eventsByDate = useMemo(() => {
     const gridStart = weeks[0][0].key
     const gridEnd = weeks[weeks.length - 1][6].key
@@ -59,20 +58,19 @@ export default function CalendarScreen({
     return map
   }, [data, weeks, externalOccurrences])
 
-  const dayColor = (event) => {
+  const barColor = (event) => {
     if (event.isExternal) return calendarColor({ colorId: event.calendarColorId })
     const child = data.children.find((c) => event.childIds?.includes(c.id))
     return child ? childColor(child) : 'var(--accent)'
   }
 
-  // Turn each week into positioned event bars: a multi-day event becomes a
-  // single bar spanning its columns; overlapping bars are stacked into lanes.
+  // Each week's event bars: a multi-day event is one bar spanning its columns;
+  // overlapping bars stack into lanes; anything past MAX_LANES becomes "+N".
   const weekViews = useMemo(
     () =>
       weeks.map((week) => {
         const startKey = week[0].key
         const endKey = week[6].key
-        // Merge each event's days within this week into one column range.
         const seen = new Map()
         for (let ci = 0; ci < 7; ci++) {
           for (const occ of eventsByDate.get(week[ci].key) || []) {
@@ -96,7 +94,6 @@ export default function CalendarScreen({
               b.colSpan - a.colSpan ||
               (a.occ.time || '99:99').localeCompare(b.occ.time || '99:99'),
           )
-        // Greedy lane assignment: first lane with no column overlap.
         const lanes = []
         for (const seg of segments) {
           let li = 0
@@ -113,19 +110,29 @@ export default function CalendarScreen({
             li++
           }
         }
-        // Anything past MAX_LANES becomes a per-day "+N" badge.
         const overflow = new Array(7).fill(0)
         const shown = segments.filter((s) => {
           if (s.lane < MAX_LANES) return true
           for (let c = s.colStart; c < s.colStart + s.colSpan; c++) overflow[c]++
           return false
         })
-        return { week, segments: shown, overflow, laneCount: Math.min(lanes.length, MAX_LANES) }
+        return { week, segments: shown, overflow }
       }),
     [weeks, eventsByDate],
   )
 
+  const selectedWeek = weekViews.find(({ week }) => week.some((c) => c.key === selectedKey))
+  const visibleWeeks = expanded || !selectedWeek ? weekViews : [selectedWeek]
   const dayEvents = eventsByDate.get(selectedKey) || []
+
+  const selectDay = (key) => {
+    setSelectedKey(key)
+    if (expanded) setExpanded(false)
+  }
+  const goMonth = (delta) => {
+    setMonthDate((m) => addMonths(m, delta))
+    setExpanded(true)
+  }
 
   const openOccurrence = (occurrence) => {
     if (occurrence.isBirthday || occurrence.isExternal) return
@@ -144,21 +151,19 @@ export default function CalendarScreen({
 
       <div className="card calendar-card">
         <div className="month-nav">
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Previous month"
-            onClick={() => setMonthDate((m) => addMonths(m, -1))}
-          >
+          <button type="button" className="icon-button" aria-label="Previous month" onClick={() => goMonth(-1)}>
             <ChevronLeft size={20} />
           </button>
-          <strong>{monthLabel(monthDate)}</strong>
           <button
             type="button"
-            className="icon-button"
-            aria-label="Next month"
-            onClick={() => setMonthDate((m) => addMonths(m, 1))}
+            className="month-title"
+            aria-label={expanded ? 'Collapse month' : 'Expand month'}
+            onClick={() => setExpanded((v) => !v)}
           >
+            <strong>{monthLabel(monthDate)}</strong>
+            {expanded ? <ChevronUp size={16} aria-hidden="true" /> : <ChevronDown size={16} aria-hidden="true" />}
+          </button>
+          <button type="button" className="icon-button" aria-label="Next month" onClick={() => goMonth(1)}>
             <ChevronRight size={20} />
           </button>
         </div>
@@ -172,51 +177,44 @@ export default function CalendarScreen({
         </div>
 
         <div className="cal-weeks">
-          {weekViews.map(({ week, segments, overflow, laneCount }, wi) => (
-            <div className="cal-week" key={wi}>
-              <div className="cal-daynums">
+          {visibleWeeks.map(({ week, segments, overflow }, wi) => (
+            <div className="cw" key={`${week[0].key}-${wi}`}>
+              <div className="cw-days">
                 {week.map((cell, ci) => (
                   <button
                     key={cell.key}
                     type="button"
                     className={[
-                      'cal-daynum',
+                      'cw-day',
                       cell.inMonth ? '' : 'day-out',
                       cell.key === today ? 'is-today' : '',
                       cell.key === selectedKey ? 'is-selected' : '',
                     ]
                       .filter(Boolean)
                       .join(' ')}
-                    onClick={() => setSelectedKey(cell.key)}
+                    aria-label={formatDateKey(cell.key, { weekday: true })}
+                    onClick={() => selectDay(cell.key)}
                   >
-                    <span className="cal-daynum-n">{cell.dayNumber}</span>
-                    {overflow[ci] > 0 && <span className="cal-overflow">+{overflow[ci]}</span>}
+                    <span className="cw-num">{cell.dayNumber}</span>
+                    {overflow[ci] > 0 && <span className="cw-more">+{overflow[ci]}</span>}
                   </button>
                 ))}
               </div>
-              <div className="cal-lanes" style={{ minHeight: laneCount * 15 }}>
+              <div className="cw-overlay" aria-hidden="true">
                 {segments.map((seg, i) => (
-                  <button
+                  <span
                     key={`${seg.occ.id}-${i}`}
-                    type="button"
-                    className={[
-                      'cal-bar',
-                      seg.continuesLeft ? 'cont-l' : '',
-                      seg.continuesRight ? 'cont-r' : '',
-                    ]
+                    className={['cw-band', seg.continuesLeft ? 'cont-l' : '', seg.continuesRight ? 'cont-r' : '']
                       .filter(Boolean)
                       .join(' ')}
                     style={{
                       gridColumn: `${seg.colStart + 1} / span ${seg.colSpan}`,
                       gridRow: seg.lane + 1,
-                      '--evt': dayColor(seg.occ),
+                      '--evt': barColor(seg.occ),
                     }}
-                    disabled={seg.occ.isBirthday || seg.occ.isExternal}
-                    onClick={() => openOccurrence(seg.occ)}
-                    title={seg.occ.title}
                   >
                     {seg.occ.title}
-                  </button>
+                  </span>
                 ))}
               </div>
             </div>
