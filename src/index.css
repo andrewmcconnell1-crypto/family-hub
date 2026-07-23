@@ -101,7 +101,7 @@ button {
   width: 100%;
   max-width: 640px;
   margin: 0 auto;
-  padding: 1.25rem 1rem calc(5.75rem + env(safe-area-inset-bottom));
+  padding: calc(1.25rem + env(safe-area-inset-top)) 1rem calc(5.75rem + env(safe-area-inset-bottom));
 }
 
 /* Photo-of-the-day backdrop: blurred, then washed with the theme background
@@ -148,8 +148,8 @@ button {
   position: sticky;
   top: 0;
   z-index: 10;
-  margin: -1.25rem -1rem 0;
-  padding: 0.7rem 1rem 0.6rem;
+  margin: calc(-1.25rem - env(safe-area-inset-top)) -1rem 0;
+  padding: calc(0.7rem + env(safe-area-inset-top)) 1rem 0.6rem;
   background: var(--bg);
   border-bottom: 2px solid var(--ink);
   display: flex;
@@ -386,8 +386,8 @@ button {
   position: sticky;
   top: 0;
   z-index: 10;
-  margin: -1.25rem -1rem 0;
-  padding: 0.9rem 1rem 0.65rem;
+  margin: calc(-1.25rem - env(safe-area-inset-top)) -1rem 0;
+  padding: calc(0.9rem + env(safe-area-inset-top)) 1rem 0.65rem;
   background: var(--bg);
   border-bottom: 2px solid var(--ink);
 }
@@ -807,11 +807,21 @@ button {
   overflow-x: auto;
 }
 
+.photo-strip-thumb-button {
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 4px;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .photo-strip-thumb {
+  display: block;
   width: 92px;
   height: 104px;
   object-fit: cover;
-  flex-shrink: 0;
   background: #fff;
   padding: 4px 4px 14px;
   border: 2px solid var(--ink);
@@ -819,12 +829,16 @@ button {
   box-shadow: 2px 2px 0 var(--shadow-ink);
 }
 
-.photo-strip-thumb:nth-child(odd) {
+.photo-strip-thumb-button:nth-child(odd) {
   transform: rotate(-1.5deg);
 }
 
-.photo-strip-thumb:nth-child(even) {
+.photo-strip-thumb-button:nth-child(even) {
   transform: rotate(1.2deg);
+}
+
+.photo-strip-thumb-button:active {
+  transform: scale(0.97);
 }
 
 /* --- Events --------------------------------------------------------------- */

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AlertCircle, ChevronDown, ChevronRight, Search } from 'lucide-react'
 import SearchOverlay from './SearchOverlay.jsx'
+import PhotoViewer from './PhotoViewer.jsx'
 import Wordmark from './Wordmark.jsx'
 import { ChildTags } from './ChildChips.jsx'
 import { calendarColor, expiringDocuments } from '../lib/familyData.js'
@@ -38,6 +39,8 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
     })
   }
   const [searching, setSearching] = useState(false)
+  const [viewingPhotoId, setViewingPhotoId] = useState(null)
+  const viewingPhoto = viewingPhotoId ? data.photos.find((p) => p.id === viewingPhotoId) : null
   // Today starts expanded; tap a day's header to toggle it.
   const [expandedDays, setExpandedDays] = useState(() => new Set([today]))
   const toggleDay = (key) =>
@@ -190,11 +193,19 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
         ) : (
           <div className="photo-strip">
             {recentPhotos.map((photo) => (
-              <PhotoThumb key={photo.id} photo={photo} />
+              <PhotoThumb key={photo.id} photo={photo} onOpen={() => setViewingPhotoId(photo.id)} />
             ))}
           </div>
         )}
       </section>
+
+      {viewingPhoto && (
+        <PhotoViewer
+          photo={viewingPhoto}
+          kids={data.children}
+          onClose={() => setViewingPhotoId(null)}
+        />
+      )}
 
       {searching && (
         <SearchOverlay data={data} onNavigate={onNavigate} onClose={() => setSearching(false)} />
@@ -303,11 +314,20 @@ function DayCard({ day, isToday, kids, expanded, onToggle, onOpen }) {
   )
 }
 
-function PhotoThumb({ photo }) {
+function PhotoThumb({ photo, onOpen }) {
   const url = useFileUrl(photo.fileId)
-  return url ? (
-    <img className="photo-strip-thumb" src={url} alt={photo.caption || 'Family photo'} />
-  ) : (
-    <span className="photo-strip-thumb photo-placeholder" />
+  return (
+    <button
+      type="button"
+      className="photo-strip-thumb-button"
+      onClick={onOpen}
+      aria-label={photo.caption || 'View photo'}
+    >
+      {url ? (
+        <img className="photo-strip-thumb" src={url} alt={photo.caption || 'Family photo'} />
+      ) : (
+        <span className="photo-strip-thumb photo-placeholder" />
+      )}
+    </button>
   )
 }

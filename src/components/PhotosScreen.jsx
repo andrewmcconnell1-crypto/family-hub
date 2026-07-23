@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Camera, Crop, Image, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { Camera, Crop, Image, Plus } from 'lucide-react'
 import ImageCropper from './ImageCropper.jsx'
+import PhotoViewer from './PhotoViewer.jsx'
 import Sheet from './Sheet.jsx'
 import EmptyState from './EmptyState.jsx'
-import { ChildFilter, ChildMultiSelect, ChildTags } from './ChildChips.jsx'
+import { ChildFilter, ChildMultiSelect } from './ChildChips.jsx'
 import { matchesChild } from '../lib/familyData.js'
 import { capturePhoto, isNativeCamera } from '../lib/nativeCamera.js'
 import { deleteFile, getFile, putFile, releaseFileUrl } from '../lib/fileStore.js'
@@ -155,44 +156,6 @@ function PhotoCell({ photo, onOpen }) {
     <button type="button" className="photo-cell" onClick={onOpen} aria-label={photo.caption || 'View photo'}>
       {url ? <img src={url} alt={photo.caption || ''} loading="lazy" /> : <span className="photo-placeholder" />}
     </button>
-  )
-}
-
-function PhotoViewer({ photo, kids, onEdit, onDelete, onClose }) {
-  const url = useFileUrl(photo.fileId)
-  return (
-    <div className="viewer-backdrop" onClick={onClose}>
-      <div className="viewer" role="dialog" aria-modal="true" aria-label="Photo" onClick={(e) => e.stopPropagation()}>
-        <div className="viewer-actions">
-          <button
-            type="button"
-            className="icon-button viewer-button"
-            aria-label="Edit photo details"
-            onClick={onEdit}
-          >
-            <Pencil size={20} />
-          </button>
-          <button
-            type="button"
-            className="icon-button viewer-button"
-            aria-label="Delete photo"
-            onClick={onDelete}
-          >
-            <Trash2 size={20} />
-          </button>
-          <button type="button" className="icon-button viewer-button" aria-label="Close" onClick={onClose}>
-            <X size={20} />
-          </button>
-        </div>
-        {url && <img src={url} alt={photo.caption || ''} />}
-        {(photo.caption || photo.childIds.length > 0) && (
-          <div className="viewer-caption">
-            {photo.caption && <span>{photo.caption}</span>}
-            <ChildTags kids={kids} childIds={photo.childIds} />
-          </div>
-        )}
-      </div>
-    </div>
   )
 }
 
