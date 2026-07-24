@@ -1000,11 +1000,7 @@ button {
 }
 
 .dow {
-  /* Match the day-number pill's footprint so each letter sits directly above
-     its column's numbers: 22px box nudged 2px in, like .cw-num inside .cw-day. */
-  width: 22px;
-  margin-left: 2px;
-  justify-self: start;
+  justify-self: stretch;
   text-align: center;
   font-size: 0.66rem;
   font-weight: 700;
@@ -1020,8 +1016,9 @@ button {
 .cal-dow {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  padding: 0.32rem 0;
-  margin-bottom: 0.25rem;
+  gap: 4px;
+  padding: 0.3rem 0;
+  margin-bottom: 0.4rem;
   background: color-mix(in srgb, var(--accent) 7%, transparent);
   border-radius: 9px;
 }
@@ -1029,33 +1026,35 @@ button {
 .cal-weeks {
   display: flex;
   flex-direction: column;
+  gap: 4px;
 }
 
 /* A week: day-number buttons (the tap targets) with event bands overlaid
-   beneath them. */
+   beneath them (landscape only). */
 .cw {
   position: relative;
-  border-top: 1px solid var(--border);
-}
-.cw:last-child {
-  border-bottom: 1px solid var(--border);
 }
 
 .cw-days {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
 }
 
+/* Portrait: each day is its own boxed card — bold ink-ish outline, rounded,
+   on a surface fill — to match the app's neo-brutalist cards. Today gets an
+   accent outline; the selected day pops with an ink outline + hard shadow. */
 .cw-day {
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 4px;
-  min-height: 72px;
-  border: 0;
-  background: none;
-  padding: 3px 2px 2px;
+  min-height: 60px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 5px 2px;
   color: inherit;
   cursor: pointer;
 }
@@ -1066,8 +1065,8 @@ button {
 .cw-dots {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 3px;
-  padding-left: 3px;
 }
 
 .cw-dot {
@@ -1077,13 +1076,21 @@ button {
   background: var(--accent);
 }
 
+/* Days from the neighbouring month: no box, just a faded number. */
 .cw-day.day-out {
+  border-color: transparent;
+  background: transparent;
   opacity: 0.4;
 }
 
+.cw-day.is-today {
+  border-color: var(--accent);
+}
+
 .cw-day.is-selected {
-  background: color-mix(in srgb, var(--accent) 13%, transparent);
-  border-radius: 8px;
+  border-color: var(--ink);
+  background: var(--accent-soft);
+  box-shadow: 2px 2px 0 var(--shadow-ink);
 }
 
 .cw-num {
@@ -1134,11 +1141,34 @@ button {
   .cw-dots {
     display: none;
   }
-  .cw-day {
-    min-height: 58px;
+  /* Drop the portrait box treatment: bands need seamless columns to span
+     multi-day events, and top-left numbers so the titles read left-to-right. */
+  .cal-dow,
+  .cal-weeks,
+  .cw-days {
+    gap: 0;
+  }
+  .dow {
+    justify-self: start;
+    width: 22px;
+    margin-left: 4px;
   }
   .cw {
     overflow: hidden;
+    border-top: 1px solid var(--border);
+  }
+  .cw-day {
+    min-height: 58px;
+    align-items: flex-start;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    padding: 3px 4px 2px;
+  }
+  .cw-day.is-selected {
+    background: color-mix(in srgb, var(--accent) 13%, transparent);
+    box-shadow: none;
   }
   .cw-overlay {
     display: grid;
