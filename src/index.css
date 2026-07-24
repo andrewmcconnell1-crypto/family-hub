@@ -960,12 +960,7 @@ button {
 /* Break the calendar out of the screen's side padding so the grid gets the
    full width — wider columns make the bands far more readable. */
 .calendar-card {
-  margin-left: -1rem;
-  margin-right: -1rem;
-  border-left: 0;
-  border-right: 0;
-  border-radius: 0;
-  padding: 0.5rem 0.5rem 0.6rem;
+  padding: 0.6rem 0.5rem 0.7rem;
   overflow: hidden; /* clip the month sliding in/out on swipe */
   touch-action: pan-y; /* keep vertical scroll; we handle horizontal swipes */
 }
@@ -1152,7 +1147,62 @@ button {
     display: block;
     position: absolute;
     bottom: 2px;
-    left: 4px;
+    right: 4px;
+  }
+
+  /* Turn the calendar into a chrome-free, edge-to-edge page: drop the top
+     mode tabs, the bottom tab bar and the day-agenda card, and let the month
+     grid grow to fill the whole screen. Scoped to body.cal-fullscreen so only
+     the calendar view loses its navigation — other tabs keep theirs. */
+  body.cal-fullscreen .tab-bar {
+    display: none;
+  }
+  body.cal-fullscreen .app-main {
+    max-width: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  body.cal-fullscreen .screen {
+    flex: 1;
+    min-height: 0;
+    gap: 0;
+  }
+  body.cal-fullscreen .planner-header,
+  body.cal-fullscreen .cal-day-agenda {
+    display: none;
+  }
+  body.cal-fullscreen .calendar-card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: max(0.35rem, env(safe-area-inset-top)) max(0.6rem, env(safe-area-inset-right))
+      env(safe-area-inset-bottom) max(0.6rem, env(safe-area-inset-left));
+  }
+  body.cal-fullscreen .month-nav,
+  body.cal-fullscreen .cal-dow {
+    flex-shrink: 0;
+  }
+  body.cal-fullscreen .cal-weeks {
+    flex: 1;
+    min-height: 0;
+  }
+  body.cal-fullscreen .cw {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Let each day cell grow to fill its (now taller) row so the tap target and
+     selected-day tint cover the whole cell, not just the number at the top. */
+  body.cal-fullscreen .cw-days {
+    flex: 1;
+    grid-auto-rows: 1fr;
   }
 }
 

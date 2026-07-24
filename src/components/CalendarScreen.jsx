@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Bell, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Paperclip, Plus, Repeat } from 'lucide-react'
 import EmptyState from './EmptyState.jsx'
 import EventSheet from './EventSheet.jsx'
@@ -43,6 +43,13 @@ export default function CalendarScreen({
     }
     return null
   })
+
+  // While the calendar is on screen, tag <body> so the stylesheet can turn the
+  // month into an edge-to-edge, chrome-free page when the phone is landscape.
+  useEffect(() => {
+    document.body.classList.add('cal-fullscreen')
+    return () => document.body.classList.remove('cal-fullscreen')
+  }, [])
 
   const weeks = useMemo(() => monthGrid(monthDate), [monthDate])
 
@@ -284,7 +291,7 @@ export default function CalendarScreen({
         </div>
       </div>
 
-      <section className="card">
+      <section className="card cal-day-agenda">
         <div className="card-title-row">
           <h2>{formatDateKey(selectedKey, { weekday: true })}</h2>
           <button type="button" className="link-button" onClick={() => setSheet({ date: selectedKey })}>
