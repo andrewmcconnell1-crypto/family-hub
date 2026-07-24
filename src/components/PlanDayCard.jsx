@@ -156,7 +156,10 @@ function PlanNoteForm({
     const trimmed = text.trim()
     if (!trimmed) return
     onSubmit({ text: trimmed, childIds })
-    if (clearOnSubmit) setText('')
+    if (clearOnSubmit) {
+      setText('')
+      setChildIds([])
+    }
   }
 
   return (
