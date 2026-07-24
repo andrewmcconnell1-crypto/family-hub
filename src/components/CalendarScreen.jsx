@@ -16,7 +16,9 @@ import {
 } from '../utils/dateUtils.js'
 
 // Event bar lanes shown per day before the rest collapse into a "+N" badge.
-const MAX_LANES = 3
+// Bands only render in landscape (portrait uses dots), where vertical room is
+// tight — two lanes keep the whole month on screen.
+const MAX_LANES = 2
 
 export default function CalendarScreen({
   tabs,
@@ -251,6 +253,11 @@ export default function CalendarScreen({
                     onClick={() => selectDay(cell.key)}
                   >
                     <span className="cw-num">{cell.dayNumber}</span>
+                    <span className="cw-dots" aria-hidden="true">
+                      {(eventsByDate.get(cell.key) || []).slice(0, 4).map((o, di) => (
+                        <span key={di} className="cw-dot" style={{ background: barColor(o) }} />
+                      ))}
+                    </span>
                     {overflow[ci] > 0 && <span className="cw-more">+{overflow[ci]}</span>}
                   </button>
                 ))}

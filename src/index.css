@@ -1052,15 +1052,34 @@ button {
 }
 
 .cw-day {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  gap: 3px;
+  gap: 4px;
   min-height: 72px;
   border: 0;
   background: none;
   padding: 3px 2px 2px;
   color: inherit;
   cursor: pointer;
+}
+
+/* Portrait: a small coloured dot per event under the day number (one per day,
+   so a multi-day event dots each day it covers). Text is too cramped to be
+   useful on a phone held upright — turn to landscape for event titles. */
+.cw-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding-left: 3px;
+}
+
+.cw-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent);
 }
 
 .cw-day.day-out {
@@ -1088,7 +1107,10 @@ button {
   color: #fff;
 }
 
+/* The "+N" badge and the event bands belong to the landscape (text) layout;
+   portrait uses dots instead, so both are hidden until the phone is turned. */
 .cw-more {
+  display: none;
   font-size: 0.55rem;
   font-weight: 600;
   color: var(--text-muted);
@@ -1103,11 +1125,35 @@ button {
   right: 1px;
   top: 27px;
   bottom: 3px;
-  display: grid;
+  display: none;
   grid-template-columns: repeat(7, 1fr);
   grid-auto-rows: 13px;
   gap: 2px 1px;
   pointer-events: none;
+}
+
+/* Landscape has the width to spell events out: swap dots for titled bands.
+   Height is scarce, so shorten the rows (two lanes + a "+N") to keep the
+   whole month visible. */
+@media (orientation: landscape) {
+  .cw-dots {
+    display: none;
+  }
+  .cw-day {
+    min-height: 58px;
+  }
+  .cw {
+    overflow: hidden;
+  }
+  .cw-overlay {
+    display: grid;
+  }
+  .cw-more {
+    display: block;
+    position: absolute;
+    bottom: 2px;
+    left: 4px;
+  }
 }
 
 .cw-band {
