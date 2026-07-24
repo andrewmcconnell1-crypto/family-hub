@@ -17,6 +17,7 @@ export default function HomeScreen({
   onNavigate,
   onOpen,
   addPlanItem,
+  updatePlanItem,
   removePlanItem,
   externalOccurrences,
 }) {
@@ -168,6 +169,7 @@ export default function HomeScreen({
           isToday={day.key === today}
           onOpenEvent={openEvent}
           onAddPlan={({ text, childIds }) => addPlanItem({ date: day.key, text, childIds })}
+          onUpdatePlan={updatePlanItem}
           onRemovePlan={removePlanItem}
         />
       ))}

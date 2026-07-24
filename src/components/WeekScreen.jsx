@@ -21,6 +21,7 @@ export default function WeekScreen({
   removeEvent,
   skipEventOccurrence,
   addPlanItem,
+  updatePlanItem,
   removePlanItem,
   copyWeekPlan,
   externalOccurrences,
@@ -121,6 +122,7 @@ export default function WeekScreen({
           lockSynthetic
           onOpenEvent={openOccurrence}
           onAddPlan={({ text, childIds }) => addPlanItem({ date: day.key, text, childIds })}
+          onUpdatePlan={updatePlanItem}
           onRemovePlan={removePlanItem}
         />
       ))}

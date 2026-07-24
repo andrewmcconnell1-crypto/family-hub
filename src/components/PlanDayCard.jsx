@@ -5,8 +5,8 @@ import { childColor } from '../lib/familyData.js'
 import { dayParts } from '../utils/dateUtils.js'
 
 // One day of the weekly planning board: that day's calendar events as light
-// context on top, then the jotted plan notes (person-tagged), then a quick
-// inline add. Shared by the Week tab and Home's "This week".
+// context on top, then the jotted plan notes (person-tagged, tap to edit),
+// then a quick inline add. Shared by the Week tab and Home's "This week".
 export default function PlanDayCard({
   day,
   people,
@@ -14,9 +14,12 @@ export default function PlanDayCard({
   onOpenEvent,
   lockSynthetic = false,
   onAddPlan,
+  onUpdatePlan,
   onRemovePlan,
 }) {
   const parts = dayParts(day.key)
+  const [editingId, setEditingId] = useState(null)
+
   return (
     <section className={`card plan-day${isToday ? ' week-day-today' : ''}`}>
       <div className="plan-day-head">
@@ -56,6 +59,24 @@ export default function PlanDayCard({
       {day.plans.length > 0 && (
         <ul className="plan-items">
           {day.plans.map((plan) => {
+            if (editingId === plan.id) {
+              return (
+                <li key={plan.id}>
+                  <PlanNoteForm
+                    people={people}
+                    initialText={plan.text}
+                    initialChildIds={plan.childIds || []}
+                    submitLabel="Save"
+                    cancelLabel="Cancel"
+                    onSubmit={(fields) => {
+                      onUpdatePlan(plan.id, fields)
+                      setEditingId(null)
+                    }}
+                    onCancel={() => setEditingId(null)}
+                  />
+                </li>
+              )
+            }
             const person = people.find((c) => plan.childIds?.includes(c.id))
             return (
               <li
@@ -63,7 +84,13 @@ export default function PlanDayCard({
                 className="plan-item"
                 style={person ? { borderLeftColor: childColor(person) } : undefined}
               >
-                <span className="plan-item-text">{plan.text}</span>
+                <button
+                  type="button"
+                  className="plan-item-text"
+                  onClick={() => onUpdatePlan && setEditingId(plan.id)}
+                >
+                  {plan.text}
+                </button>
                 <ChildTags kids={people} childIds={plan.childIds} />
                 <button
                   type="button"
@@ -84,12 +111,42 @@ export default function PlanDayCard({
   )
 }
 
-// Inline quick-add for a day's plan. Stays open after adding so you can rattle
-// off several notes; the person chips remember your last pick for speed.
+// The add row: a button that opens the note form, which stays open after each
+// add so you can rattle off several notes in a row.
 function PlanAdder({ people, onAdd }) {
   const [open, setOpen] = useState(false)
-  const [text, setText] = useState('')
-  const [childIds, setChildIds] = useState([])
+  if (!open) {
+    return (
+      <button type="button" className="plan-add-btn" onClick={() => setOpen(true)}>
+        <Plus size={15} aria-hidden="true" /> Add
+      </button>
+    )
+  }
+  return (
+    <PlanNoteForm
+      people={people}
+      submitLabel="Add"
+      cancelLabel="Done"
+      clearOnSubmit
+      onSubmit={onAdd}
+      onCancel={() => setOpen(false)}
+    />
+  )
+}
+
+// Shared text + person-chips form used for both adding and editing a note.
+function PlanNoteForm({
+  people,
+  initialText = '',
+  initialChildIds = [],
+  submitLabel,
+  cancelLabel,
+  clearOnSubmit = false,
+  onSubmit,
+  onCancel,
+}) {
+  const [text, setText] = useState(initialText)
+  const [childIds, setChildIds] = useState(initialChildIds)
 
   const toggle = (id) =>
     setChildIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]))
@@ -98,16 +155,8 @@ function PlanAdder({ people, onAdd }) {
     e.preventDefault()
     const trimmed = text.trim()
     if (!trimmed) return
-    onAdd({ text: trimmed, childIds })
-    setText('')
-  }
-
-  if (!open) {
-    return (
-      <button type="button" className="plan-add-btn" onClick={() => setOpen(true)}>
-        <Plus size={15} aria-hidden="true" /> Add
-      </button>
-    )
+    onSubmit({ text: trimmed, childIds })
+    if (clearOnSubmit) setText('')
   }
 
   return (
@@ -139,18 +188,11 @@ function PlanAdder({ people, onAdd }) {
         </div>
       )}
       <div className="plan-add-actions">
-        <button
-          type="button"
-          className="link-button"
-          onClick={() => {
-            setOpen(false)
-            setText('')
-          }}
-        >
-          Done
+        <button type="button" className="link-button" onClick={onCancel}>
+          {cancelLabel}
         </button>
         <button type="submit" className="secondary-button plan-add-save" disabled={!text.trim()}>
-          Add
+          {submitLabel}
         </button>
       </div>
     </form>
