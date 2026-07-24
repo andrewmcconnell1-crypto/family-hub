@@ -249,6 +249,8 @@ export default function App() {
             data={store.data}
             onNavigate={navigate}
             onOpen={openItem}
+            addPlanItem={store.addPlanItem}
+            removePlanItem={store.removePlanItem}
             externalOccurrences={externalCalendars.occurrencesInRange}
           />
         )}

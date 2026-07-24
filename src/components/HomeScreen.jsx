@@ -1,18 +1,25 @@
 import { useState } from 'react'
-import { AlertCircle, ChevronDown, ChevronRight, Search } from 'lucide-react'
+import { AlertCircle, Search } from 'lucide-react'
 import SearchOverlay from './SearchOverlay.jsx'
 import PhotoViewer from './PhotoViewer.jsx'
+import PlanDayCard from './PlanDayCard.jsx'
 import Wordmark from './Wordmark.jsx'
-import { ChildTags } from './ChildChips.jsx'
-import { calendarColor, expiringDocuments } from '../lib/familyData.js'
-import { addDays, dayParts, formatDateKey, parseDateKey, todayKey } from '../utils/dateUtils.js'
+import { expiringDocuments } from '../lib/familyData.js'
+import { addDays, formatDateKey, parseDateKey, todayKey } from '../utils/dateUtils.js'
 import { birthdayOccurrences, calendarOccurrences, weekdayIndex } from '../utils/recurrence.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
 
-// Bistro-style dashboard: today front and centre, the rest of the week
-// condensed, plus highlights (overdue to-dos, next birthday, top priorities).
+// Bistro-style dashboard: today front and centre, the rest of the week as the
+// planning board, plus highlights (overdue to-dos, next birthday, priorities).
 // The Planner holds the detail; everything here links into it.
-export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrences }) {
+export default function HomeScreen({
+  data,
+  onNavigate,
+  onOpen,
+  addPlanItem,
+  removePlanItem,
+  externalOccurrences,
+}) {
   const today = todayKey()
   const weekEnd = addDays(today, 6 - weekdayIndex(today)) // Sunday of this week
   const thisWeek = [
@@ -29,27 +36,25 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
   const activeTodos = data.todos.filter((t) => !t.done)
   const recentPhotos = data.photos.slice(0, 6)
 
-  // A card per remaining day of this week (today included).
+  // A planning-board card per remaining day of this week (today included).
   const weekDays = []
   for (let key = today; key <= weekEnd; key = addDays(key, 1)) {
     weekDays.push({
       key,
       events: thisWeek.filter((o) => o.date === key),
-      todos: data.todos.filter((t) => !t.done && t.dueDate === key),
+      plans: (data.weekPlans || []).filter((p) => p.date === key),
     })
   }
   const [searching, setSearching] = useState(false)
   const [viewingPhotoId, setViewingPhotoId] = useState(null)
   const viewingPhoto = viewingPhotoId ? data.photos.find((p) => p.id === viewingPhotoId) : null
-  // Today starts expanded; tap a day's header to toggle it.
-  const [expandedDays, setExpandedDays] = useState(() => new Set([today]))
-  const toggleDay = (key) =>
-    setExpandedDays((prev) => {
-      const next = new Set(prev)
-      if (next.has(key)) next.delete(key)
-      else next.add(key)
-      return next
-    })
+
+  const openEvent = (o) =>
+    onOpen(
+      o.isBirthday || o.isExternal
+        ? { type: 'date', date: o.date }
+        : { type: 'event', id: o.id, date: o.date },
+    )
 
   const nextBirthday = birthdayOccurrences(data.children, addDays(today, 1), addDays(today, 60))[0]
   const daysToBirthday = nextBirthday
@@ -156,14 +161,14 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
         </button>
       </div>
       {weekDays.map((day) => (
-        <DayCard
+        <PlanDayCard
           key={day.key}
           day={day}
+          people={data.children}
           isToday={day.key === today}
-          kids={data.children}
-          expanded={expandedDays.has(day.key)}
-          onToggle={() => toggleDay(day.key)}
-          onOpen={onOpen}
+          onOpenEvent={openEvent}
+          onAddPlan={({ text, childIds }) => addPlanItem({ date: day.key, text, childIds })}
+          onRemovePlan={removePlanItem}
         />
       ))}
 
@@ -211,106 +216,6 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
         <SearchOverlay data={data} onNavigate={onNavigate} onClose={() => setSearching(false)} />
       )}
     </div>
-  )
-}
-
-// One Bistro-style card per day: collapsed it's a single summary line, tapped
-// open it shows the full rows (times, tags, due to-dos).
-function DayCard({ day, isToday, kids, expanded, onToggle, onOpen }) {
-  const count = day.events.length + day.todos.length
-  const { dow, num, weekdayLong } = dayParts(day.key)
-  const summary = [
-    ...day.events.map((e) => e.title),
-    ...day.todos.map((t) => `☐ ${t.title}`),
-  ].join(' · ')
-
-  return (
-    <section className={`card day-card${isToday ? ' week-day-today' : ''}`}>
-      <button
-        type="button"
-        className="day-card-header"
-        aria-expanded={expanded}
-        disabled={count === 0}
-        onClick={onToggle}
-      >
-        <span className="date-leaf" aria-hidden="true">
-          <span className="date-leaf-dow">{dow}</span>
-          <span className="date-leaf-num">{num}</span>
-        </span>
-        <span className="day-card-title">
-          {weekdayLong}
-          {isToday && <span className="today-chip">Today</span>}
-        </span>
-        {!expanded && (
-          <span className={`day-card-summary${count === 0 ? ' muted' : ''}`}>
-            {count === 0 ? 'Nothing on' : summary}
-          </span>
-        )}
-        {count > 0 &&
-          (expanded ? (
-            <ChevronDown size={18} aria-hidden="true" />
-          ) : (
-            <ChevronRight size={18} aria-hidden="true" />
-          ))}
-      </button>
-      {expanded && count > 0 && (
-        <ul className="event-list day-card-body">
-          {day.events.map((event) => (
-            <li key={`${event.id}-${event.date}`}>
-              <button
-                type="button"
-                className={`event-row event-row-button${event.isExternal ? ' event-row-external' : ''}`}
-                style={
-                  event.isExternal
-                    ? { borderLeftColor: calendarColor({ colorId: event.calendarColorId }) }
-                    : undefined
-                }
-                onClick={() =>
-                  onOpen(
-                    event.isBirthday || event.isExternal
-                      ? { type: 'date', date: event.date }
-                      : { type: 'event', id: event.id, date: event.date },
-                  )
-                }
-              >
-                <div className="event-when">
-                  {event.time ? (
-                    <span className="event-time">{event.time}</span>
-                  ) : (
-                    <span className="event-time muted">all day</span>
-                  )}
-                </div>
-                <div className="event-main">
-                  <span className="event-title">{event.title}</span>
-                  {event.isExternal ? (
-                    <span className="external-tag">{event.calendarName}</span>
-                  ) : (
-                    <ChildTags kids={kids} childIds={event.childIds} />
-                  )}
-                </div>
-              </button>
-            </li>
-          ))}
-          {day.todos.map((todo) => (
-            <li key={todo.id}>
-              <button
-                type="button"
-                className="event-row event-row-button"
-                onClick={() => onOpen({ type: 'todo', id: todo.id })}
-              >
-                <div className="event-when">
-                  <span className="event-time muted">to-do</span>
-                </div>
-                <div className="event-main">
-                  <span className="event-title">{todo.title}</span>
-                  <ChildTags kids={kids} childIds={todo.childIds} />
-                </div>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
   )
 }
 

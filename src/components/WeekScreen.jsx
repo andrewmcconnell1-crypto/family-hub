@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import EventSheet from './EventSheet.jsx'
-import { ChildTags } from './ChildChips.jsx'
-import { childColor } from '../lib/familyData.js'
+import PlanDayCard from './PlanDayCard.jsx'
 import { calendarOccurrences, weekdayIndex } from '../utils/recurrence.js'
-import { addDays, dayParts, formatDateKey, todayKey } from '../utils/dateUtils.js'
+import { addDays, formatDateKey, todayKey } from '../utils/dateUtils.js'
 
 const mondayOf = (key) => addDays(key, -weekdayIndex(key))
 const byTime = (a, b) => (a.time || '99:99').localeCompare(b.time || '99:99')
@@ -114,71 +113,16 @@ export default function WeekScreen({
       )}
 
       {days.map((day) => (
-        <section key={day.key} className={`card plan-day${day.key === today ? ' week-day-today' : ''}`}>
-          <div className="plan-day-head">
-            <span className="date-leaf" aria-hidden="true">
-              <span className="date-leaf-dow">{dayParts(day.key).dow}</span>
-              <span className="date-leaf-num">{dayParts(day.key).num}</span>
-            </span>
-            <h2 className="plan-day-title">
-              {dayParts(day.key).weekdayLong}
-              {day.key === today && <span className="today-chip">Today</span>}
-            </h2>
-          </div>
-
-          {day.events.length > 0 && (
-            <ul className="plan-events">
-              {day.events.map((occurrence) => (
-                <li key={`${occurrence.id}-${occurrence.date}`}>
-                  <button
-                    type="button"
-                    className="plan-event"
-                    disabled={occurrence.isBirthday || occurrence.isExternal}
-                    onClick={() => openOccurrence(occurrence)}
-                  >
-                    <CalendarDays size={13} aria-hidden="true" className="plan-event-icon" />
-                    {occurrence.time && <span className="plan-event-time">{occurrence.time}</span>}
-                    <span className="plan-event-title">{occurrence.title}</span>
-                    {occurrence.isExternal && (
-                      <span className="external-tag">{occurrence.calendarName}</span>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {day.plans.length > 0 && (
-            <ul className="plan-items">
-              {day.plans.map((plan) => {
-                const person = data.children.find((c) => plan.childIds?.includes(c.id))
-                return (
-                  <li
-                    key={plan.id}
-                    className="plan-item"
-                    style={person ? { borderLeftColor: childColor(person) } : undefined}
-                  >
-                    <span className="plan-item-text">{plan.text}</span>
-                    <ChildTags kids={data.children} childIds={plan.childIds} />
-                    <button
-                      type="button"
-                      className="plan-item-remove"
-                      aria-label={`Remove “${plan.text}”`}
-                      onClick={() => removePlanItem(plan.id)}
-                    >
-                      <X size={15} />
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-
-          <PlanAdder
-            people={data.children}
-            onAdd={({ text, childIds }) => addPlanItem({ date: day.key, text, childIds })}
-          />
-        </section>
+        <PlanDayCard
+          key={day.key}
+          day={day}
+          people={data.children}
+          isToday={day.key === today}
+          lockSynthetic
+          onOpenEvent={openOccurrence}
+          onAddPlan={({ text, childIds }) => addPlanItem({ date: day.key, text, childIds })}
+          onRemovePlan={removePlanItem}
+        />
       ))}
 
       {sheet && (
@@ -213,82 +157,5 @@ export default function WeekScreen({
         />
       )}
     </div>
-  )
-}
-
-// Inline quick-add for a day's plan. Stays open after adding so you can rattle
-// off several notes; the person chips remember your last pick for speed.
-function PlanAdder({ people, onAdd }) {
-  const [open, setOpen] = useState(false)
-  const [text, setText] = useState('')
-  const [childIds, setChildIds] = useState([])
-
-  const toggle = (id) =>
-    setChildIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]))
-
-  const submit = (e) => {
-    e.preventDefault()
-    const trimmed = text.trim()
-    if (!trimmed) return
-    onAdd({ text: trimmed, childIds })
-    setText('')
-  }
-
-  if (!open) {
-    return (
-      <button type="button" className="plan-add-btn" onClick={() => setOpen(true)}>
-        <Plus size={15} aria-hidden="true" /> Add
-      </button>
-    )
-  }
-
-  return (
-    <form className="plan-add-form" onSubmit={submit}>
-      <input
-        className="plan-add-input"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="e.g. Dom running early"
-        autoFocus
-      />
-      {people.length > 0 && (
-        <div className="plan-who">
-          {people.map((person) => {
-            const on = childIds.includes(person.id)
-            const color = childColor(person)
-            return (
-              <button
-                type="button"
-                key={person.id}
-                className={`plan-who-chip${on ? ' is-on' : ''}`}
-                style={
-                  on
-                    ? { background: color, borderColor: color, color: '#fff' }
-                    : { borderColor: color, color }
-                }
-                onClick={() => toggle(person.id)}
-              >
-                {person.name}
-              </button>
-            )
-          })}
-        </div>
-      )}
-      <div className="plan-add-actions">
-        <button
-          type="button"
-          className="link-button"
-          onClick={() => {
-            setOpen(false)
-            setText('')
-          }}
-        >
-          Done
-        </button>
-        <button type="submit" className="secondary-button plan-add-save" disabled={!text.trim()}>
-          Add
-        </button>
-      </div>
-    </form>
   )
 }
