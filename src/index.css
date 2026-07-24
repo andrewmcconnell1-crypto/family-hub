@@ -1561,6 +1561,179 @@ button {
 .week-day .card-title-row {
   margin-bottom: 0.1rem;
 }
+
+/* --- Weekly planner board ------------------------------------------------- */
+
+.copy-week-cta {
+  margin-top: -0.4rem;
+}
+
+.plan-day {
+  padding: 0.7rem 0.9rem 0.8rem;
+}
+
+.plan-day-head {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.55rem;
+}
+
+.plan-day-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+/* Calendar events sit as light context above the jotted notes. */
+.plan-events {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.plan-event {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 0.2rem 0;
+  text-align: left;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.plan-event-icon {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.plan-event-time {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.plan-event-title {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-event:disabled {
+  cursor: default;
+}
+
+/* The jotted plan notes — the primary content of the board. */
+.plan-items {
+  list-style: none;
+  margin: 0 0 0.55rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.plan-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.4rem 0.4rem 0.65rem;
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+}
+
+.plan-item-text {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.plan-item-remove {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  border-radius: 8px;
+}
+
+.plan-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1.5px dashed var(--border);
+  background: none;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+}
+
+.plan-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.plan-add-input {
+  width: 100%;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0.5rem 0.7rem;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.plan-add-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 3px 3px 0 var(--accent);
+}
+
+.plan-who {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.plan-who-chip {
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.plan-add-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.8rem;
+}
+
+.plan-add-save {
+  min-height: 40px;
+  padding: 0.4rem 1rem;
+}
 /* Drop the divider under the last row so it doesn't add a line before the
    card's bottom padding. */
 .event-list li:last-child .event-row,

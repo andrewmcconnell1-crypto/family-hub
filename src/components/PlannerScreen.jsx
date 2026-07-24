@@ -81,6 +81,10 @@ export default function PlannerScreen({
       removeEvent={store.removeEvent}
       skipEventOccurrence={store.skipEventOccurrence}
       toggleTodo={store.toggleTodo}
+      addPlanItem={store.addPlanItem}
+      updatePlanItem={store.updatePlanItem}
+      removePlanItem={store.removePlanItem}
+      copyWeekPlan={store.copyWeekPlan}
       externalOccurrences={externalOccurrences}
     />
   )

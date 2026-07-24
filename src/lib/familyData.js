@@ -92,7 +92,17 @@ export const DOC_CATEGORIES = [
 ]
 
 export function emptyData() {
-  return { children: [], todos: [], events: [], documents: [], photos: [], externalCalendars: [] }
+  return {
+    children: [],
+    todos: [],
+    events: [],
+    documents: [],
+    photos: [],
+    externalCalendars: [],
+    // Disposable "map out my week" notes: short text pinned to a date, tagged
+    // to people. Not calendar events — no time, reminders or recurrence.
+    weekPlans: [],
+  }
 }
 
 // Colours for subscribed external calendars (Google/Outlook/etc.). Kept
@@ -224,6 +234,7 @@ export function normalizeData(raw) {
       takenAt: '',
       addedAt: '',
     }),
+    weekPlans: normalizeList(raw.weekPlans, ['id', 'date', 'text'], {}),
     externalCalendars: Array.isArray(raw.externalCalendars)
       ? raw.externalCalendars
           .filter(
@@ -242,7 +253,7 @@ export function normalizeData(raw) {
       : [],
   }
   // Drop tags pointing at children that no longer exist.
-  for (const listName of ['todos', 'events', 'documents', 'photos']) {
+  for (const listName of ['todos', 'events', 'documents', 'photos', 'weekPlans']) {
     for (const item of data[listName]) {
       item.childIds = item.childIds.filter((id) => childIdSet.has(id))
     }
@@ -281,7 +292,8 @@ export function hasContent(data) {
     data.events.length > 0 ||
     data.documents.length > 0 ||
     data.photos.length > 0 ||
-    data.externalCalendars.length > 0
+    data.externalCalendars.length > 0 ||
+    (data.weekPlans?.length || 0) > 0
   )
 }
 

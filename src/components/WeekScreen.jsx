@@ -1,19 +1,19 @@
 import { useMemo, useState } from 'react'
-import { Bell, Check, ChevronLeft, ChevronRight, Paperclip, Plus, Repeat } from 'lucide-react'
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import EventSheet from './EventSheet.jsx'
 import { ChildTags } from './ChildChips.jsx'
-import { calendarColor } from '../lib/familyData.js'
+import { childColor } from '../lib/familyData.js'
 import { calendarOccurrences, weekdayIndex } from '../utils/recurrence.js'
 import { addDays, dayParts, formatDateKey, todayKey } from '../utils/dateUtils.js'
 
 const mondayOf = (key) => addDays(key, -weekdayIndex(key))
-
-// Timed events sort before all-day within a day; external feeds sort with them.
 const byTime = (a, b) => (a.time || '99:99').localeCompare(b.time || '99:99')
 
-// The whole week at a glance, Bistro Plan-style: one section per day with the
-// day's events (recurrences and birthdays included) AND the to-dos due that
-// day, tick-off-able in place.
+// "Map out my week": a quick, disposable planning board. Under each day you jot
+// short plan notes (who's got the girls, running days, office days), optionally
+// tagged to a person. That week's calendar events (birthdays, appointments)
+// show alongside as light context — the long-term stuff still lives in the
+// Calendar. "Copy last week" pulls the previous week's plan in to tweak.
 export default function WeekScreen({
   tabs,
   data,
@@ -21,7 +21,9 @@ export default function WeekScreen({
   updateEvent,
   removeEvent,
   skipEventOccurrence,
-  toggleTodo,
+  addPlanItem,
+  removePlanItem,
+  copyWeekPlan,
   externalOccurrences,
 }) {
   const today = todayKey()
@@ -43,12 +45,18 @@ export default function WeekScreen({
       return {
         key,
         events: eventsByDay.get(key) || [],
-        todos: data.todos.filter((todo) => !todo.done && todo.dueDate === key),
+        plans: (data.weekPlans || []).filter((p) => p.date === key),
       }
     })
   }, [data, weekStart, weekEnd, externalOccurrences])
 
   const isCurrentWeek = weekStart === mondayOf(today)
+  const weekPlanCount = days.reduce((n, d) => n + d.plans.length, 0)
+  const prevWeekStart = addDays(weekStart, -7)
+  const lastWeekHasPlan = useMemo(
+    () => (data.weekPlans || []).some((p) => p.date >= prevWeekStart && p.date < weekStart),
+    [data.weekPlans, prevWeekStart, weekStart],
+  )
 
   const openOccurrence = (occurrence) => {
     if (occurrence.isBirthday || occurrence.isExternal) return
@@ -94,104 +102,82 @@ export default function WeekScreen({
         </button>
       </div>
 
+      {weekPlanCount === 0 && lastWeekHasPlan && (
+        <button
+          type="button"
+          className="card card-cta copy-week-cta"
+          onClick={() => copyWeekPlan(prevWeekStart, weekStart)}
+        >
+          <strong>Copy last week</strong>
+          <span>Pull in last week's plan and tweak what's different.</span>
+        </button>
+      )}
+
       {days.map((day) => (
-        <section key={day.key} className={`card week-day${day.key === today ? ' week-day-today' : ''}`}>
-          <div className="card-title-row">
-            <h2 className="week-day-title">
-              <span className="date-leaf" aria-hidden="true">
-                <span className="date-leaf-dow">{dayParts(day.key).dow}</span>
-                <span className="date-leaf-num">{dayParts(day.key).num}</span>
-              </span>
+        <section key={day.key} className={`card plan-day${day.key === today ? ' week-day-today' : ''}`}>
+          <div className="plan-day-head">
+            <span className="date-leaf" aria-hidden="true">
+              <span className="date-leaf-dow">{dayParts(day.key).dow}</span>
+              <span className="date-leaf-num">{dayParts(day.key).num}</span>
+            </span>
+            <h2 className="plan-day-title">
               {dayParts(day.key).weekdayLong}
               {day.key === today && <span className="today-chip">Today</span>}
             </h2>
-            <button
-              type="button"
-              className="icon-button"
-              aria-label={`Add event on ${formatDateKey(day.key, { weekday: true })}`}
-              onClick={() => setSheet({ defaultDate: day.key })}
-            >
-              <Plus size={18} />
-            </button>
           </div>
 
-          {day.events.length === 0 && day.todos.length === 0 ? (
-            <p className="muted week-empty">Nothing on</p>
-          ) : (
-            <>
-              {day.events.length > 0 && (
-                <ul className="event-list">
-                  {day.events.map((occurrence) => (
-                    <li key={`${occurrence.id}-${occurrence.date}`}>
-                      <button
-                        type="button"
-                        className={`event-row event-row-button${occurrence.isExternal ? ' event-row-external' : ''}`}
-                        style={
-                          occurrence.isExternal
-                            ? { borderLeftColor: calendarColor({ colorId: occurrence.calendarColorId }) }
-                            : undefined
-                        }
-                        disabled={occurrence.isBirthday || occurrence.isExternal}
-                        onClick={() => openOccurrence(occurrence)}
-                      >
-                        <div className="event-when">
-                          {occurrence.time ? (
-                            <span className="event-time">{occurrence.time}</span>
-                          ) : (
-                            <span className="event-time muted">all day</span>
-                          )}
-                        </div>
-                        <div className="event-main">
-                          <span className="event-title">{occurrence.title}</span>
-                          <span className="event-meta">
-                            {occurrence.repeat !== 'none' && !occurrence.isBirthday && (
-                              <Repeat size={12} aria-label="Repeats" />
-                            )}
-                            {occurrence.documentIds?.length > 0 && (
-                              <Paperclip size={12} aria-label="Has attachments" />
-                            )}
-                            {Number.isInteger(occurrence.reminder) && (
-                              <Bell size={12} aria-label="Reminder set" />
-                            )}
-                            {occurrence.isExternal ? (
-                              <span className="external-tag">{occurrence.calendarName}</span>
-                            ) : (
-                              <ChildTags kids={data.children} childIds={occurrence.childIds} />
-                            )}
-                          </span>
-                        </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {day.todos.length > 0 && (
-                <ul className="todo-list week-todos">
-                  {day.todos.map((todo) => (
-                    <li key={todo.id} className="todo-row">
-                      <button
-                        type="button"
-                        className="todo-check"
-                        role="checkbox"
-                        aria-checked={false}
-                        aria-label={`Mark “${todo.title}” done`}
-                        onClick={() => toggleTodo(todo.id)}
-                      >
-                        <Check size={14} aria-hidden="true" style={{ visibility: 'hidden' }} />
-                      </button>
-                      <span className="todo-main">
-                        <span className="todo-title">{todo.title}</span>
-                        <span className="todo-meta">
-                          <span className="muted">to-do</span>
-                          <ChildTags kids={data.children} childIds={todo.childIds} />
-                        </span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </>
+          {day.events.length > 0 && (
+            <ul className="plan-events">
+              {day.events.map((occurrence) => (
+                <li key={`${occurrence.id}-${occurrence.date}`}>
+                  <button
+                    type="button"
+                    className="plan-event"
+                    disabled={occurrence.isBirthday || occurrence.isExternal}
+                    onClick={() => openOccurrence(occurrence)}
+                  >
+                    <CalendarDays size={13} aria-hidden="true" className="plan-event-icon" />
+                    {occurrence.time && <span className="plan-event-time">{occurrence.time}</span>}
+                    <span className="plan-event-title">{occurrence.title}</span>
+                    {occurrence.isExternal && (
+                      <span className="external-tag">{occurrence.calendarName}</span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
+
+          {day.plans.length > 0 && (
+            <ul className="plan-items">
+              {day.plans.map((plan) => {
+                const person = data.children.find((c) => plan.childIds?.includes(c.id))
+                return (
+                  <li
+                    key={plan.id}
+                    className="plan-item"
+                    style={person ? { borderLeftColor: childColor(person) } : undefined}
+                  >
+                    <span className="plan-item-text">{plan.text}</span>
+                    <ChildTags kids={data.children} childIds={plan.childIds} />
+                    <button
+                      type="button"
+                      className="plan-item-remove"
+                      aria-label={`Remove “${plan.text}”`}
+                      onClick={() => removePlanItem(plan.id)}
+                    >
+                      <X size={15} />
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+
+          <PlanAdder
+            people={data.children}
+            onAdd={({ text, childIds }) => addPlanItem({ date: day.key, text, childIds })}
+          />
         </section>
       ))}
 
@@ -227,5 +213,82 @@ export default function WeekScreen({
         />
       )}
     </div>
+  )
+}
+
+// Inline quick-add for a day's plan. Stays open after adding so you can rattle
+// off several notes; the person chips remember your last pick for speed.
+function PlanAdder({ people, onAdd }) {
+  const [open, setOpen] = useState(false)
+  const [text, setText] = useState('')
+  const [childIds, setChildIds] = useState([])
+
+  const toggle = (id) =>
+    setChildIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]))
+
+  const submit = (e) => {
+    e.preventDefault()
+    const trimmed = text.trim()
+    if (!trimmed) return
+    onAdd({ text: trimmed, childIds })
+    setText('')
+  }
+
+  if (!open) {
+    return (
+      <button type="button" className="plan-add-btn" onClick={() => setOpen(true)}>
+        <Plus size={15} aria-hidden="true" /> Add
+      </button>
+    )
+  }
+
+  return (
+    <form className="plan-add-form" onSubmit={submit}>
+      <input
+        className="plan-add-input"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="e.g. Dom running early"
+        autoFocus
+      />
+      {people.length > 0 && (
+        <div className="plan-who">
+          {people.map((person) => {
+            const on = childIds.includes(person.id)
+            const color = childColor(person)
+            return (
+              <button
+                type="button"
+                key={person.id}
+                className={`plan-who-chip${on ? ' is-on' : ''}`}
+                style={
+                  on
+                    ? { background: color, borderColor: color, color: '#fff' }
+                    : { borderColor: color, color }
+                }
+                onClick={() => toggle(person.id)}
+              >
+                {person.name}
+              </button>
+            )
+          })}
+        </div>
+      )}
+      <div className="plan-add-actions">
+        <button
+          type="button"
+          className="link-button"
+          onClick={() => {
+            setOpen(false)
+            setText('')
+          }}
+        >
+          Done
+        </button>
+        <button type="submit" className="secondary-button plan-add-save" disabled={!text.trim()}>
+          Add
+        </button>
+      </div>
+    </form>
   )
 }

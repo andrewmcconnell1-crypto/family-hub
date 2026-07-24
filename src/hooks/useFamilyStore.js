@@ -18,6 +18,7 @@ import {
   uploadLocalFiles,
 } from '../lib/fileStore.js'
 import { supabase } from '../lib/supabase.js'
+import { addDays, parseDateKey } from '../utils/dateUtils.js'
 import { readTakenAt } from '../lib/exif.js'
 import { makeId } from '../utils/id.js'
 import { downscaleImage } from '../utils/imageUtils.js'
@@ -412,6 +413,48 @@ export function useFamilyStore(user, ownerId) {
     }))
   }, [])
 
+  // Week planner: disposable per-day notes ("map out my week"). Not events —
+  // no time, reminders or recurrence; just short text pinned to a date.
+  const addPlanItem = useCallback(({ date, text, childIds }) => {
+    const id = makeId('plan')
+    setData((d) => ({
+      ...d,
+      weekPlans: [...(d.weekPlans || []), { id, date, text, childIds: childIds || [] }],
+    }))
+    return id
+  }, [])
+
+  const updatePlanItem = useCallback((id, patch) => {
+    setData((d) => ({
+      ...d,
+      weekPlans: (d.weekPlans || []).map((p) => (p.id === id ? { ...p, ...patch } : p)),
+    }))
+  }, [])
+
+  const removePlanItem = useCallback((id) => {
+    setData((d) => ({ ...d, weekPlans: (d.weekPlans || []).filter((p) => p.id !== id) }))
+  }, [])
+
+  // "Copy last week": clone one week's plan onto another. Items land on the
+  // same weekday of the target week; anything already there is kept.
+  const copyWeekPlan = useCallback((fromWeekStart, toWeekStart) => {
+    const offset = Math.round(
+      (parseDateKey(toWeekStart) - parseDateKey(fromWeekStart)) / 86400000,
+    )
+    setData((d) => {
+      const fromEnd = addDays(fromWeekStart, 6)
+      const copies = (d.weekPlans || [])
+        .filter((p) => p.date >= fromWeekStart && p.date <= fromEnd)
+        .map((p) => ({
+          id: makeId('plan'),
+          date: addDays(p.date, offset),
+          text: p.text,
+          childIds: [...(p.childIds || [])],
+        }))
+      return { ...d, weekPlans: [...(d.weekPlans || []), ...copies] }
+    })
+  }, [])
+
   // Undo support: restore a previous data snapshot wholesale, and purge file
   // blobs once a delete is final (its undo window expired).
   const restore = useCallback((snapshot) => {
@@ -451,6 +494,10 @@ export function useFamilyStore(user, ownerId) {
     addExternalCalendar,
     updateExternalCalendar,
     removeExternalCalendar,
+    addPlanItem,
+    updatePlanItem,
+    removePlanItem,
+    copyWeekPlan,
     restore,
     purgeFiles,
   }
