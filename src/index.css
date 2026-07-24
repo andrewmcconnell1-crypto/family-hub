@@ -532,6 +532,37 @@ button {
   box-shadow: none;
 }
 
+/* Secondary action button: an outlined pill for in-form actions that are more
+   than a text link but shouldn't compete with the primary button — "Take a
+   photo", "Photograph a document", "Crop & zoom", "Choose photo", "Cancel". */
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  gap: 0.4rem;
+  min-height: 44px;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  box-shadow: 2px 2px 0 var(--shadow-ink);
+  transition: transform 0.06s ease, box-shadow 0.06s ease;
+}
+
+.secondary-button:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.secondary-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .icon-button {
   display: inline-flex;
   align-items: center;
@@ -1873,6 +1904,38 @@ button {
   outline: none;
   border-color: var(--accent);
   box-shadow: 3px 3px 0 var(--accent);
+}
+
+/* File pickers: drop the box and make the OS "Choose file" control read as an
+   on-theme pill button, with the filename beside it. */
+.form input[type='file'] {
+  border: 0;
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  min-height: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.form input[type='file']:focus {
+  box-shadow: none;
+}
+
+.form input[type='file']::file-selector-button,
+.form input[type='file']::-webkit-file-upload-button {
+  margin-right: 0.6rem;
+  min-height: 44px;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.95rem;
+  box-shadow: 2px 2px 0 var(--shadow-ink);
+  cursor: pointer;
 }
 
 /* Chips inside forms shouldn't inherit the caption styling. */

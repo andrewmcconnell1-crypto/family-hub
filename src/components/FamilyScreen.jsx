@@ -516,7 +516,7 @@ function ChildSheet({ child, onSave, onDelete, onClose }) {
                 if (file) setCropFile(file)
               }}
             />
-            <button type="button" className="link-button" onClick={() => fileRef.current?.click()}>
+            <button type="button" className="secondary-button" onClick={() => fileRef.current?.click()}>
               {previewUrl ? 'Change photo' : 'Choose photo'}
             </button>
             {previewUrl && (

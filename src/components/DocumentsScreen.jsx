@@ -202,7 +202,7 @@ function DocumentSheet({ kids, doc, onSave, onClose }) {
             {isNativeCamera() && (
               <button
                 type="button"
-                className="link-button"
+                className="secondary-button"
                 onClick={async () => {
                   try {
                     const photo = await capturePhoto()
@@ -216,7 +216,7 @@ function DocumentSheet({ kids, doc, onSave, onClose }) {
                   }
                 }}
               >
-                <Camera size={14} aria-hidden="true" /> Photograph a document
+                <Camera size={16} aria-hidden="true" /> Photograph a document
               </button>
             )}
             {file && <span className="muted">{file.name}</span>}

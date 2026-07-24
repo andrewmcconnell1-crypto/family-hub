@@ -233,7 +233,7 @@ function AddPhotosSheet({ kids, onAdd, onClose }) {
           {isNativeCamera() && (
             <button
               type="button"
-              className="link-button"
+              className="secondary-button"
               onClick={async () => {
                 try {
                   const photo = await capturePhoto()
@@ -244,13 +244,13 @@ function AddPhotosSheet({ kids, onAdd, onClose }) {
                 }
               }}
             >
-              <Camera size={14} aria-hidden="true" /> Take a photo
+              <Camera size={16} aria-hidden="true" /> Take a photo
             </button>
           )}
           {files.length > 1 && <span className="muted">{files.length} photos selected</span>}
           {files.length === 1 && (
-            <button type="button" className="link-button" onClick={() => setCropFile(files[0])}>
-              <Crop size={14} aria-hidden="true" /> Crop & zoom before adding
+            <button type="button" className="secondary-button" onClick={() => setCropFile(files[0])}>
+              <Crop size={16} aria-hidden="true" /> Crop & zoom before adding
             </button>
           )}
         </div>

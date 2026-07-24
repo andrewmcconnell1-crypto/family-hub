@@ -191,7 +191,7 @@ export default function ImageCropper({ file, round = false, output = 2000, onUse
           aria-label="Zoom"
         />
         <div className="form-actions">
-          <button type="button" className="link-button" onClick={onCancel}>
+          <button type="button" className="secondary-button" onClick={onCancel}>
             Cancel
           </button>
           <button type="button" className="primary-button" disabled={!natural || busy} onClick={apply}>
