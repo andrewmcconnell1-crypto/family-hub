@@ -55,6 +55,28 @@ export const EVENT_CATEGORIES = [
   { id: 'other', label: 'Other' },
 ]
 
+// Events fall into two kinds:
+//   routine  — the everyday weekly rhythm (running Tue/Thu, work, school runs);
+//              a timetable, usually recurring on set weekdays.
+//   occasion — the things you plan around and count down to (birthdays,
+//              holidays, appointments); usually one-off, multi-day or yearly.
+// Kind is stored explicitly once the user picks it in the event form; until
+// then it's inferred from how the event repeats.
+export const EVENT_KINDS = [
+  { id: 'occasion', label: 'Occasion' },
+  { id: 'routine', label: 'Routine' },
+]
+
+export function inferEventKind(event) {
+  return event?.repeat === 'weekly' || event?.repeat === 'fortnightly' ? 'routine' : 'occasion'
+}
+
+export function eventKind(event) {
+  return event?.kind === 'routine' || event?.kind === 'occasion'
+    ? event.kind
+    : inferEventKind(event)
+}
+
 // Lead times for a per-event reminder (minutes before the start), or null.
 export const EVENT_REMINDER_OPTIONS = [
   { value: null, label: 'No reminder' },
@@ -185,6 +207,7 @@ export function normalizeData(raw) {
     events: normalizeList(raw.events, ['id', 'title', 'date'], {
       time: '',
       category: 'other',
+      kind: '',
       notes: '',
       repeat: 'none',
       weekdays: [],
@@ -196,6 +219,8 @@ export function normalizeData(raw) {
       // Fall back to "other" for events saved under a category that no longer
       // exists (e.g. the old School/Activity set).
       category: EVENT_CATEGORIES.some((c) => c.id === event.category) ? event.category : 'other',
+      // Explicit routine/occasion override; '' means "infer from repeat".
+      kind: event.kind === 'routine' || event.kind === 'occasion' ? event.kind : '',
       weekdays: Array.isArray(event.weekdays)
         ? event.weekdays.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
         : [],
