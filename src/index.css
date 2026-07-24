@@ -2048,6 +2048,22 @@ button {
   gap: 0.85rem;
 }
 
+/* "Ends after N times" — a small number field inline with plain-case labels. */
+.repeat-count-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.form .repeat-count-row input {
+  width: 4.5rem;
+}
+
 .form input,
 .form select,
 .form textarea {

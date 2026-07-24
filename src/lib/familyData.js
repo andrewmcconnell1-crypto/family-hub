@@ -199,6 +199,7 @@ export function normalizeData(raw) {
       repeat: 'none',
       weekdays: [],
       endDate: '',
+      repeatCount: null,
       exceptions: [],
       reminder: null,
     }).map((event) => ({
@@ -206,6 +207,9 @@ export function normalizeData(raw) {
       // Fall back to "other" for events saved under a category that no longer
       // exists (e.g. the old School/Activity set).
       category: EVENT_CATEGORIES.some((c) => c.id === event.category) ? event.category : 'other',
+      // Stop a repeating series after N occurrences (null = no count limit).
+      repeatCount:
+        Number.isInteger(event.repeatCount) && event.repeatCount > 0 ? event.repeatCount : null,
       weekdays: Array.isArray(event.weekdays)
         ? event.weekdays.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
         : [],

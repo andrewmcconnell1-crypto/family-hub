@@ -52,6 +52,22 @@ function matchesRepeat(event, key) {
   }
 }
 
+// The date of the count-th occurrence of a repeating series, walking from its
+// anchor. Skipped days (exceptions) still count toward the total — matching
+// iCal COUNT semantics — so deleting one occurrence doesn't extend the series.
+function nthOccurrenceDate(event, count) {
+  let seen = 0
+  let key = event.date
+  for (let i = 0; i < 20000; i++) {
+    if (matchesRepeat(event, key)) {
+      seen += 1
+      if (seen >= count) return key
+    }
+    key = addDays(key, 1)
+  }
+  return key
+}
+
 // Expand events into dated occurrences within [startKey, endKey], inclusive.
 // Each occurrence carries the series' fields with `date` set to the occurrence
 // day, plus seriesDate for reference. Ranges are calendar-sized (a month or a
@@ -80,8 +96,15 @@ export function occurrencesInRange(events, startKey, endKey) {
       }
       continue
     }
+    // A series can end on a date (endDate), after a number of occurrences
+    // (repeatCount), or both — whichever limit comes first wins.
+    let seriesEnd = event.endDate || null
+    if (Number.isInteger(event.repeatCount) && event.repeatCount > 0) {
+      const countEnd = nthOccurrenceDate(event, event.repeatCount)
+      if (countEnd && (!seriesEnd || countEnd < seriesEnd)) seriesEnd = countEnd
+    }
     const from = event.date > startKey ? event.date : startKey
-    const to = event.endDate && event.endDate < endKey ? event.endDate : endKey
+    const to = seriesEnd && seriesEnd < endKey ? seriesEnd : endKey
     const exceptions = Array.isArray(event.exceptions) ? event.exceptions : []
     for (let key = from; key <= to; key = addDays(key, 1)) {
       if (matchesRepeat(event, key) && !exceptions.includes(key)) {

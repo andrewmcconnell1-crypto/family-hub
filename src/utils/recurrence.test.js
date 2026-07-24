@@ -106,6 +106,28 @@ describe('occurrencesInRange', () => {
     const out = occurrencesInRange(events, '2026-07-01', '2026-08-31')
     expect(out.map((o) => o.date)).toEqual(['2026-07-13', '2026-07-27'])
   })
+
+  it('caps a repeating series after repeatCount occurrences', () => {
+    const events = [{ ...base, date: '2026-07-06', repeat: 'weekly', repeatCount: 3 }]
+    const out = occurrencesInRange(events, '2026-07-01', '2026-08-31')
+    expect(out.map((o) => o.date)).toEqual(['2026-07-06', '2026-07-13', '2026-07-20'])
+  })
+
+  it('counts skipped days toward repeatCount so the series end stays put', () => {
+    const events = [
+      { ...base, date: '2026-07-06', repeat: 'weekly', repeatCount: 3, exceptions: ['2026-07-13'] },
+    ]
+    const out = occurrencesInRange(events, '2026-07-01', '2026-08-31')
+    expect(out.map((o) => o.date)).toEqual(['2026-07-06', '2026-07-20'])
+  })
+
+  it('ends on whichever of endDate / repeatCount comes first', () => {
+    const events = [
+      { ...base, date: '2026-07-06', repeat: 'weekly', repeatCount: 5, endDate: '2026-07-20' },
+    ]
+    const out = occurrencesInRange(events, '2026-07-01', '2026-08-31')
+    expect(out.map((o) => o.date)).toEqual(['2026-07-06', '2026-07-13', '2026-07-20'])
+  })
 })
 
 describe('birthdayOccurrences', () => {

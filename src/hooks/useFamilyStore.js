@@ -265,6 +265,7 @@ export function useFamilyStore(user, ownerId) {
           repeat: 'none',
           weekdays: [],
           endDate: '',
+          repeatCount: null,
           exceptions: [],
           documentIds: [],
           reminder: null,

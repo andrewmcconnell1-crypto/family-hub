@@ -38,6 +38,11 @@ export default function EventSheet({
     return []
   })
   const [endDate, setEndDate] = useState(event?.endDate || '')
+  // How a repeating series ends: never, on a date, or after a set count.
+  const [endMode, setEndMode] = useState(
+    event?.repeatCount ? 'count' : event?.endDate && event?.repeat && event.repeat !== 'none' ? 'date' : 'never',
+  )
+  const [repeatCount, setRepeatCount] = useState(event?.repeatCount ? String(event.repeatCount) : '')
   const [documentIds, setDocumentIds] = useState(event?.documentIds || [])
   // New timed events default to a 30-minute nudge; existing events keep their
   // saved choice (null = none). A reminder only applies once a time is set.
@@ -60,6 +65,19 @@ export default function EventSheet({
   const submit = (e) => {
     e.preventDefault()
     if (!title.trim() || !date) return
+    const repeating = repeat !== 'none'
+    // For a one-off, endDate is the multi-day span end. For a repeating event it
+    // depends on how the series ends: on a date, after N occurrences, or never.
+    let outEndDate = ''
+    let outCount = null
+    if (!repeating) {
+      outEndDate = endDate && endDate > date ? endDate : ''
+    } else if (endMode === 'date') {
+      outEndDate = endDate
+    } else if (endMode === 'count') {
+      const n = parseInt(repeatCount, 10)
+      outCount = Number.isInteger(n) && n > 0 ? n : null
+    }
     onSave({
       title: title.trim(),
       date,
@@ -69,9 +87,8 @@ export default function EventSheet({
       notes: notes.trim(),
       repeat,
       weekdays: pickDays ? weekdays : [],
-      // For a repeating event endDate is "repeats until"; for a one-off it's
-      // the multi-day span end. Only keep it when it's after the start.
-      endDate: endDate && endDate > date ? endDate : repeat === 'none' ? '' : endDate,
+      endDate: outEndDate,
+      repeatCount: outCount,
       documentIds,
       reminder: time ? reminder : null,
     })
@@ -167,10 +184,49 @@ export default function EventSheet({
           </div>
         )}
         {repeat !== 'none' && (
-          <label>
-            Repeats until
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-          </label>
+          <div className="form-field">
+            <span className="form-label">Ends</span>
+            <div className="chip-row">
+              {[
+                ['never', 'Never'],
+                ['date', 'On date'],
+                ['count', 'After…'],
+              ].map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={`chip${endMode === id ? ' chip-active' : ''}`}
+                  aria-pressed={endMode === id}
+                  onClick={() => setEndMode(id)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {endMode === 'date' && (
+              <input
+                type="date"
+                value={endDate}
+                min={date}
+                aria-label="Repeats until"
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            )}
+            {endMode === 'count' && (
+              <div className="repeat-count-row">
+                After
+                <input
+                  type="number"
+                  min="1"
+                  inputMode="numeric"
+                  value={repeatCount}
+                  aria-label="Number of times"
+                  onChange={(e) => setRepeatCount(e.target.value)}
+                />
+                {repeatCount === '1' ? 'time' : 'times'}
+              </div>
+            )}
+          </div>
         )}
         {kids.length > 0 && (
           <div className="form-field">
