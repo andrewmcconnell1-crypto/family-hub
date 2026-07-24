@@ -1127,16 +1127,6 @@ button {
   background: var(--accent);
 }
 
-/* Routine events read as a quieter hollow ring so occasions (solid dots) win
-   the eye. Ring colour is set inline to the event's colour. */
-.cw-dot-routine {
-  width: 7px;
-  height: 7px;
-  background: transparent;
-  border: 1.5px solid var(--accent);
-  box-sizing: border-box;
-}
-
 /* Days from the neighbouring month: no box, just a faded number. */
 .cw-day.day-out {
   border-color: transparent;
@@ -1311,14 +1301,6 @@ button {
   text-overflow: ellipsis;
 }
 
-/* Routine bands are quieter than occasions: fainter fill, dashed edge,
-   muted text — so birthdays/holidays read first. */
-.cw-band-routine {
-  background: color-mix(in srgb, var(--evt, var(--accent)) 9%, transparent);
-  border-left-style: dashed;
-  color: var(--text-muted);
-}
-
 .cw-band.cont-l {
   border-left: 0;
   border-top-left-radius: 0;
@@ -1327,30 +1309,6 @@ button {
 .cw-band.cont-r {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
-}
-
-/* Small right-aligned toggle under the month to hide/show the routine layer. */
-.cal-routine-toggle {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  width: fit-content;
-  margin: 0.45rem 0 0 auto;
-  padding: 0.35rem 0.5rem;
-  border: 0;
-  background: none;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  font-weight: 600;
-  border-radius: 8px;
-}
-
-.cal-routine-swatch {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  border: 1.5px solid var(--text-muted);
-  box-sizing: border-box;
 }
 
 .day-out {
@@ -2604,42 +2562,6 @@ button {
   padding: 0 0.45rem 0.1rem;
   border-radius: 5px;
   transform: rotate(-1.2deg);
-}
-
-/* Weekly routine: a compact day-by-day timetable of the recurring rhythm,
-   kept lighter than the occasion day-cards above it. */
-.routine-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.routine-row {
-  display: flex;
-  gap: 0.7rem;
-  align-items: baseline;
-  font-size: 0.9rem;
-}
-
-.routine-day {
-  flex-shrink: 0;
-  width: 2.4rem;
-  font-weight: 700;
-  font-size: 0.72rem;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.routine-day-today {
-  color: var(--accent);
-}
-
-.routine-items {
-  color: var(--text);
 }
 
 /* Day cards sit slightly askew, like stuck-on notes. */

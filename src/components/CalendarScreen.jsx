@@ -3,7 +3,7 @@ import { Bell, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, 
 import EmptyState from './EmptyState.jsx'
 import EventSheet from './EventSheet.jsx'
 import { ChildTags } from './ChildChips.jsx'
-import { EVENT_CATEGORIES, calendarColor, childColor, eventKind } from '../lib/familyData.js'
+import { EVENT_CATEGORIES, calendarColor, childColor } from '../lib/familyData.js'
 import { calendarOccurrences } from '../utils/recurrence.js'
 import {
   addMonths,
@@ -36,9 +36,6 @@ export default function CalendarScreen({
   // The month starts expanded (full grid); tapping a day collapses it to that
   // week so the day's agenda has room, iOS-style. The chevron toggles back.
   const [expanded, setExpanded] = useState(true)
-  // Everyday routine (running Tue/Thu, ...) can be hidden from the month grid so
-  // occasions — birthdays, holidays, appointments — aren't lost in the noise.
-  const [showRoutine, setShowRoutine] = useState(true)
   const [sheet, setSheet] = useState(() => {
     if (focus?.kind === 'event') {
       const series = data.events.find((e) => e.id === focus.id)
@@ -70,13 +67,6 @@ export default function CalendarScreen({
     return map
   }, [data, weeks, externalOccurrences])
 
-  const hasRoutine = useMemo(() => {
-    for (const list of eventsByDate.values()) {
-      for (const o of list) if (eventKind(o) === 'routine') return true
-    }
-    return false
-  }, [eventsByDate])
-
   const barColor = (event) => {
     if (event.isExternal) return calendarColor({ colorId: event.calendarColorId })
     const child = data.children.find((c) => event.childIds?.includes(c.id))
@@ -93,7 +83,6 @@ export default function CalendarScreen({
         const seen = new Map()
         for (let ci = 0; ci < 7; ci++) {
           for (const occ of eventsByDate.get(week[ci].key) || []) {
-            if (!showRoutine && eventKind(occ) === 'routine') continue
             const uid = `${occ.id}:${occ.seriesDate || occ.date}:${occ.spanStart || occ.date}`
             const seg = seen.get(uid)
             if (seg) seg.colEnd = ci
@@ -138,7 +127,7 @@ export default function CalendarScreen({
         })
         return { week, segments: shown, overflow }
       }),
-    [weeks, eventsByDate, showRoutine],
+    [weeks, eventsByDate],
   )
 
   const selectedWeek = weekViews.find(({ week }) => week.some((c) => c.key === selectedKey))
@@ -272,20 +261,9 @@ export default function CalendarScreen({
                   >
                     <span className="cw-num">{cell.dayNumber}</span>
                     <span className="cw-dots" aria-hidden="true">
-                      {(eventsByDate.get(cell.key) || [])
-                        .filter((o) => showRoutine || eventKind(o) === 'occasion')
-                        .slice(0, 4)
-                        .map((o, di) => {
-                          const routine = eventKind(o) === 'routine'
-                          const color = barColor(o)
-                          return (
-                            <span
-                              key={di}
-                              className={`cw-dot${routine ? ' cw-dot-routine' : ''}`}
-                              style={routine ? { borderColor: color } : { background: color }}
-                            />
-                          )
-                        })}
+                      {(eventsByDate.get(cell.key) || []).slice(0, 4).map((o, di) => (
+                        <span key={di} className="cw-dot" style={{ background: barColor(o) }} />
+                      ))}
                     </span>
                     {overflow[ci] > 0 && <span className="cw-more">+{overflow[ci]}</span>}
                   </button>
@@ -295,12 +273,7 @@ export default function CalendarScreen({
                 {segments.map((seg, i) => (
                   <span
                     key={`${seg.occ.id}-${i}`}
-                    className={[
-                      'cw-band',
-                      eventKind(seg.occ) === 'routine' ? 'cw-band-routine' : '',
-                      seg.continuesLeft ? 'cont-l' : '',
-                      seg.continuesRight ? 'cont-r' : '',
-                    ]
+                    className={['cw-band', seg.continuesLeft ? 'cont-l' : '', seg.continuesRight ? 'cont-r' : '']
                       .filter(Boolean)
                       .join(' ')}
                     style={{
@@ -316,17 +289,6 @@ export default function CalendarScreen({
             </div>
           ))}
         </div>
-        {hasRoutine && (
-          <button
-            type="button"
-            className="cal-routine-toggle"
-            aria-pressed={showRoutine}
-            onClick={() => setShowRoutine((v) => !v)}
-          >
-            <span className="cal-routine-swatch" aria-hidden="true" />
-            {showRoutine ? 'Hide routine' : 'Show routine'}
-          </button>
-        )}
       </div>
 
       <section className="card cal-day-agenda">

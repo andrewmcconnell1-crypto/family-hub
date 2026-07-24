@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Sheet from './Sheet.jsx'
 import DocAttachments from './DocAttachments.jsx'
 import { ChildMultiSelect } from './ChildChips.jsx'
-import { EVENT_CATEGORIES, EVENT_KINDS, EVENT_REMINDER_OPTIONS, inferEventKind } from '../lib/familyData.js'
+import { EVENT_CATEGORIES, EVENT_REMINDER_OPTIONS } from '../lib/familyData.js'
 import { REPEAT_OPTIONS, WEEKDAY_LABELS, weekdayIndex } from '../utils/recurrence.js'
 import { formatDateKey } from '../utils/dateUtils.js'
 
@@ -42,12 +42,6 @@ export default function EventSheet({
   // New timed events default to a 30-minute nudge; existing events keep their
   // saved choice (null = none). A reminder only applies once a time is set.
   const [reminder, setReminder] = useState(event ? (event.reminder ?? null) : 30)
-  // Routine vs occasion. null = follow the automatic guess from repeat; a
-  // string = the user overrode it. Persisted as '' when still automatic.
-  const [kindOverride, setKindOverride] = useState(
-    event?.kind === 'routine' || event?.kind === 'occasion' ? event.kind : null,
-  )
-  const effectiveKind = kindOverride ?? inferEventKind({ repeat })
 
   const pickDays = repeat === 'weekly' || repeat === 'fortnightly'
 
@@ -71,7 +65,6 @@ export default function EventSheet({
       date,
       time,
       category,
-      kind: kindOverride ?? '',
       childIds,
       notes: notes.trim(),
       repeat,
@@ -139,24 +132,6 @@ export default function EventSheet({
               ))}
             </select>
           </label>
-        </div>
-        <div className="form-field">
-          <span className="form-label">
-            Type <span className="label-hint">{kindOverride ? 'set manually' : 'auto from repeat'}</span>
-          </span>
-          <div className="chip-row">
-            {EVENT_KINDS.map((k) => (
-              <button
-                key={k.id}
-                type="button"
-                className={`chip${effectiveKind === k.id ? ' chip-active' : ''}`}
-                aria-pressed={effectiveKind === k.id}
-                onClick={() => setKindOverride(k.id)}
-              >
-                {k.label}
-              </button>
-            ))}
-          </div>
         </div>
         {time && (
           <label>

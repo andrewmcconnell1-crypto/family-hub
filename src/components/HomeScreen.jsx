@@ -4,7 +4,7 @@ import SearchOverlay from './SearchOverlay.jsx'
 import PhotoViewer from './PhotoViewer.jsx'
 import Wordmark from './Wordmark.jsx'
 import { ChildTags } from './ChildChips.jsx'
-import { calendarColor, eventKind, expiringDocuments } from '../lib/familyData.js'
+import { calendarColor, expiringDocuments } from '../lib/familyData.js'
 import { addDays, dayParts, formatDateKey, parseDateKey, todayKey } from '../utils/dateUtils.js'
 import { birthdayOccurrences, calendarOccurrences, weekdayIndex } from '../utils/recurrence.js'
 import { useFileUrl } from '../hooks/useFileUrl.js'
@@ -29,23 +29,15 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
   const activeTodos = data.todos.filter((t) => !t.done)
   const recentPhotos = data.photos.slice(0, 6)
 
-  // Occasions (birthdays, holidays, appointments) headline each day; the
-  // everyday routine is pulled out into its own compact timetable below so it
-  // doesn't drown out what's special this week.
-  const occasions = thisWeek.filter((o) => eventKind(o) === 'occasion')
-  const routineThisWeek = thisWeek.filter((o) => eventKind(o) === 'routine')
-
-  // A card per remaining day of this week (today included), showing occasions.
+  // A card per remaining day of this week (today included).
   const weekDays = []
   for (let key = today; key <= weekEnd; key = addDays(key, 1)) {
     weekDays.push({
       key,
-      events: occasions.filter((o) => o.date === key),
-      routine: routineThisWeek.filter((o) => o.date === key),
+      events: thisWeek.filter((o) => o.date === key),
       todos: data.todos.filter((t) => !t.done && t.dueDate === key),
     })
   }
-  const routineDays = weekDays.filter((d) => d.routine.length > 0)
   const [searching, setSearching] = useState(false)
   const [viewingPhotoId, setViewingPhotoId] = useState(null)
   const viewingPhoto = viewingPhotoId ? data.photos.find((p) => p.id === viewingPhotoId) : null
@@ -174,28 +166,6 @@ export default function HomeScreen({ data, onNavigate, onOpen, externalOccurrenc
           onOpen={onOpen}
         />
       ))}
-
-      {routineDays.length > 0 && (
-        <section className="card routine-card">
-          <div className="card-title-row">
-            <h2>Weekly routine</h2>
-          </div>
-          <ul className="routine-list">
-            {routineDays.map((day) => (
-              <li key={day.key} className="routine-row">
-                <span className={`routine-day${day.key === today ? ' routine-day-today' : ''}`}>
-                  {dayParts(day.key).dow}
-                </span>
-                <span className="routine-items">
-                  {day.routine
-                    .map((o) => (o.time ? `${o.time} ${o.title}` : o.title))
-                    .join(' · ')}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
 
       {nextBirthday && (
         <button
