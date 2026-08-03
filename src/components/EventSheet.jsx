@@ -46,7 +46,17 @@ export default function EventSheet({
   const [documentIds, setDocumentIds] = useState(event?.documentIds || [])
   // New timed events default to a 30-minute nudge; existing events keep their
   // saved choice (null = none). A reminder only applies once a time is set.
-  const [reminder, setReminder] = useState(event ? (event.reminder ?? null) : 30)
+  // One or more reminder lead times (minutes before start). New timed events
+  // default to a single 30-minute nudge.
+  const [reminders, setReminders] = useState(() => {
+    if (!event) return [30]
+    if (Array.isArray(event.reminders)) return event.reminders.filter(Number.isInteger)
+    return Number.isInteger(event.reminder) ? [event.reminder] : []
+  })
+  const toggleReminder = (value) =>
+    setReminders((list) =>
+      list.includes(value) ? list.filter((v) => v !== value) : [...list, value],
+    )
 
   const pickDays = repeat === 'weekly' || repeat === 'fortnightly'
 
@@ -78,6 +88,9 @@ export default function EventSheet({
       const n = parseInt(repeatCount, 10)
       outCount = Number.isInteger(n) && n > 0 ? n : null
     }
+    const outReminders = time
+      ? [...new Set(reminders.filter(Number.isInteger))].sort((a, b) => a - b)
+      : []
     onSave({
       title: title.trim(),
       date,
@@ -90,7 +103,10 @@ export default function EventSheet({
       endDate: outEndDate,
       repeatCount: outCount,
       documentIds,
-      reminder: time ? reminder : null,
+      // Sorted, de-duped lead times; only timed events carry them. `reminder`
+      // is a legacy single-value mirror for older clients / the edge function.
+      reminders: outReminders,
+      reminder: outReminders.length ? outReminders[0] : null,
     })
   }
 
@@ -151,19 +167,24 @@ export default function EventSheet({
           </label>
         </div>
         {time && (
-          <label>
-            Reminder
-            <select
-              value={reminder === null ? '' : String(reminder)}
-              onChange={(e) => setReminder(e.target.value === '' ? null : Number(e.target.value))}
-            >
+          <div className="form-field">
+            <span className="form-label">
+              Reminders <span className="label-hint">pick any — none = off</span>
+            </span>
+            <div className="chip-row">
               {EVENT_REMINDER_OPTIONS.map((option) => (
-                <option key={String(option.value)} value={option.value === null ? '' : String(option.value)}>
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`chip${reminders.includes(option.value) ? ' chip-active' : ''}`}
+                  aria-pressed={reminders.includes(option.value)}
+                  onClick={() => toggleReminder(option.value)}
+                >
                   {option.label}
-                </option>
+                </button>
               ))}
-            </select>
-          </label>
+            </div>
+          </div>
         )}
         {pickDays && (
           <div className="form-field">

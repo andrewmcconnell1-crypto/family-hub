@@ -14,7 +14,7 @@
 
 import { Capacitor } from '@capacitor/core'
 import { LocalNotifications } from '@capacitor/local-notifications'
-import { reminderLeadLabel } from './familyData.js'
+import { eventReminders, reminderLeadLabel } from './familyData.js'
 import { localWallToUtcMs } from './reminders.js'
 import { occurrencesInRange } from '../utils/recurrence.js'
 import { toDateKey } from '../utils/dateUtils.js'
@@ -80,17 +80,20 @@ export function upcomingReminders(data, { now = Date.now(), tz } = {}) {
   const startKey = toDateKey(new Date(now))
   const endKey = toDateKey(new Date(horizonMs + 2 * 86400000))
   for (const occ of occurrencesInRange(data.events || [], startKey, endKey)) {
-    if (!occ.time || !Number.isInteger(occ.reminder)) continue
-    const fireMs = localWallToUtcMs(occ.date, occ.time, zone) - occ.reminder * 60000
-    if (fireMs > now && fireMs <= horizonMs) {
-      const key = `evt:${occ.id}:${occ.date}:${occ.reminder}`
-      out.push({
-        id: idFor(key),
-        key,
-        title: occ.title,
-        body: `${occ.time} · ${reminderLeadLabel(occ.reminder)}`,
-        at: new Date(fireMs),
-      })
+    if (!occ.time) continue
+    const startMs = localWallToUtcMs(occ.date, occ.time, zone)
+    for (const mins of eventReminders(occ)) {
+      const fireMs = startMs - mins * 60000
+      if (fireMs > now && fireMs <= horizonMs) {
+        const key = `evt:${occ.id}:${occ.date}:${mins}`
+        out.push({
+          id: idFor(key),
+          key,
+          title: occ.title,
+          body: `${occ.time} · ${reminderLeadLabel(mins)}`,
+          at: new Date(fireMs),
+        })
+      }
     }
   }
 

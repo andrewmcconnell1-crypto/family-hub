@@ -268,6 +268,7 @@ export function useFamilyStore(user, ownerId) {
           repeatCount: null,
           exceptions: [],
           documentIds: [],
+          reminders: [],
           reminder: null,
           ...event,
           id,

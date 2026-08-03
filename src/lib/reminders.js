@@ -8,7 +8,7 @@
 // we convert them to absolute UTC milliseconds using the household's timezone
 // before comparing against the window.
 
-import { reminderLeadLabel } from './familyData.js'
+import { eventReminders, reminderLeadLabel } from './familyData.js'
 import { occurrencesInRange } from '../utils/recurrence.js'
 import { toDateKey } from '../utils/dateUtils.js'
 
@@ -63,15 +63,17 @@ export function collectDueReminders(
   const startKey = toDateKey(new Date(windowStartMs - 2 * 86400000))
   const endKey = toDateKey(new Date(windowEndMs + 2 * 86400000))
   for (const occ of occurrencesInRange(data.events || [], startKey, endKey)) {
-    if (!occ.time || !Number.isInteger(occ.reminder)) continue
+    if (!occ.time) continue
     const startMs = localWallToUtcMs(occ.date, occ.time, tz)
-    const fireMs = startMs - occ.reminder * 60000
-    if (fireMs > windowStartMs && fireMs <= windowEndMs) {
-      out.push({
-        key: `evt:${occ.id}:${occ.date}:${occ.reminder}`,
-        title: occ.title,
-        body: `${occ.time} · ${reminderLeadLabel(occ.reminder)}`,
-      })
+    for (const mins of eventReminders(occ)) {
+      const fireMs = startMs - mins * 60000
+      if (fireMs > windowStartMs && fireMs <= windowEndMs) {
+        out.push({
+          key: `evt:${occ.id}:${occ.date}:${mins}`,
+          title: occ.title,
+          body: `${occ.time} · ${reminderLeadLabel(mins)}`,
+        })
+      }
     }
   }
 

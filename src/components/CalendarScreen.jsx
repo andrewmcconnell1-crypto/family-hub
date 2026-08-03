@@ -329,7 +329,9 @@ export default function CalendarScreen({
                       {occurrence.documentIds?.length > 0 && (
                         <Paperclip size={12} aria-label="Has attachments" />
                       )}
-                      {Number.isInteger(occurrence.reminder) && <Bell size={12} aria-label="Reminder set" />}
+                      {(occurrence.reminders?.length > 0 || Number.isInteger(occurrence.reminder)) && (
+                        <Bell size={12} aria-label="Reminder set" />
+                      )}
                       {!occurrence.isExternal && (
                         <ChildTags kids={data.children} childIds={occurrence.childIds} />
                       )}

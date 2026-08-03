@@ -17,7 +17,7 @@ export function useNativeReminders(data) {
   // OS's alarm list.
   const signature = data
     ? JSON.stringify(
-        (data.events || []).map((e) => [e.id, e.date, e.time, e.reminder, e.repeat, e.endDate, e.weekdays, e.exceptions]),
+        (data.events || []).map((e) => [e.id, e.date, e.time, e.reminders, e.reminder, e.repeat, e.endDate, e.weekdays, e.exceptions]),
       ) +
       '|' +
       JSON.stringify((data.todos || []).map((t) => [t.id, t.dueDate, t.remind, t.done]))

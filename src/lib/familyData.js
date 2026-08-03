@@ -55,15 +55,27 @@ export const EVENT_CATEGORIES = [
   { id: 'other', label: 'Other' },
 ]
 
-// Lead times for a per-event reminder (minutes before the start), or null.
+// Lead times for a per-event reminder (minutes before the start). An event can
+// have several — e.g. a day before AND an hour before.
 export const EVENT_REMINDER_OPTIONS = [
-  { value: null, label: 'No reminder' },
   { value: 0, label: 'At start time' },
   { value: 10, label: '10 minutes before' },
   { value: 30, label: '30 minutes before' },
   { value: 60, label: '1 hour before' },
   { value: 1440, label: '1 day before' },
 ]
+
+// An event's reminder lead times as a sorted, de-duped array of minutes.
+// Accepts the new `reminders` array and falls back to the legacy single
+// `reminder` field so old data (and un-migrated devices) keep working.
+export function eventReminders(event) {
+  const raw = Array.isArray(event?.reminders)
+    ? event.reminders
+    : Number.isInteger(event?.reminder)
+      ? [event.reminder]
+      : []
+  return [...new Set(raw.filter((m) => Number.isInteger(m)))].sort((a, b) => a - b)
+}
 
 // Human phrase for a reminder lead time, used in the notification body.
 export function reminderLeadLabel(minutes) {
@@ -201,28 +213,34 @@ export function normalizeData(raw) {
       endDate: '',
       repeatCount: null,
       exceptions: [],
+      reminders: [],
       reminder: null,
-    }).map((event) => ({
-      ...event,
-      // Fall back to "other" for events saved under a category that no longer
-      // exists (e.g. the old School/Activity set).
-      category: EVENT_CATEGORIES.some((c) => c.id === event.category) ? event.category : 'other',
-      // Stop a repeating series after N occurrences (null = no count limit).
-      repeatCount:
-        Number.isInteger(event.repeatCount) && event.repeatCount > 0 ? event.repeatCount : null,
-      weekdays: Array.isArray(event.weekdays)
-        ? event.weekdays.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
-        : [],
-      exceptions: Array.isArray(event.exceptions)
-        ? event.exceptions.filter(isNonEmptyString)
-        : [],
-      // Minutes before the start to notify, or null for no reminder. Only
-      // timed events can carry one.
-      reminder: Number.isInteger(event.reminder) && event.time ? event.reminder : null,
-      documentIds: Array.isArray(event.documentIds)
-        ? event.documentIds.filter(isNonEmptyString)
-        : [],
-    })),
+    }).map((event) => {
+      // One or more lead times (minutes before start); only timed events carry
+      // them. `reminder` is a legacy single-value mirror kept for older clients
+      // and the not-yet-redeployed reminders edge function.
+      const reminders = event.time ? eventReminders(event) : []
+      return {
+        ...event,
+        // Fall back to "other" for events saved under a category that no longer
+        // exists (e.g. the old School/Activity set).
+        category: EVENT_CATEGORIES.some((c) => c.id === event.category) ? event.category : 'other',
+        // Stop a repeating series after N occurrences (null = no count limit).
+        repeatCount:
+          Number.isInteger(event.repeatCount) && event.repeatCount > 0 ? event.repeatCount : null,
+        weekdays: Array.isArray(event.weekdays)
+          ? event.weekdays.filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+          : [],
+        exceptions: Array.isArray(event.exceptions)
+          ? event.exceptions.filter(isNonEmptyString)
+          : [],
+        reminders,
+        reminder: reminders.length ? reminders[0] : null,
+        documentIds: Array.isArray(event.documentIds)
+          ? event.documentIds.filter(isNonEmptyString)
+          : [],
+      }
+    }),
     documents: normalizeList(raw.documents, ['id', 'title', 'fileId'], {
       category: 'other',
       notes: '',

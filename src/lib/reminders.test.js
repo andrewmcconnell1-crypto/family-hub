@@ -38,6 +38,33 @@ describe('collectDueReminders — events', () => {
     ])
   })
 
+  it('fires each of an event with multiple reminders', () => {
+    const multi = {
+      events: [
+        { id: 'm1', title: 'Flight', date: '2026-07-20', time: '10:00', reminders: [60, 1440] },
+      ],
+      todos: [],
+    }
+    // The "1 day before" reminder (fires 2026-07-19 10:00).
+    const dayBefore = collectDueReminders(multi, {
+      tz: 'UTC',
+      windowStartMs: at('2026-07-19', '09:59'),
+      windowEndMs: at('2026-07-19', '10:01'),
+    })
+    expect(dayBefore).toEqual([
+      { key: 'evt:m1:2026-07-20:1440', title: 'Flight', body: '10:00 · tomorrow' },
+    ])
+    // The "1 hour before" reminder (fires 2026-07-20 09:00).
+    const hourBefore = collectDueReminders(multi, {
+      tz: 'UTC',
+      windowStartMs: at('2026-07-20', '08:59'),
+      windowEndMs: at('2026-07-20', '09:01'),
+    })
+    expect(hourBefore).toEqual([
+      { key: 'evt:m1:2026-07-20:60', title: 'Flight', body: '10:00 · in 1 hour' },
+    ])
+  })
+
   it('is exclusive at the window start and inclusive at the end', () => {
     const fire = at('2026-07-20', '08:30')
     expect(collectDueReminders(data, { tz: 'UTC', windowStartMs: fire, windowEndMs: fire + 1 })).toEqual([])

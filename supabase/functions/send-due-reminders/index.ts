@@ -111,6 +111,15 @@ const leadLabel = (m: number) =>
   : m === 1440 ? "tomorrow"
   : `in ${m} minutes`;
 
+// An event's lead times: the new `reminders` array, or the legacy single
+// `reminder` field for data saved by older clients.
+const remindersOf = (e: Ev): number[] => {
+  const raw = Array.isArray(e?.reminders)
+    ? e.reminders
+    : Number.isInteger(e?.reminder) ? [e.reminder] : [];
+  return [...new Set(raw.filter((m: unknown) => Number.isInteger(m)))] as number[];
+};
+
 // --- Due reminders in (windowStart, windowEnd] (mirrors reminders.js) -----
 function collectDue(
   data: Ev,
@@ -123,14 +132,17 @@ function collectDue(
   const startKey = toKey(windowStartMs - 2 * 86400000);
   const endKey = toKey(windowEndMs + 2 * 86400000);
   for (const occ of occurrences(data.events, startKey, endKey)) {
-    if (!occ.time || !Number.isInteger(occ.reminder)) continue;
-    const fire = localWallToUtcMs(occ.date, occ.time, tz) - occ.reminder * 60000;
-    if (fire > windowStartMs && fire <= windowEndMs) {
-      out.push({
-        key: `evt:${occ.id}:${occ.date}:${occ.reminder}`,
-        title: occ.title,
-        body: `${occ.time} · ${leadLabel(occ.reminder)}`,
-      });
+    if (!occ.time) continue;
+    const startMs = localWallToUtcMs(occ.date, occ.time, tz);
+    for (const mins of remindersOf(occ)) {
+      const fire = startMs - mins * 60000;
+      if (fire > windowStartMs && fire <= windowEndMs) {
+        out.push({
+          key: `evt:${occ.id}:${occ.date}:${mins}`,
+          title: occ.title,
+          body: `${occ.time} · ${leadLabel(mins)}`,
+        });
+      }
     }
   }
   const hh = String(todoHour).padStart(2, "0");
@@ -226,13 +238,15 @@ Deno.serve(async (req) => {
         devices: ownerSubs.length,
         hasData: Boolean(row?.data),
         eventsWithReminder: (row?.data?.events || [])
-          .filter((e: Ev) => e?.time && Number.isInteger(e?.reminder))
+          .filter((e: Ev) => e?.time && remindersOf(e).length > 0)
           .map((e: Ev) => ({
             title: e.title,
             date: e.date,
             time: e.time,
-            reminder: e.reminder,
-            fireAt: new Date(localWallToUtcMs(e.date, e.time, tz) - e.reminder * 60000).toISOString(),
+            reminders: remindersOf(e),
+            fireAt: remindersOf(e).map((m) =>
+              new Date(localWallToUtcMs(e.date, e.time, tz) - m * 60000).toISOString()
+            ),
           })),
         dueNow: due.map((r) => r.key),
       });
